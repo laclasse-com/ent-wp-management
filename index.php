@@ -33,8 +33,8 @@ require_once('includes/hooks-functions.inc.php');
 require_once('includes/pilotage-functions.inc.php');
 // Fonctions liées à la CASification de WordPress.
 require_once('includes/cas-functions.inc.php');
-
-// require_once('includes/ENTback-office.php'); // pour faire un black-office de paramétrage du plugin.
+// Fonctions de paramétrage du back-office des options du plugin.
+require_once('includes/ENTback-office.php'); 
 
 require_once(ABSPATH . WPINC . '/registration.php');
 require_once(ABSPATH . WPINC . '/formatting.php');

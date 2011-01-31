@@ -1,52 +1,109 @@
 <?php
-// create custom plugin settings menu
-add_action('admin_menu', 'ENT_WP_Mngnt_create_menu');
+/**
+	Back-office pour les options du plugin ENT-WP-management.
+	@file ENTback-office.php
+	@author PGL pgl@erasme.org
 
-function ENT_WP_Mngnt_create_menu() {
+*/
+require_once(ABSPATH  . '/wp-admin/includes/template.php');
 
-	//create new top-level menu
-	add_menu_page('Options du plugin ENT-WP-Management', NOM_ENT, 'administrator', __FILE__, 'ENT_WP_Mngnt_settings_page',plugins_url('/images/icon.png', __FILE__));
+/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	
+	G E S T I O N   D E   L ' A N O N Y M A T 
 
-	//call register settings function
-	add_action( 'admin_init', 'ENT_WP_Mgmnt_register_mysettings' );
-}
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
+ // ------------------------------------------------------------------
+ // Add all your sections, fields and settings during admin_init
+ // ------------------------------------------------------------------
+ function gestionAnonymatEleves() {
+ 	// Ajout de la section dans 'Vie Privée'
+ 	add_settings_section('student_privacy_section',
+		'Anonymat des élèves',
+		'explicationAnonymat',
+		'privacy');
+ 	
+ 	// Ajout du champs "student-privacy" dans cette section
+ 	add_settings_field('student-privacy',
+		'Signature des élèves',
+		'formulaireAnonymat',
+		'privacy',
+		'student_privacy_section');
+ 	
+ 	// Enregistrement dans $_POST
+ 	register_setting('privacy','student-privacy');
+ }
+   
+ // ------------------------------------------------------------------
+ // Paragraphe d'explication
+ // ------------------------------------------------------------------
+ function explicationAnonymat() {
+ 	echo '<p>Decidez ici de ce que votre blog doit afficher pour la signature publique des 
+ 		élèves dans les articles et les commentaires<br/>
+ 		Vous pouvez choisir d\'afficher leurs noms et prénoms, ou bien une chaîne de 
+ 		caractères qui les représentera tout en leur permettant de rester anonyme.</p>';
+ }
+ 
+ // ------------------------------------------------------------------
+ // Formulaire
+ // ------------------------------------------------------------------
+ function formulaireAnonymat() {
+ 	echo '<input name="student-privacy" id="student-privacy" type="radio" value="1" class="code" ' . 
+ 		checked( 1, get_option('student-privacy'), false ) . 
+ 		' /> Les noms et prénoms sont anonymisés.<br/>';
+ 	echo '<input name="student-privacy" id="student-privacy" type="radio" value="0" class="code" ' . 
+ 		checked( 0, get_option('student-privacy'), false ) . 
+ 		' /> Les noms et prénoms des élèves apparaîssent dans les articles et les commentaires.';
+ }
 
+ // ------------------------------------------------------------------
+ // Fonction qui renvoie une signature anonyme ou pas en fonctions 
+ //	des options du blog
+ // ------------------------------------------------------------------
+  function getSignature($signature, $userId, $profil){
+  	global $blog_id;
+  	// Récupérer la valeur de l'option d'anonymat
+  	$choixAnonymat = get_blog_option($blog_id, 'student-privacy', 0);
+  	
+  	// Voir si on est en back-office ou en front-office.
+  	if (!defined('WP_ADMIN')) $BackOffice = 0;
+  	else  $BackOffice = 1;
+  	
+  	// si l'anonymat a été paramètré on affiche un nom anonymisé
+  	if ($profil == 'ELEVE' && $choixAnonymat == 1 ) {
+  		$uidAnonyme = get_usermeta( $userId, 'uid_ENT');
+  		if ($BackOffice == 1) return strtolower($uidAnonyme)." <br/><small>(".$signature.")</small>";
+  		return strtolower($uidAnonyme);
+  	}
+  	// Ici FO ou BO oun s'en fout on affiche la signature
+  	return $signature;
+  
+  }
 
-function ENT_WP_Mgmnt_register_mysettings() {
-	//register our settings
-	register_setting( 'cas-sso-settings-group', 'cas_server_name' );
-	register_setting( 'baw-settings-group', 'some_other_option' );
-	register_setting( 'baw-settings-group', 'option_etc' );
-}
+ // ------------------------------------------------------------------
+ // Fonction d'affichage de la signature anonymisée sur les articles
+ // ------------------------------------------------------------------
+  function gereAnonymatArticle($post_author){
+  	global $post;
+  	$profil = get_usermeta( $post->post_author, 'profil_ENT');
+  	return getSignature($post_author, $post->post_author, $profil);
+  }
 
-function ENT_WP_Mngnt_settings_page() {
+ // ------------------------------------------------------------------
+ // Fonction d'affichage de la signature anonymisée sur les commentaires
+ // ------------------------------------------------------------------
+  function gereAnonymatCommentaire($comment_author){
+  	global $comment;
+  	$profil = get_usermeta( $comment->user_id, 'profil_ENT');
+  	return getSignature($comment_author, $comment->user_id, $profil);  	
+  }
+
+/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	
+	h o o k   G E S T I O N   D E   L ' A N O N Y M A T 
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
+ add_action('admin_init', 'gestionAnonymatEleves');
+ 
+ add_filter('the_author', 'gereAnonymatArticle', 10, 1);
+ add_filter('get_comment_author', 'gereAnonymatCommentaire', 10, 1);
 ?>
-<div class="wrap">
-<h2>ENT - WP - Management :: <?php echo NOM_ENT; ?></h2>
-
-<form method="post" action="options.php">
-    <?php settings_fields( 'cas-sso-settings-group' ); ?>
-    <table class="form-table">
-        <tr valign="top">
-        <th scope="row">Nom du serveur CAS</th>
-        <td><input type="text" name="cas_server_name" value="<?php echo get_option('cas_server_name'); ?>" /></td>
-        </tr>
-         
-        <tr valign="top">
-        <th scope="row">Nom du service de synchronisation des blogs dans l'ENT</th>
-        <td><input type="text" name="some_other_option" value="<?php echo get_option('some_other_option'); ?>" /></td>
-        </tr>
-        
-        <tr valign="top">
-        <th scope="row">Options, Etc.</th>
-        <td><input type="text" name="option_etc" value="<?php echo get_option('option_etc'); ?>" /></td>
-        </tr>
-    </table>
-    
-    <p class="submit">
-    <input type="submit" class="button-primary" value="<?php _e('Save Changes') ?>" />
-    </p>
-
-</form>
-</div>
-<?php } ?>
