@@ -1,0 +1,53 @@
+<?php
+// --------------------------------------------------------------------------------
+// fonctions utilitaires du plugin ENT-WP-Management.
+// --------------------------------------------------------------------------------
+
+// --------------------------------------------------------------------------------
+// fonction d'envoie d'un GET HTTP.
+// --------------------------------------------------------------------------------
+function get_http($url){
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, $url);
+	curl_setopt($ch, CURLOPT_HEADER, 0);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+	
+	$data = curl_exec($ch);
+	if (curl_errno($ch)) {
+		return curl_error($ch);
+	}
+	curl_close($ch);
+	return $data;
+}
+
+// --------------------------------------------------------------------------------
+//  Fonction d'affichage d'un message de retour d'une action de pilotage.
+// --------------------------------------------------------------------------------
+function message($pmessage){
+	echo "
+		<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">
+		<html xmlns=\"http://www.w3.org/1999/xhtml\" dir=\"ltr\" lang=\"fr-FR\">
+			<head>
+				<title>WordPress &rsaquo; message de retour</title>
+
+				<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />
+				<link rel='stylesheet' id='install-css'  href='".network_site_url()."wp-admin/css/install.css?ver=20100605' type='text/css' media='all' />
+<!--[if lte IE 7]>
+<link rel='stylesheet' id='ie-css'  href='".network_site_url()."wp-admin/css/ie.css?ver=20100610' type='text/css' media='all' />
+<![endif]-->
+<style>
+body {width:auto;}
+</style>
+			</head>
+
+			<body>
+				<h1 id=\"logo\"><img alt=\"WordPress\" src=\"".network_site_url()."wp-admin/images/wordpress-logo.png\" /></h1>
+				<p>$pmessage</p>
+			</body>
+		</html>";
+		
+}
+
+
+?>
