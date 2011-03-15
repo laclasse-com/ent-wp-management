@@ -48,38 +48,23 @@ fonction getUserCols : modifier l'entête des colonnes de la liste des utilisateu
 					   pour ajouter des données issues de l'ENT.
 filter : wpmu_users_columns
 *************************************************************************************/
-function getUserCols(){
-	return array(
- 	                'id'           	=> __( 'ID' ),
- 	                'login'      	=> __( 'Username' ),
- 	                'name'       	=> __( 'Name' ),
- 	                'email'      	=> __( 'E-mail' ),
- 	                'registered' 	=> _x( 'Registered', 'user' ),
- 	                'blogs'      	=> __( 'Blogs' ),
- 	                'profil_ENT'  	=> __( 'profil ENT' ),
- 	                'classe_ENT'  	=> __( 'classe'),
- 	                'etablissement_ENT' => __( '&eacute;tablissement')
- 	            );
+function getUserCols($userCols){
+	$customCols = array('profil_ENT'  		=> __( 'profil ENT' ),
+ 	                	'classe_ENT'  		=> __( 'classe'),
+ 	                	'etablissement_ENT' => __( '&eacute;tablissement')
+ 	                   );
+	return array_merge($userCols, $customCols);
 }
 
 /*************************************************************************************
 fonction getCustomUserMeta : Fonction de récupération de la valeur des champs usermeta.
 filter : manage_users_custom_column
 *************************************************************************************/
-function getCustomUserMeta($colName, $userID){
+function getCustomUserMeta($ignore, $colName, $userID){
 	global $wpdb;
 	$metaValue = "";
-	// La dernière requête SQL porte justement sur la table wp_usermeta.
-	// SELECT user_id, meta_key, meta_value FROM wp_usermeta WHERE user_id IN (id du user)
-	// sauf pour les supers admin du site où le user id est toujours 1 (Pourquoi ? bug WP ?)
-	// SELECT user_id, meta_key, meta_value FROM wp_usermeta WHERE user_id IN (1)
+	$metaValue = get_user_meta( $userID, $colName, true);
 	
-	foreach ($wpdb->last_result as $elt => $obj) {
-		if ($obj->meta_key == $colName) {
-			$metaValue = $obj->meta_value;
-			quit;
-		}
-	}
 	if ($metaValue == "") // cas des super admin du réseau (bug ci-dessus)
 		$metaValue = "-";
 		
@@ -110,13 +95,19 @@ filter : manage_blogs_custom_column
 function getCustomSiteMeta($colName, $blogID) {
 	$typeBlog = get_blog_option($blogID, 'type_de_blog');
 	switch ($typeBlog) {
-		case "MASTER" : echo "Blog principal"; break;
-		case "CLS" : echo "classe"; break;
-		case "GRP" : echo "Groupe d'&eacute;l&egrave;ves"; break;
-		case "ENV" : echo "Groupe de travail"; break;
-		case "ETB" : echo "Etablissement"; break;
-		default	   : echo "inconnu !"; break;
+		//case "MASTER" : echo "Blog principal"; break;
+		case "CLS" : $LibTypeBlog = "Classe"; $color = "chocolate"; break;
+		case "GRP" : $LibTypeBlog = "Groupe d'&eacute;l&egrave;ves"; $color = "lightgreen"; break;
+		case "ENV" : $LibTypeBlog = "Groupe de travail"; $color = "green"; break;
+		case "ETB" : $LibTypeBlog = "Etablissement"; $color = "saddlebrown"; break;
+		default	   : if ($blogID == 1) $LibTypeBlog = "<strong>Blog principal</strong>";
+					 else $LibTypeBlog = "inconnu...";
+					 $color = "red";  
+					 break;
 	}
+	
+	echo "<span style='color:".$color.";'>".$LibTypeBlog."</span>";
+
 }
 
 /*************************************************************************************

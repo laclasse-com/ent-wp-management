@@ -94,7 +94,7 @@ function hasRoleOnDomain($pDom, $pRole){
 function setIframeTemplate() {
 	wp_enqueue_script('jquery'); 
 	// script de detection d'IFRAME qui ajoute le contexte de navigation à toutes les urls.
-	wp_enqueue_script( "ent-wp-managment-iframe-detect", "/wp-content/plugins/ENT-WP-management/js/ENT-WP-managment-iframe-detect.js");
+	wp_enqueue_script( "ent-wp-managment-iframe-detect", "/wp-content/plugins/ent-wp-management/js/ent-wp-managment-iframe-detect.js");
 	// Forcer l'affichage du modèle simplifié.
 	add_filter('stylesheet', 'modeIntegreIframeENT');
 	add_filter('template', 'modeIntegreIframeENT');

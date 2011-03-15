@@ -81,8 +81,8 @@ add_filter('admin_footer_text', 'addEntName', 10, 0);
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
-add_filter('wpmu_users_columns', 'getUserCols', 10, 0);
-add_filter('manage_users_custom_column', 'getCustomUserMeta', 10, 2);
+add_filter('wpmu_users_columns', 'getUserCols', 10, 1);
+add_filter('manage_users_custom_column', 'getCustomUserMeta', 10, 3);
 add_filter('ENT_WP_MGMT_format_output', 'formatMeta', 10, 2);
 add_filter('wp_print_scripts', 'addUsersManagmentScript', 10, 0);
 
@@ -93,7 +93,7 @@ add_filter('wp_print_scripts', 'addUsersManagmentScript', 10, 0);
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
 add_filter('wpmu_blogs_columns', 'getBlogsCols', 10, 0);
-add_filter('manage_blogs_custom_column', 'getCustomSiteMeta', 10, 2);
+add_filter('manage_sites_custom_column', 'getCustomSiteMeta', 10, 2);
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	
@@ -125,11 +125,11 @@ add_filter('wpmu_welcome_user_notification', 'disableThisFunc', 10, 2);
 // Contr™leur d'actions
 // --------------------------------------------------------------------------------
 
-if (isset($_GET['ENT_action'])) {
+if (isset($_REQUEST['ENT_action'])) {
 
 	$ENT_action 		= $_REQUEST['ENT_action'];
 	//$ENTblogid 			= $_REQUEST['ENTblogid'];
-	$ENTblogid 			= $_GET['pblogid'];
+	$ENTblogid 			= $_REQUEST['pblogid'];
 	$blogname 			= $_REQUEST['blogname'];
 	$username 			= $_REQUEST['username'];
 	$blogdescription 	= $_REQUEST['blogdescription'];

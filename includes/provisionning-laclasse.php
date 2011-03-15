@@ -308,16 +308,16 @@ function majWPUserMetData($p_userId) {
 	// Maj des données
 	logIt("maj des donn&eacute;es de l'utilisateur");
 	if (isset($_GET['debug']) && $_GET['debug'] == "O") print_r($_SESSION['phpCAS']['attributes']);
-	update_usermeta($p_userId, 'uid_ENT', 			$_SESSION['phpCAS']['attributes']['uid']);
-	update_usermeta($p_userId, 'etablissement_ENT', $_SESSION['phpCAS']['attributes']['ENTPersonStructRattachRNE']);
-	update_usermeta($p_userId, 'display_name',  	$_SESSION['phpCAS']['attributes']['LaclasseNom'].' '.$_SESSION['phpCAS']['attributes']['LaclassePrenom']);
-	update_usermeta($p_userId, 'first_name', 		$_SESSION['phpCAS']['attributes']['LaclassePrenom']);
-	update_usermeta($p_userId, 'last_name', 		$_SESSION['phpCAS']['attributes']['LaclasseNom']);
-	update_usermeta($p_userId, 'profil_ENT', 		$_SESSION['phpCAS']['attributes']['LaclasseProfil']);
+	update_user_meta($p_userId, 'uid_ENT', 			$_SESSION['phpCAS']['attributes']['uid']);
+	update_user_meta($p_userId, 'etablissement_ENT', $_SESSION['phpCAS']['attributes']['ENTPersonStructRattachRNE']);
+	update_user_meta($p_userId, 'display_name',  	$_SESSION['phpCAS']['attributes']['LaclasseNom'].' '.$_SESSION['phpCAS']['attributes']['LaclassePrenom']);
+	update_user_meta($p_userId, 'first_name', 		$_SESSION['phpCAS']['attributes']['LaclassePrenom']);
+	update_user_meta($p_userId, 'last_name', 		$_SESSION['phpCAS']['attributes']['LaclasseNom']);
+	update_user_meta($p_userId, 'profil_ENT', 		$_SESSION['phpCAS']['attributes']['LaclasseProfil']);
 	// Classe de l'élève
 	if ($_SESSION['phpCAS']['attributes']['LaclasseProfil'] == "ELEVE") {
 		logIt("classe de l'utilisateur");
-		update_usermeta($p_userId, 'classe_ENT', $_SESSION['phpCAS']['attributes']['ENTEleveClasses']);
+		update_user_meta($p_userId, 'classe_ENT', $_SESSION['phpCAS']['attributes']['ENTEleveClasses']);
 	}
 }
 

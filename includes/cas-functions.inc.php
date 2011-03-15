@@ -119,7 +119,6 @@ function wpcas_options_page() {
 <?php
 }
 ?>
-
 <?php
 // --------------------------------------------------------------------------------
 // Une fonction de mise en session des donnŽes du jeton CAS. (connexion avec CAS)
