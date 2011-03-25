@@ -193,6 +193,7 @@ if (isset($_REQUEST['ENT_action'])) {
 	// Migration des données de l'ancien blog.
 	//
 	case 'MIGRER_DATA' :
+		
 		if(hasRoleOnDomain($domain, "administrator") || is_super_admin()) 
 			include_once('scripts/migrer_data_ENT.php');
 		else 
