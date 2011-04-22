@@ -434,7 +434,10 @@ function redirection($p_domaine) {
 		endMessage("<ul>".$logProvisioning ."</ul>". "Mode DEBUG activ&eacute; : Pas de redirection.");
 	}
 	else {
-		header('Location: http://'.$p_domaine.'/?ENT_action=IFRAME');
+		// Si le blog est de type Etablissement (ETB) on enlève la sidebar
+		// Car la place dans la page est étroite.
+		if ($_REQUEST["blogtype"] == 'ETB')	header('Location: http://'.$p_domaine.'/?ENT_action=IFRAME&ENT_display=CENTRAL');
+		else header('Location: http://'.$p_domaine.'/?ENT_action=IFRAME');
 	}
 }
 
