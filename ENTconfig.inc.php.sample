@@ -1,0 +1,32 @@
+<?php
+/**********************************************************************
+	Fichier de configuration du plugin de management de WP depuis un ENT.
+**********************************************************************/
+
+// tableau de configuration pour la connexion ˆ CAS.
+
+$wpcas_options = array(
+	'cas_version' => '2.0',
+	'include_path' => '/var/www/html/CAS-1.2.0/CAS.php',
+	'server_hostname' => 'cas-erasme.erasme.lan', 
+	'server_port' => '443',
+	'server_path' => '/cas/'
+	);
+
+// Nom du serveur ENT
+define (SERVEUR_ENT, "www.dev.laclasse.com");
+
+// Nom de l'ENT
+define (NOM_ENT, "Laclasse.com");
+
+// Nom de domaine de la plateforme de blog.
+define(BLOG_DOMAINE, "blogs.dev.laclasse.com");
+
+// chaine statique MD5 pour les encodages de clé de sécurité sur divers services web avec l'ENT.
+define(MD5_SALT, "xxxxxxxx");
+
+// Cle Akismet pour la gestion des spams dans les commentaires.	
+define(AKISMET_KEY, "169f1a275c36");
+
+
+?>
