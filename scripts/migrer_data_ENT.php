@@ -310,9 +310,9 @@ show("Fin de la reprise des données.");
 // aucun redirect si rien n'a été importé car il peut s'agir d'un erreur et dans cce cas il faut afficher le log
 // Il peut aussi s'agir d'un blog vide.
 
-/*
+
 if (($nbPost - $nbPostImported) != 0) die();
 else redirectTemporise();
 echo "</div></div></body></html>";
-*/
+
 ?>

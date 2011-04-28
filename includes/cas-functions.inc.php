@@ -244,7 +244,7 @@ class wpCAS {
 
 	// disabled reset, lost, and retrieve password features
 	function disable_function_user() {
-		echo( __( 'La  fonction d\'ajout d\'utilisateur est d&eacute;sactiv&eacute;e. Passez par l\'ENT '.NOM_ENT.' pour ajouter des utilisateurs &agrave; votre blog.', 'wpcas' ));
+		echo( __( 'La  fonction d\'ajout d\'un nouvel utilisateur est d&eacute;sactiv&eacute;e. Passez par l\'ENT '.NOM_ENT.' pour ajouter des utilisateurs &agrave; votre blog.', 'wpcas' ));
 	}
 
 	// disabled reset, lost, and retrieve password features

@@ -38,9 +38,8 @@ fonction addUsersManagmentScript : Ajouter les javascipt de management des users
 filter : wp_print_scripts
 *************************************************************************************/
 function addUsersManagmentScript() {
-	echo "";
-	$plugin_url = trailingslashit( get_bloginfo('wpurl') ).PLUGINDIR.'/'. dirname( plugin_basename(__FILE__) );
-	wp_enqueue_script('wp_wall_script', $plugin_url.'/custom-user-managment.js');
+	$plugin_js_url = WP_PLUGIN_URL.'/ent-wp-management/js';
+	wp_enqueue_script('wp_wall_script', $plugin_js_url.'/custom-user-managment.js');
 }
 
 /*************************************************************************************
@@ -88,26 +87,27 @@ function formatMeta($key, $val) {
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
+function formatTypeBlog($pBlogID, $pTypeBlog) {
+	switch ($pTypeBlog) {
+		case "CLS" : $LibTypeBlog = "Blog de classe"; $color = "chocolate"; break;
+		case "GRP" : $LibTypeBlog = "Blog de groupe d'&eacute;l&egrave;ves"; $color = "lightgreen"; break;
+		case "ENV" : $LibTypeBlog = "Blog de groupe de travail"; $color = "green"; break;
+		case "ETB" : $LibTypeBlog = "Blog d'&eacute;tablissement"; $color = "saddlebrown"; break;
+		default	   : if ($pBlogID == 1) $LibTypeBlog = "<strong>Blog principal</strong>";
+					 else $LibTypeBlog = "inconnu...";
+					 $color = "red";  
+					 break;
+	}
+	return "<span style='color:".$color.";'>".$LibTypeBlog."</span>";
+}
+
 /*************************************************************************************
 fonction getCustomSiteMeta : Fonction de récupération de la valeur des champs blogmeta.
 filter : manage_blogs_custom_column
 *************************************************************************************/
 function getCustomSiteMeta($colName, $blogID) {
 	$typeBlog = get_blog_option($blogID, 'type_de_blog');
-	switch ($typeBlog) {
-		//case "MASTER" : echo "Blog principal"; break;
-		case "CLS" : $LibTypeBlog = "Classe"; $color = "chocolate"; break;
-		case "GRP" : $LibTypeBlog = "Groupe d'&eacute;l&egrave;ves"; $color = "lightgreen"; break;
-		case "ENV" : $LibTypeBlog = "Groupe de travail"; $color = "green"; break;
-		case "ETB" : $LibTypeBlog = "Etablissement"; $color = "saddlebrown"; break;
-		default	   : if ($blogID == 1) $LibTypeBlog = "<strong>Blog principal</strong>";
-					 else $LibTypeBlog = "inconnu...";
-					 $color = "red";  
-					 break;
-	}
-	
-	echo "<span style='color:".$color.";'>".$LibTypeBlog."</span>";
-
+	echo formatTypeBlog($blogID, $typeBlog);
 }
 
 /*************************************************************************************
@@ -125,6 +125,45 @@ function getBlogsCols() {
  	                'users'        => __( 'Users' ),
  	                'type_de_blog' => __('type de blog')
  	           );
+}
+
+/*************************************************************************************
+fonction getCustomExtraInfoBlog : Fonction de récupération de la valeur des champs blogmeta.
+filter : myblogs_options
+*************************************************************************************/
+function getCustomExtraInfoBlog($ignore, $user_blog) {
+	if ( !is_string($user_blog) && $user_blog != 'global') {
+	$typeBlog = get_blog_option($user_blog->userblog_id, 'type_de_blog');
+	echo "<div style='text-align:right;padding-right:40px;'>".formatTypeBlog($user_blog->userblog_id, $typeBlog)."</div>";
+	}
+}
+
+/*************************************************************************************
+fonction getCustomActionBlog : Ajout d'action aux blogs de l'utilisateur
+filter : myblogs_blog_actions
+*************************************************************************************/
+function getCustomActionBlog($ActionExistantes, $user_blog) {
+	
+	echo $ActionExistantes. "&nbsp;|&nbsp;<a href='?blogid=".$user_blog->userblog_id."&action=DESINSCRIRE'>Me d&eacute;sinscrire</a>";
+}
+
+/*************************************************************************************
+fonction actionsBlog : Traitement de l'action de désinscription
+action : myblogs_allblogs_options
+*************************************************************************************/
+function actionsBlog() {
+	global $current_user;
+	$action = $_REQUEST["action"];
+	$blogid = $_REQUEST["blogid"];
+	if ($action == 'DESINSCRIRE') {
+		if (aUnRoleSurCeBlog($current_user->ID, $blogid)) {
+			$cu = (array) $current_user;
+			foreach ($cu["wp_".$blogid."_capabilities"] as $role => $val) {
+
+				remove_user_from_blog($current_user->ID, $blogid);
+			}
+		}
+	}
 }
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
