@@ -346,14 +346,15 @@ function rattachUserToHisBlog($p_domain, $p_path, $p_site_id, $p_wpUsrId, $p_rol
 		$wpBlogId = get_blog_id_by_domain($p_domain);
 		logIt("get_blog_id_by_domain a renvoy&eacute; #".$wpBlogId.".");
 				
-		// Ajout des droits sur le blog. Si le user est noueau, on lui affecte un role, 
+		// Ajout des droits sur le blog. Si le user est nouveau OU qu'il n'a pas de droits sur le blog, 
+		// on lui affecte un role, 
 		// sinon on n'y touche pas, ce role peut avoir été changé manuellement dans 
 		// le back-office de WordPress.
-		if ($NewUser) {
+		if ($NewUser || !aUnRoleSurCeBlog($p_wpUsrId, $wpBlogId) ) {
 			logIt("Ajout du role '".$p_role."' sur le blog #".$wpBlogId.".");
 			add_user_to_blog($wpBlogId, $p_wpUsrId, $p_role);
 		}
-		else logIt("L'utilisateur #".$p_wpUsrId." n'est pas nouveau. on ne modifie pas son role sur le blog #".$wpBlogId.".");
+		else logIt("L'utilisateur #".$p_wpUsrId." n'est pas nouveau ou a d&eacute;j&agrave; un role sur le blog #".$wpBlogId." : on ne modifie pas son role.");
 
 	}
 	else {
@@ -371,10 +372,14 @@ function rattachSuperUserToTheBLog($p_userId, $p_role) {
 			// Ajout des droits super administrateur sur le blog des blogs.
 			add_user_to_blog(1, $p_userId, $p_role);
 			logIt("Ajout des droits administrateur sur le blog des blogs");
+			logIt("is_super_admin() renvoie ".is_super_admin());
 		
-			if (grant_super_admin($p_userId)) 
-			 	logIt("Ajout des droits super administrateur sur le blog des blogs");
-			else logIt("Pas de droits SUPER ADMIN, mais je ne sais pas pourquoi...");
+			if (!is_super_admin()) {
+				if (grant_super_admin($p_userId) ) 
+			 		logIt("Ajout des droits super administrateur sur le blog des blogs");
+			 	else logIt("Pas de droits SUPER ADMIN, mais je ne sais pas pourquoi...");
+			 	}
+			else logIt("L'utilisateur est d&eacute;j&agrave; superAdmin.");
 		}
 }
 
@@ -484,7 +489,7 @@ logIt("r&eacute;cup&eacute;rer les variables du jeton CAS");
 ////////setCASdataInSession();
 $LaclasseAttributes = $_SESSION['phpCAS']['attributes'];
 
-if (isset($_GET['debug']) && $_GET['debug'] == "O") print_r($LaclasseAttributes);
+//if (isset($_GET['debug']) && $_GET['debug'] == "O") print_r($LaclasseAttributes);
 
 $laclasseUserUid 		= $LaclasseAttributes['uid'];
 $laclasseUserCodeRne 	= $LaclasseAttributes['ENTPersonStructRattachRNE'];
