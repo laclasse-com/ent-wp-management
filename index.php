@@ -61,7 +61,11 @@ add_action('password_reset', array('wpCAS', 'disable_function_pwd'));
 add_filter('show_password_fields', array('wpCAS', 'show_password_fields'));
 
 // supprimer l'apparition du formulaire d'ajout d'un utilisateurs (connexion avec CAS).
+/* dépréquétide in WP 3.1
 add_action('show_adduser_fields', array('wpCAS', 'disable_function_user'));
+*/
+add_action('show_network_site_users_add_new_form', array('wpCAS', 'disable_function_user'));
+
 
 add_filter('login_url',array('wpCAS', 'get_url_login'));
 
@@ -94,6 +98,12 @@ add_filter('wp_print_scripts', 'addUsersManagmentScript', 10, 0);
 
 add_filter('wpmu_blogs_columns', 'getBlogsCols', 10, 0);
 add_filter('manage_sites_custom_column', 'getCustomSiteMeta', 10, 2);
+// liste des blogs de l'utilisateur
+add_filter('myblogs_options', 'getCustomExtraInfoBlog', 10, 2);
+add_filter('myblogs_blog_actions', 'getCustomActionBlog', 10, 2);
+// Hook pour la désinscription d'un blog.
+add_action( 'myblogs_allblogs_options', 'actionsBlog', 10, 0);
+
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	
@@ -172,32 +182,49 @@ if (isset($_REQUEST['ENT_action'])) {
 		$mustDieAfterAction = true;
 		break;
 	//
-	// Supprimer un ancien blog de l'ENT (après la repise des données en général)
-	//
-	/*
-	case 'SUPPRIMER_ANCIEN_BLOG' :
-		if(hasRoleOnDomain($domain, "administrator") || is_super_admin()) supprimerAncienBlogDansENT($ENTblogid);	
-		else 
-			message("Vous n'&ecirc;tes pas administrateur du site '$domain'.");
-		$mustDieAfterAction = true;
-		break;
-	*/
-	//
 	// Supprimer un blog
 	//
 	case 'SUPPRIMER_BLOG' :
-		supprimerBlog($domain);	
+		if (phpCAS::isAuthenticated()) {
+			$user = get_userdatabylogin(phpCAS::getUser());
+		} else phpCAS::forceAuthentication();
+
+		$blogId = getBlogIdByDomain($domain);
+		if (!$blogId) {
+			echo "L'identifiant de '$domain' n'a pas &eacute;t&eacute; trouv&eacute;. Ce blog existe-t-il ?";
+			exit;
+		}
+		else {
+			switch_to_blog($blogId);
+			if(hasRoleOnDomain($user, $domain, "administrator") || is_super_admin())  {
+				wpmu_delete_blog ($blogId, true);	
+				message("Le blog '$domain' a &eacute;t&eacute; supprim&eacute;.");
+			}
+			else message("Vous n'&ecirc;tes pas administrateur du blog '$domain'.");
+		}
 		$mustDieAfterAction = true;
 		break;
 	//
 	// Migration des données de l'ancien blog.
 	//
 	case 'MIGRER_DATA' :
+		if (phpCAS::isAuthenticated()) {
+			$user = get_userdatabylogin(phpCAS::getUser());
+		} else phpCAS::forceAuthentication();
+
+		$blogId = getBlogIdByDomain($domain);
+		if (!$blogId) {
+			echo "L'identifiant de '$domain' n'a pas &eacute;t&eacute; trouv&eacute;. Ce blog existe-t-il ?";
+			exit;
+		}
+		else {
+			switch_to_blog($blogId);
+			if(hasRoleOnDomain($user, $domain, "administrator") || is_super_admin())  {
+				include_once('scripts/migrer_data_ENT.php');
+			}
+			else message("Vous n'&ecirc;tes pas administrateur du blog '$domain'.");
+		}
 		
-		if(hasRoleOnDomain($domain, "administrator") || is_super_admin()) 
-			include_once('scripts/migrer_data_ENT.php');
-		else 
-			message("Vous n'&ecirc;tes pas administrateur du site '$domain'.");
 		$mustDieAfterAction = true; // on va être redirigé par le script de reprise, tranquillement.		
 		break;
 	//

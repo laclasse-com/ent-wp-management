@@ -14,26 +14,6 @@ function getBlogIdByDomain( $domain ) {
 	return $rowBlog->blog_id;
 }
 
-
-// --------------------------------------------------------------------------------
-// fonction de suppression d'un blog.
-// --------------------------------------------------------------------------------
-function supprimerBlog($domain) {
-	$blogId = getBlogIdByDomain($domain);
-	if (!$blogId) {
-		echo "L'identifiant de '$domain' n'a pas &eacute;t&eacute; trouv&eacute;. Ce blog existe-t-il ?";
-		exit;
-	}
-	else {
-		switch_to_blog($blogId);
-		if(hasRoleOnDomain($domain, "administrator") || is_super_admin())  {
-			wpmu_delete_blog ($blogId, true);
-			message("Le blog '$domain' a &eacute;t&eacute; supprim&eacute;.");
-		}
-		else message("Vous n'&ecirc;tes pas administrateur du blog '$domain', vous ne pouvez pas le supprimer.");
-	}
-}
-
 // --------------------------------------------------------------------------------
 // fonction de controle de l'existence d'un blog. Service web appelé depuis l'ENT
 // --------------------------------------------------------------------------------
@@ -72,19 +52,41 @@ function modifierParams($domain) {
 }
 
 // --------------------------------------------------------------------------------
+// fonction qui renvoie vrai si l'utilisateur a un role quelconque sur le blog donné.
+// --------------------------------------------------------------------------------
+function aUnRoleSurCeBlog($pUserId, $pBlogId){
+	$u = new WP_User($pUserId);
+	if( $u->ID != 0 ) {
+		// transformer l'objet user en tableau.
+		$cu = (array) $u;	
+		// Les roles sur le blogs son dans un tableau nommé en fct du blogid.
+		if ($cu["wp_".$pBlogId."_capabilities"]) return true;
+	  }
+	 return false;
+}
+
+// --------------------------------------------------------------------------------
 // fonction qui renvoie true si l'utilisateur est administrateur de son domaine.
 // --------------------------------------------------------------------------------
-function hasRoleOnDomain($pDom, $pRole){
-	global $current_user;
+function hasRoleOnDomain($user, $pDom, $pRole){
+	//global $user;
 	$blogId = getBlogIdByDomain($pDom);
-	// transformer l'objet current_user en tableau.
-	$cu = (array) $current_user;
-	// Les roles sur le blogs son dans un tableau nommé en fct du blogid.
-	$rolesSurCeBlog = $cu["wp_".$blogId."_capabilities"];
-	// analyse de la valeur
-	if ($rolesSurCeBlog[strtolower($pRole)] == "1") 
-		return true;
+
+	// L'objet user doit être correctement initialisé
+	//if (phpCAS::isAuthenticated()) {
+	//	$user = get_userdatabylogin(phpCAS::getUser());
+		if( $user->ID != 0 ) {
+			// transformer l'objet user en tableau.
+			$cu = (array) $user;			
+			// Les roles sur le blogs son dans un tableau nommé en fct du blogid.
+			$rolesSurCeBlog = $cu["wp_".$blogId."_capabilities"];
+			// analyse de la valeur
+			if ($rolesSurCeBlog[strtolower($pRole)] == "1") 
+				return true;
+		}
+	//}
 	return false;
+
 }
 
 // --------------------------------------------------------------------------------
@@ -94,7 +96,10 @@ function hasRoleOnDomain($pDom, $pRole){
 function setIframeTemplate() {
 	wp_enqueue_script('jquery'); 
 	// script de detection d'IFRAME qui ajoute le contexte de navigation à toutes les urls.
-	wp_enqueue_script( "ent-wp-managment-iframe-detect", "/wp-content/plugins/ent-wp-management/js/ent-wp-managment-iframe-detect.js");
+	$plugin_js_url = WP_PLUGIN_URL.'/ent-wp-management/js';
+	wp_enqueue_script('wp_wall_script', $plugin_js_url.'/ent-wp-managment-iframe-detect.js');
+
+	//wp_enqueue_script( "ent-wp-managment-iframe-detect", "/wp-content/plugins/ent-wp-management/js/ent-wp-managment-iframe-detect.js");
 	// Forcer l'affichage du modèle simplifié.
 	add_filter('stylesheet', 'modeIntegreIframeENT');
 	add_filter('template', 'modeIntegreIframeENT');
