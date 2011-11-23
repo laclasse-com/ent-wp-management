@@ -77,7 +77,8 @@ add_filter('login_url',array('wpCAS', 'get_url_login'));
 
 // Ajout d'un texte perso dans le footer.
 add_filter('admin_footer_text', 'addEntName', 10, 0);
-
+// Marquage Ministériel
+add_action('wp_footer', 'xiti_MEN_et_google', 10, 0);
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	
