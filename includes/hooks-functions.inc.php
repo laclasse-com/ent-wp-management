@@ -17,6 +17,32 @@ function addEntName () {
   echo "Plateforme de blogs de <a href='http://".SERVEUR_ENT."/' target='_blank'>".NOM_ENT."</a>.";
 }
 
+// --------------------------------------------------------------------------------
+// fonction pour ajouter la marquage du Ministère de l'éducation nationale sur tous 
+// les footer des blogs 
+// hook : admin_footer
+// --------------------------------------------------------------------------------
+function xiti_MEN_et_google(){
+	global $current_user;
+	if (strtoupper(MODE_SERVEUR) == 'PROD') {
+		if ($current_user->user_login == "")
+			echo '<!-- Page publique non marquée par xiti_men -->';
+		else {
+			echo '<SCRIPT TYPE="text/javascript" src="http://'.SERVEUR_ENT.'/v2/js/marqueur_men/xtfirst_ENT.js"></SCRIPT>';
+			echo '<SCRIPT TYPE="text/javascript" src="http://'.SERVEUR_ENT.'/pls/public/xiti_men.get_marqueur_blogs?plogin='.$current_user->user_login.'"></SCRIPT>';
+		}
+		// Notre marquage Google
+		echo '
+<!-- Marqueur Google Analytics -->
+<script src="http://www.google-analytics.com/urchin.js" type="text/javascript"></script>
+<script type="text/javascript">
+	_uacct = "UA-910479-6";
+	urchinTracker();
+</script>';
+	}
+	else echo '<!-- Site de développement, pas de marquage. -->';
+}
+
 
 // --------------------------------------------------------------------------------
 // Quelques filtres pour le back-office utilisaé dans la connexion avec CAS

@@ -19,6 +19,9 @@ define (SERVEUR_ENT, "www.dev.laclasse.com");
 // Nom de l'ENT
 define (NOM_ENT, "Laclasse.com");
 
+// Mode du serveur DEV ou PROD : en DEV, pas de marquage Xiti
+define (MODE_SERVEUR, "DEV"); // PROD
+
 // Nom de domaine de la plateforme de blog.
 define(BLOG_DOMAINE, "blogs.dev.laclasse.com");
 
