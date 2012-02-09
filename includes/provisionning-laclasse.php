@@ -42,12 +42,15 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307	 USA
 	----------------------------------------------
 		- ADMIN : Devient super-administreur de tout les blogs, pas de création de blog.
 		
-		- PROF, ADM_ETB, CPE : Devient administrateur de son domaine si le domaine n'existe pas,
-							   avec création de blog, sinon devient éditeur du blog existant.
+		- PROF, 
+		- ADM_ETB, CPE, PRINCIPAL : Deviennent administrateur de leur domaine si le domaine n'existe pas,
+                       avec création de blog, sinon devient éditeur du blog existant.
+                       
+        - PRINCIPAL  : Si le blog est celui de son établissement : Devient administrateur de son domaine. 
+                       Pour tous les autres blogs, voir la règle ci dessus (profs, cpe, adm_etb).
 							   
 		- ELEVE : Devient contributeur du blog existant dans le domaine, pas de création de blog.
 		- PARENT : Devient souscripteur du blog existant, pas de création de blog.
-
 	
 	Les paramètres d'entrée sont les suivants :
 	--------------------------------------------
@@ -86,7 +89,7 @@ function createUserWP($p_username, $p_useremail, $p_role, $p_domain) {
 	$loginExists = false;
 	$hasToUpdateUserData = true;
 	$userExists = false;
-	logIt("___Fonction : createUserWP");
+	logIt("___/ Fonction : createUserWP");
 	
 	// Vérification de l'existance du compte, par rapport à l'email (donnée unique de Wordpress).
 	$userId = get_user_id_from_string( $p_useremail );
@@ -170,7 +173,7 @@ function createUserWP($p_username, $p_useremail, $p_role, $p_domain) {
 	// cookie d'authentification WP
 	setWPCookie($userId);
 	
-	logIt("___Fin Fonction : createUserWP.");
+	logIt("___/ Fin Fonction : createUserWP.");
 	
 	return $userId;
 }
@@ -240,7 +243,7 @@ function creerPremierArticle($domain, $wpBlogId, $pUserId, $pTypeBlog) {
 // --------------------------------------------------------------------------------
 // fonction création d'un nouveau blog
 // --------------------------------------------------------------------------------
-function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $site_id, $wpUsrId, $TypeDeBlog) {
+function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $site_id, $wpUsrId, $TypeDeBlog, $EtbUAI) {
 	logIt("___Fonction : creerNouveauBlog");
 	logIt("Cr&eacute;ation du blog pour le domaine '".$domain."'.");
 	$wpBlogId = create_empty_blog( $domain, $path, $sitename, $site_id);
@@ -254,6 +257,12 @@ function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $si
 	// Ajout des options pour ce nouveau blog.
 	add_blog_option( $wpBlogId, 'type_de_blog', $TypeDeBlog );
 	logIt(" -> Ajout du type de blog '".$TypeDeBlog."'.");
+	
+	// Si ce type de blog est un blog d'établissement, on enregistre le code rne de cet établissement
+	if ($TypeDeBlog == 'ETB') {
+	   add_blog_option( $wpBlogId, 'etablissement_ENT', $EtbUAI );
+	   logIt(" -> Ajout de l'option 'etablissement_ENT'='".$EtbUAI."'.");
+	}
 	
 	add_blog_option( $wpBlogId, 'idBLogENT', $_REQUEST['idAncienBlogEnt'] );
 	logIt(" -> Ce blog est identifi&eacute; comme #".$_REQUEST['idAncienBlogEnt']." dans l'ENT.");
@@ -335,7 +344,8 @@ function setWPCookie($p_usrId) {
 // --------------------------------------------------------------------------------
 function rattachUserToHisBlog($p_domain, $p_path, $p_site_id, $p_wpUsrId, $p_role) {
 	global $NewUser;
-	// Suppression du droit même minimum sur le blog des blogs.
+    logIt("___/ Fonction : rattachUserToHisBlog");	
+    // Suppression du droit même minimum sur le blog des blogs.
     remove_user_from_blog($p_wpUsrId, 1, 1);
 
 	// Si le domaine existe
@@ -350,17 +360,20 @@ function rattachUserToHisBlog($p_domain, $p_path, $p_site_id, $p_wpUsrId, $p_rol
 		// on lui affecte un role, 
 		// sinon on n'y touche pas, ce role peut avoir été changé manuellement dans 
 		// le back-office de WordPress.
-		if ($NewUser || !aUnRoleSurCeBlog($p_wpUsrId, $wpBlogId) ) {
-			logIt("Ajout du role '".$p_role."' sur le blog #".$wpBlogId.".");
-			add_user_to_blog($wpBlogId, $p_wpUsrId, $p_role);
+		$aUnRole = aUnRoleSurCeBlog($p_wpUsrId, $wpBlogId);
+		logIt("aUnRoleSurCeBlog a renvoy&eacute; '".(($aUnRole)? "true" : "false")."'.");
+		if (!$aUnRole || $NewUser) {
+			 logIt("Ajout du role '".$p_role."' sur le blog #".$wpBlogId.".");
+			 add_user_to_blog($wpBlogId, $p_wpUsrId, $p_role);
 		}
-		else logIt("L'utilisateur #".$p_wpUsrId." n'est pas nouveau ou a d&eacute;j&agrave; un role sur le blog #".$wpBlogId." : on ne modifie pas son role.");
+		else logIt("L'utilisateur #".$p_wpUsrId." a d&eacute;j&agrave; un role sur le blog #".$wpBlogId." : on ne modifie pas son role.");
 
 	}
 	else {
 		// le domaine n'existe pas : cette connexion ne vient sans doute pas de laclasse.com => message d'erreur 
 		errMsg("Vous n'avez pas le profil requis pour cr&eacute;er un blog");
 	}
+    logIt("___/ Fin Fonction : rattachUserToHisBlog");	
 }
 
 // --------------------------------------------------------------------------------
@@ -627,24 +640,32 @@ logIt("path=".$path);
 			// le premier qui arrive est administrateur du nouveau blog !
 			logIt("le domaine '".$domain."' n'existe pas.");
 			// Maintenant il faut créer un blog.
-			creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $site_id, $wpUsrId, $TypeDeBlog);
+			creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $site_id, $wpUsrId, $TypeDeBlog, $laclasseUserCodeRne);
 		}
 	}
 
 	// --------------------------------------------------------------------------------
-	// Profil des personnel de l'éducation nationale PROF or ADM_ETB or CPE
+	// Profil des personnel de l'éducation nationale PROF, ADM_ETB, CPE, PRINCIPAL
 	//	Ces profils peuvent créer des blogs et sont donc administrateur du blog créé.
 	// Si le blog existe déjà, alors l'utilisateur est rattaché au blog avec des droits
 	// d'éditeur ("Editor") -> peut ecrire, valider des posts et valider les posts des autres.
 	// --------------------------------------------------------------------------------
-	if (in_array($laclasseUserProfil, array("PROF","ADM_ETB","CPE"))) {
+	if (in_array($laclasseUserProfil, array("PROF","ADM_ETB","CPE", "PRINCIPAL"))) {
 
 		// Si le domaine existe
 		if (domain_exists($domain, $path, $site_id)) {	
 			// L'utilisateur n'est pas le premier à venir pour ce domaine, 
 			// il est par défaut "éditeur" car c'est un un adulte de l'Ed.Nat.
-			$wpUsrId = createUserWP($username, $user_email, "editor", $domain);
-			rattachUserToHisBlog($domain, $path, $site_id, $wpUsrId, "editor");
+			$profilBlog = "editor";
+			
+			// Si c'est un prinncipal et qu'il vient sur le blog de son établissement, il est admin
+			$codeUAIBlog = get_blog_option($site_id, 'etablissement_ENT');
+			logIt("ce blog est rattaché à l'établissement  '".$codeUAIBlog."'.");
+			
+			if ( $laclasseUserProfil == "PRINCIPAL" && $codeUAIBlog == $laclasseUserCodeRne ) $profilBlog = "administrator";
+			
+			$wpUsrId = createUserWP($username, $user_email, $profilBlog, $domain);
+			rattachUserToHisBlog($domain, $path, $site_id, $wpUsrId, $profilBlog);
 		}
 		else {
 			// ici le domaine n'existe pas : 
@@ -652,7 +673,7 @@ logIt("path=".$path);
 			logIt("le domaine '".$domain."' n'existe pas.");
 			$wpUsrId = createUserWP($username, $user_email, "administrator", $domain);
 			// Maintenant il faut créer un blog.
-			creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $site_id, $wpUsrId, $TypeDeBlog);
+			creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $site_id, $wpUsrId, $TypeDeBlog, $laclasseUserCodeRne);
    		}
 	}
 

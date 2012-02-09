@@ -55,14 +55,17 @@ function modifierParams($domain) {
 // fonction qui renvoie vrai si l'utilisateur a un role quelconque sur le blog donné.
 // --------------------------------------------------------------------------------
 function aUnRoleSurCeBlog($pUserId, $pBlogId){
-	$u = new WP_User($pUserId);
+/*	PGL - 09/02/2012 : THis is a buggy code. WTF ?
+    $u = new WP_User($pUserId);
 	if( $u->ID != 0 ) {
 		// transformer l'objet user en tableau.
 		$cu = (array) $u;	
+		print_r($u);
 		// Les roles sur le blogs son dans un tableau nommé en fct du blogid.
 		if ($cu["wp_".$pBlogId."_capabilities"]) return true;
 	  }
 	 return false;
+*/ return is_blog_user($pBlogId);
 }
 
 // --------------------------------------------------------------------------------
