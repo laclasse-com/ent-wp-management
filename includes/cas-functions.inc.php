@@ -186,7 +186,7 @@ class wpCAS {
 			// CAS was successful so sets session variables
 			setCASdataInSession();
 			
-			if ( $user = get_userdatabylogin( phpCAS::getUser() )){ // user already exists
+			if ( $user = get_user_by('login', phpCAS::getUser() )){ // user already exists
 				// the CAS user has a WP account
 				wp_set_auth_cookie( $user->ID );
 			}

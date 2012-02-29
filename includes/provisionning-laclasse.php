@@ -107,7 +107,7 @@ function createUserWP($p_username, $p_useremail, $p_role, $p_domain) {
 		logIt("V&eacute;rification de l'existence du compte, par rapport &agrave; au login '".$p_username."'.");
 		$loginExists = true;
 		$userExists = true;
-		$userRec = get_userdatabylogin($loginId);
+		$userRec = get_user_by('login',$loginId);
 		logIt("R&eacute;cup&eacute;ration des infos de l'utilisateur #$userId via son login.");
 	}
 	
@@ -158,7 +158,7 @@ function createUserWP($p_username, $p_useremail, $p_role, $p_domain) {
    		}
    	
 		// rŽcupŽration des information de l'utilisateur 
-		$userRec = get_userdatabylogin($p_username);
+		$userRec = get_user_by('login',$p_username);
 		$userId = $userRec->ID;
 		logIt("Id de l'utilisateur dans WP=".$userId);
 
@@ -539,7 +539,7 @@ if (!isset($_GET['blogname']) || $_GET['blogname'] == "") {
 	die();
 /*
 		// rŽcupŽration de l'id de l'utilisateur 
-		$userRec = get_userdatabylogin($username);
+		$userRec = get_user_by('login',$username);
 		$userId = $userRec->ID;
 		$tabBlogs = get_blogs_of_user($userId);
 		
