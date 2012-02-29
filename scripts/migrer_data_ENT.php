@@ -50,7 +50,7 @@ function creerArticle($titre, $date_creation, $auteur, $contenu, $attachment, $i
 	// Voir si l'auteur existe sinon  rattacher à l'utilisateur courant.
 	if ( username_exists($auteur) ) {
 		// récupération des information de l'utilisateur 
-		$userRec = get_userdatabylogin($auteur);
+		$userRec = get_user_by('login',$auteur);
 		$userId = $userRec->ID;
 	}
 	else {

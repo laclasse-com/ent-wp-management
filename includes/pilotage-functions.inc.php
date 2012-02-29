@@ -77,7 +77,7 @@ function hasRoleOnDomain($user, $pDom, $pRole){
 
 	// L'objet user doit être correctement initialisé
 	//if (phpCAS::isAuthenticated()) {
-	//	$user = get_userdatabylogin(phpCAS::getUser());
+	//	$user = get_user_by('login',phpCAS::getUser());
 		if( $user->ID != 0 ) {
 			// transformer l'objet user en tableau.
 			$cu = (array) $user;			
