@@ -144,7 +144,7 @@ if (isset($_REQUEST['ENT_action'])) {
 	$blogname 			= $_REQUEST['blogname'];
 	$username 			= $_REQUEST['username'];
 	$blogdescription 	= $_REQUEST['blogdescription'];
-	$mustDieAfterAction = false;  // Utilisé pour es actions qui ne nécessite pas d'afficage après s'être déroulées.
+	$mustDieAfterAction = false;  // Utilisé pour les actions qui ne nécessitent pas d'affichage après s'être déroulées.
 	
 	switch ($ENT_action) {
 	//
@@ -187,7 +187,7 @@ if (isset($_REQUEST['ENT_action'])) {
 	//
 	case 'SUPPRIMER_BLOG' :
 		if (phpCAS::isAuthenticated()) {
-			$user = get_userdatabylogin(phpCAS::getUser());
+			$user = get_user_by('login',phpCAS::getUser());
 		} else phpCAS::forceAuthentication();
 
 		$blogId = getBlogIdByDomain($domain);
@@ -210,7 +210,7 @@ if (isset($_REQUEST['ENT_action'])) {
 	//
 	case 'MIGRER_DATA' :
 		if (phpCAS::isAuthenticated()) {
-			$user = get_userdatabylogin(phpCAS::getUser());
+			$user = get_user_by('login',phpCAS::getUser());
 		} else phpCAS::forceAuthentication();
 
 		$blogId = getBlogIdByDomain($domain);
