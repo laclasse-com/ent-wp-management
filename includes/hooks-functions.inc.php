@@ -28,7 +28,7 @@ function xiti_MEN_et_google(){
 		if ($current_user->user_login == "")
 			echo '<!-- Page publique non marquŽe par xiti_men -->';
 		else {
-			echo '<SCRIPT TYPE="text/javascript" src="http://'.SERVEUR_ENT.'/v2/js/marqueur_men/xtfirst_ENT.js"></SCRIPT>';
+			echo '<SCRIPT TYPE="text/javascript" src="http://'.SERVEUR_ENT.'/v25/js/marqueur_men/xtfirst_ENT.js"></SCRIPT>';
 			echo '<SCRIPT TYPE="text/javascript" src="http://'.SERVEUR_ENT.'/pls/public/xiti_men.get_marqueur_blogs?plogin='.$current_user->user_login.'"></SCRIPT>';
 		}
 		// Notre marquage Google
