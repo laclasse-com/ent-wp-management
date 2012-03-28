@@ -74,7 +74,8 @@ add_filter('login_url',array('wpCAS', 'get_url_login'));
 	h o o k s   e t   f i l t r e s   g é n é r a u x 
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
-
+// ajouter le role à côté du nom à la place de "Howdy"
+add_filter( 'admin_bar_menu', 'bienvenue');
 // Ajout d'un texte perso dans le footer.
 add_filter('admin_footer_text', 'addEntName', 10, 0);
 // Marquage Ministériel
@@ -105,6 +106,13 @@ add_filter('myblogs_blog_actions', 'getCustomActionBlog', 10, 2);
 // Hook pour la désinscription d'un blog.
 add_action( 'myblogs_allblogs_options', 'actionsBlog', 10, 0);
 
+/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	
+	l i s t e   d e s   a r t i c l e s 
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
+// selectbox pourréduire la liste par auteur
+// BUG ???   add_action('restrict_manage_posts', 'restrict_manage_authors');
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	
@@ -125,6 +133,18 @@ add_filter('wpmu_signup_blog_notification', 'disableThisFunc', 10, 2);
 add_filter('wpmu_signup_user_notification', 'disableThisFunc', 10, 2);
 add_filter('wpmu_welcome_notification', 'disableThisFunc', 10, 2);
 add_filter('wpmu_welcome_user_notification', 'disableThisFunc', 10, 2);
+
+
+/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	
+	s é c u r i s a t i o n   d e   l a   p l a t e f o r m e 
+
+http://www.geekpress.fr/wordpress/guide/7-conseils-securite-wordpress-802/
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
+// Supprimer la version de WP dans l'entête publique
+remove_action('wp_head', 'wp_generator');
+// Supprimer l'accès à la modification des thèmes : editeur de thème
+add_action( 'admin_init', 'remove_editor_menu', 20);
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	
