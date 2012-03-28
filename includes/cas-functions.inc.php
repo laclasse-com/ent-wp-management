@@ -26,100 +26,6 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA	 02111-1307	 USA 
 */
 
-//----------------------------------------------------------------------------
-//		ADMIN OPTION PAGE FUNCTIONS
-//----------------------------------------------------------------------------
-function wpcas_options_page_add() {
-	add_options_page( __( 'wpCAS', 'wpcas' ), __( 'wpCAS', 'wpcas' ), 8, basename(__FILE__), 'wpcas_options_page');
-} 
-
-function wpcas_options_page() {
-	global $wpdb;
-	
-	// Setup Default Options Array
-	$optionarray_def = array(
-				 'new_user' => FALSE,
-				 'redirect_url' => '',
-				 'email_suffix' => 'yourschool.edu',
-				 'cas_version' => CAS_VERSION_1_0,
-				 'include_path' => '',
-				 'server_hostname' => 'yourschool.edu',
-				 'server_port' => '443',
-				 'server_path' => ''
-				 );
-	
-	if (isset($_POST['submit']) ) {		 
-		// Options Array Update
-		$optionarray_update = array (
-				 'new_user' => $_POST['new_user'],
-				 'redirect_url' => $_POST['redirect_url'],
-				 'email_suffix' => $_POST['email_suffix'],
-				 'include_path' => $_POST['include_path'],
-				 'cas_version' => $_POST['cas_version'],
-				 'server_hostname' => $_POST['server_hostname'],
-				 'server_port' => $_POST['server_port'],
-				 'server_path' => $_POST['server_path']
-				 );
-
-		update_option('wpcas_options', $optionarray_update);
-	}
-	
-	// Get Options
-	$optionarray_def = get_option('wpcas_options');
-	
-	?>
-	<div class="wrap">
-	<h2>CAS Authentication Options</h2>
-	<form method="post" action="<?php echo $_SERVER['PHP_SELF'] . '?page=' . basename(__FILE__); ?>&updated=true">
-	<h3><?php _e( 'wpCAS options', 'wpcas' ) ?></h3>
-	<h4><?php _e( 'Note', 'wpcas' ) ?></h4>
-	<p><?php _e( 'Now that youÕve activated this plugin, WordPress is attempting to authenticate using CAS, even if itÕs not configured or misconfigured.', 'wpcas' ) ?></p>
-	<p><?php _e( 'Save yourself some trouble, open up another browser or use another machine to test logins. That way you can preserve this session to adjust the configuration or deactivate the plugin.', 'wpcas' ) ?></p>
-	<h4><?php _e( 'Also note', 'wpcas' ) ?></h4>
-	<p><?php _e( 'These settings are overridden by the <code>wpcas-conf.php</code> file, if present.', 'wpcas' ) ?></p>
-
-	<h4><?php _e( 'phpCAS include path', 'wpcas' ) ?></h4>
-	<table width="700px" cellspacing="2" cellpadding="5" class="editform">
-		<tr>
-			<td colspan="2"><?php _e( 'Full absolute path to CAS.php script', 'wpcas' ) ?></td>
-		</tr>
-		<tr valign="center"> 
-			<th width="300px" scope="row"><?php _e( 'CAS.php path', 'wpcas' ) ?></th> 
-			<td><input type="text" name="include_path" id="include_path_inp" value="<?php echo $optionarray_def['include_path']; ?>" size="35" /></td>
-		</tr>
-	</table>		
-	
-	<h4><?php _e( 'phpCAS::client() parameters', 'wpcas' ) ?></h4>
-	<table width="700px" cellspacing="2" cellpadding="5" class="editform">
-		<tr valign="center"> 
-			<th width="300px" scope="row">CAS versions</th> 
-			<td><select name="cas_version" id="cas_version_inp">
-				<option value="2.0" <?php echo ($optionarray_def['cas_version'] == '2.0')?'selected':''; ?>>CAS_VERSION_2_0</option>
-				<option value="1.0" <?php echo ($optionarray_def['cas_version'] == '1.0')?'selected':''; ?>>CAS_VERSION_1_0</option>
-			</td>
-		</tr>
-		<tr valign="center"> 
-			<th width="300px" scope="row"><?php _e( 'server hostname', 'wpcas' ) ?></th> 
-			<td><input type="text" name="server_hostname" id="server_hostname_inp" value="<?php echo $optionarray_def['server_hostname']; ?>" size="35" /></td>
-		</tr>
-		<tr valign="center"> 
-			<th width="300px" scope="row"><?php _e( 'server port', 'wpcas' ) ?></th> 
-			<td><input type="text" name="server_port" id="server_port_inp" value="<?php echo $optionarray_def['server_port']; ?>" size="35" /></td>
-		</tr>
-		<tr valign="center"> 
-			<th width="300px" scope="row"><?php _e( 'server path', 'wpcas' ) ?></th> 
-			<td><input type="text" name="server_path" id="server_path_inp" value="<?php echo $optionarray_def['server_path']; ?>" size="35" /></td>
-		</tr>
-	</table>
-
-	<div class="submit">
-		<input type="submit" name="submit" value="<?php _e('Update Options') ?> &raquo;" />
-	</div>
-	</form>
-<?php
-}
-?>
-<?php
 // --------------------------------------------------------------------------------
 // Une fonction de mise en session des donnŽes du jeton CAS. (connexion avec CAS)
 // --------------------------------------------------------------------------------
@@ -232,7 +138,9 @@ class wpCAS {
 			
 		if ($_REQUEST['ENT_action'] == 'IFRAME') 
 			$qry = '?ENT_action=IFRAME';
-			
+
+        // Supprimer les cookies de WP
+        wp_clear_auth_cookie();
 		phpCAS::logout( array( 'url' => get_option( 'siteurl' ).$qry ));
 		exit();
 	}
