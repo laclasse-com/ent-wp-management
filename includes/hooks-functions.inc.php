@@ -10,6 +10,72 @@
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
 // --------------------------------------------------------------------------------
+// Proposer une selectbox de restriction par auteur sur la liste des articles
+// filter : restrict_manage_posts
+// http://www.geekpress.fr/wordpress/astuce/ajouter-filtre-auteur-administration-wordpress-563/
+
+//                  MARCHE PAS ???
+// --------------------------------------------------------------------------------
+/*
+function restrict_manage_authors() {
+    $default_post_type = (isset($_GET['post_type']))? isset($_GET['post_type']) : 'post';
+//        if (  post_type_exists($_GET['post_type'])
+//        &&    in_array( strtolower($_GET['post_type'] ), get_post_types() ) ) {
+                global $wpdb;
+                global $blog_id;
+                // On prepare la requete pour recuperer tous les auteurs qui ont publiŽs au moins 1 article
+                $query = $wpdb->prepare( 'SELECT DISTINCT U.ID, U.display_name
+                    FROM ' . $wpdb->get_blog_prefix( $blog_id ). 'posts as P, '.$wpdb->users .' as U
+
+                    WHERE U.ID = P.post_author
+                    AND P.post_type = %s
+                    AND P.post_status = "publish"
+                ', $_GET['post_type'] );
+                // On recupere les id
+                $users = $wpdb->get_col($query);
+                
+               // On gŽnŽre le select avec la liste des auteurs
+                wp_dropdown_users(array(
+                        'show_option_all'       => __('Voir tous les auteurs'),
+                        'show_option_none'      => false,
+                        'name'                  => 'author',
+                        'include'				=> $wpdb->get_results($query), //$users,
+                        'selected'              => !empty($_GET['author']) ? (int)$_GET['author'] : 0,
+                        'include_selected'      => false
+                ));
+                
+//        }
+
+}
+*/
+// --------------------------------------------------------------------------------
+// Suppression de l'Žditeur de thme
+// filter : admin_init
+// http://www.geekpress.fr/wordpress/astuce/supprimer-sous-menu-editeur-theme-wordpress-615/
+// --------------------------------------------------------------------------------
+function remove_editor_menu()
+{
+	remove_submenu_page( 'themes.php', 'theme-editor.php' );
+}
+
+// --------------------------------------------------------------------------------
+// fonction pour mettre le r™le de la personne connectŽe ˆ c™tŽ de son nom
+// filter : admin_bar_menu
+// http://www.geekpress.fr/wordpress/tutoriel/modifier-howdy-admin-bar-1102/
+// --------------------------------------------------------------------------------
+function bienvenue($wp_admin_bar){
+	global $current_user;
+	$my_account = $wp_admin_bar->get_node( 'my-account' );
+	if( in_array( $current_user->user_login, get_super_admins() ) ) :
+		  $my_role = __( 'Super-admin' );
+	else: $my_role = translate_user_role( $GLOBALS['wp_roles']->role_names[$current_user->roles[0]] );
+	endif;
+	$howdy = sprintf( __( 'Howdy, %1$s' ), $current_user->display_name );
+	$title = str_replace( $howdy, sprintf( '%1$s (%2$s)', $current_user->display_name, $my_role ), $my_account->title );
+	$wp_admin_bar->add_node( array( 'id' => 'my-account', 'title' => $title ) );
+}
+
+// --------------------------------------------------------------------------------
 // fonction pour ajouter la marque de l'ENT dans le footer du back-office.
 // hook : admin_footer_text
 // --------------------------------------------------------------------------------
