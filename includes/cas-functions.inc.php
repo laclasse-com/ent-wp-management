@@ -104,7 +104,6 @@ class wpCAS {
 		logIt("Serveur d'authentification : http".$proto."://".$wpcas_options[$ent]['server_hostname'].":".$wpcas_options[$ent]['server_port'].$wpcas_options[$ent]['server_path'].".");
 
 		if ( !$cas_configured ) {
-			//die( __( 'Pas de configuration SSO pour l\'ENT "'.$ent.'".', 'wpcas' ));
 			message('<h1>Aucun serveur d\'authentification trouv&eacute; pour l\'ENT "'.$ent.'".</h1><br/>S&eacute;lectionnez votre ENT : <br/><br/>' . select_sso());
 			die();
 		}
