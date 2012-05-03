@@ -41,7 +41,7 @@ function setCASdataInSession() {
 	xml_parse_into_struct($p, $content, $values, $index);
 	// traitement des erreurs
 	$ReturnStatus = xml_get_error_code($p);
-	if ($ReturnStatus != 0 && $conent != "") {
+	if ($ReturnStatus != 0 && $content != "") {
     	echo("erreur de parsing du fichier XML '$file': ".xml_get_error_code($p).
     				" - ".xml_error_string(xml_get_error_code($p)).
     				" à la ligne ".xml_get_current_line_number($p).
@@ -102,11 +102,12 @@ class wpCAS {
 		logIt("<h1>ENT : $ent</h1>");
 		$proto = ($wpcas_options[$ent]['server_port'] == '443') ? 's': '';
 		logIt("Serveur d'authentification : http".$proto."://".$wpcas_options[$ent]['server_hostname'].":".$wpcas_options[$ent]['server_port'].$wpcas_options[$ent]['server_path'].".");
-		
-		if ( !$cas_configured )
+
+		if ( !$cas_configured ) {
 			//die( __( 'Pas de configuration SSO pour l\'ENT "'.$ent.'".', 'wpcas' ));
 			message('<h1>Aucun serveur d\'authentification trouv&eacute; pour l\'ENT "'.$ent.'".</h1><br/>S&eacute;lectionnez votre ENT : <br/><br/>' . select_sso());
 			die();
+		}
 		if( phpCAS::isAuthenticated() ){
 			// CAS was successful so sets session variables
 			setCASdataInSession();
