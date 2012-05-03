@@ -30,7 +30,6 @@
 // Une fonction de mise en session des donnŽes du jeton CAS. (connexion avec CAS)
 // --------------------------------------------------------------------------------
 function setCASdataInSession() {
-	$tab = array();
 	
 	$content = $_SESSION['phpCAS']['response'];
 	$content = str_replace("\t", "", $content);
@@ -42,12 +41,11 @@ function setCASdataInSession() {
 	xml_parse_into_struct($p, $content, $values, $index);
 	// traitement des erreurs
 	$ReturnStatus = xml_get_error_code($p);
-	if ($ReturnStatus != 0) {
+	if ($ReturnStatus != 0 && $content != "") {
     	echo("erreur de parsing du fichier XML '$file': ".xml_get_error_code($p).
     				" - ".xml_error_string(xml_get_error_code($p)).
     				" à la ligne ".xml_get_current_line_number($p).
     				", colonne ".xml_get_current_column_number($p).".");
-    	return $tab;
 	}
 	xml_parser_free($p);
 	// parsing et construction d'un tableau de valeurs
@@ -72,6 +70,23 @@ function wpcas_provisioning( $user_name ){
 	$ret = include( WP_PLUGIN_DIR."/".dirname( plugin_basename( __FILE__ )).'/provisionning-laclasse.php');
 }
 
+// --------------------------------------------------------------------------------
+//  Formulaire de saisie de données complémentaires
+// --------------------------------------------------------------------------------
+
+// --------------------------------------------------------------------------------
+//  Formulaire de choix d'un serveur de sso
+// --------------------------------------------------------------------------------
+function select_sso() {
+  global $wpcas_options;
+  $html = "\n<form action='".network_site_url()."/wp-admin/'>\n<select name='ent' id='ent' class=''>
+	<option value=''>Choisir un serveur d'authentification</option>";
+	foreach($wpcas_options as $k => $v) {
+	 $html .= "<option value='$k'>$k</option>\n";
+	}
+  $html .= "</select><br/><br/><input type='submit' value='Valider'/></form>";
+  return $html;
+}
 
 // --------------------------------------------------------------------------------
 //  Classe cd client CAS
@@ -83,18 +98,25 @@ class wpCAS {
 	 If the user is not provisioned, wpcas_nowpuser() is called
 	*/
 	function authenticate() {
-		global $wpcas_options, $cas_configured;
-		
-		
-		if ( !$cas_configured )
-			die( __( 'wpCAS plugin not configured', 'wpcas' ));
+		global $wpcas_options, $cas_configured, $ent;
+		logIt("<h1>ENT : $ent</h1>");
+		$proto = ($wpcas_options[$ent]['server_port'] == '443') ? 's': '';
+		logIt("Serveur d'authentification : http".$proto."://".$wpcas_options[$ent]['server_hostname'].":".$wpcas_options[$ent]['server_port'].$wpcas_options[$ent]['server_path'].".");
+
+		if ( !$cas_configured ) {
+			//die( __( 'Pas de configuration SSO pour l\'ENT "'.$ent.'".', 'wpcas' ));
+			message('<h1>Aucun serveur d\'authentification trouv&eacute; pour l\'ENT "'.$ent.'".</h1><br/>S&eacute;lectionnez votre ENT : <br/><br/>' . select_sso());
+			die();
+		}
 		if( phpCAS::isAuthenticated() ){
 			// CAS was successful so sets session variables
 			setCASdataInSession();
 			
-			if ( $user = get_user_by('login', phpCAS::getUser() )){ // user already exists
+			$user = get_user_by('login', phpCAS::getUser());
+			if ( $user ){ // user already exists
 				// the CAS user has a WP account
 				wp_set_auth_cookie( $user->ID );
+				wp_set_current_user( $user->ID );
 			}
 			// On provisionne ce qu'il manque : user ou blog, ou les deux
 			wpcas_provisioning( phpCAS::getUser() );
@@ -108,22 +130,20 @@ class wpCAS {
 	
 	// renvoie l'url de login, selon le contexte : intégré dans une IFRAME ou normal
 	function get_url_login() {
-		global $wpcas_options;
+		global $ent, $wpcas_options;
 		if ($_REQUEST['ENT_action'] == 'IFRAME') {
 			$qry = '?ENT_action=IFRAME';
 			$url =  home_url().'/wp-login.php'.$qry;
 		}
 		// Si on n'est pas en mode intégré
-		else {
-			//$url = home_url().'/wp-login.php';
-		
-		if ($wpcas_options['server_port'] == 443) $protoc = "https://";
-		else $protoc = "http://";
-		$url = $protoc.
-			   $wpcas_options['server_hostname'].
-			   (($wpcas_options['server_port'] != 80 )? ":".$wpcas_options['server_port'] : "").
-			   $wpcas_options['server_path'].
-			   "login?service=".urlencode(home_url()."/wp-login.php");
+		else {		
+  		if ($wpcas_options[$ent]['server_port'] == 443) $protoc = "https://";
+  		else $protoc = "http://";
+  		$url = $protoc.
+  			   $wpcas_options[$ent]['server_hostname'].
+  			   (($wpcas_options[$ent]['server_port'] != 80 )? ":".$wpcas_options[$ent]['server_port'] : "").
+  			   $wpcas_options[$ent]['server_path'].
+  			   "/login?service=".urlencode(home_url()."/wp-login.php");
 			   
 		}
 		return $url;
@@ -171,31 +191,25 @@ class wpCAS {
 // --------------------------------------------------------------------------------
 //  D é b u t   d u   s c r i p t   d e   C A S i f i c a t i o n 
 // --------------------------------------------------------------------------------
-
-// do we have a valid options array? fetch the options from the DB if not
-if( !is_array( $wpcas_options )){
-	$wpcas_options = get_option( 'wpcas_options' );
-	add_action( 'admin_menu', 'wpcas_options_page_add' );
-}
+$ent = 'laclasse';
+if (isset($_REQUEST['ent']) && ($_REQUEST['ent'] != "")) $ent = $_REQUEST['ent'];
 
 $cas_configured = true;
 
 // try to configure the phpCAS client
-if ($wpcas_options['include_path'] == '' ||
-		(include_once $wpcas_options['include_path']) != true)
+if ($wpcas_options[$ent]['include_path'] == '' ||
+		(include_once $wpcas_options[$ent]['include_path']) != true)
 	$cas_configured = false;
 
-if ($wpcas_options['server_hostname'] == '' ||
-		$wpcas_options['server_path'] == '' ||
-		intval($wpcas_options['server_port']) == 0)
+if ($wpcas_options[$ent]['server_hostname'] == '' ||
+		intval($wpcas_options[$ent]['server_port']) == 0)
 	$cas_configured = false;
 
 if ($cas_configured) {
-	phpCAS::client($wpcas_options['cas_version'], 
-		$wpcas_options['server_hostname'], 
-		intval($wpcas_options['server_port']), 
-		$wpcas_options['server_path']);
-	
+	phpCAS::client($wpcas_options[$ent]['cas_version'], 
+		$wpcas_options[$ent]['server_hostname'], 
+		intval($wpcas_options[$ent]['server_port']), 
+		$wpcas_options[$ent]['server_path']);
 	
 	// function added in phpCAS v. 0.6.0
 	// checking for static method existance is frustrating in php4
