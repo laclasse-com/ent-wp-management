@@ -55,17 +55,7 @@ function modifierParams($domain) {
 // fonction qui renvoie vrai si l'utilisateur a un role quelconque sur le blog donné.
 // --------------------------------------------------------------------------------
 function aUnRoleSurCeBlog($pUserId, $pBlogId){
-/*	PGL - 09/02/2012 : THis is a buggy code. WTF ?
-    $u = new WP_User($pUserId);
-	if( $u->ID != 0 ) {
-		// transformer l'objet user en tableau.
-		$cu = (array) $u;	
-		print_r($u);
-		// Les roles sur le blogs son dans un tableau nommé en fct du blogid.
-		if ($cu["wp_".$pBlogId."_capabilities"]) return true;
-	  }
-	 return false;
-*/ return is_blog_user($pBlogId);
+  return is_blog_user($pBlogId);
 }
 
 // --------------------------------------------------------------------------------
@@ -75,9 +65,6 @@ function hasRoleOnDomain($user, $pDom, $pRole){
 	//global $user;
 	$blogId = getBlogIdByDomain($pDom);
 
-	// L'objet user doit être correctement initialisé
-	//if (phpCAS::isAuthenticated()) {
-	//	$user = get_user_by('login',phpCAS::getUser());
 		if( $user->ID != 0 ) {
 			// transformer l'objet user en tableau.
 			$cu = (array) $user;			
@@ -102,7 +89,6 @@ function setIframeTemplate() {
 	$plugin_js_url = WP_PLUGIN_URL.'/ent-wp-management/js';
 	wp_enqueue_script('wp_wall_script', $plugin_js_url.'/ent-wp-managment-iframe-detect.js');
 
-	//wp_enqueue_script( "ent-wp-managment-iframe-detect", "/wp-content/plugins/ent-wp-management/js/ent-wp-managment-iframe-detect.js");
 	// Forcer l'affichage du modèle simplifié.
 	add_filter('stylesheet', 'modeIntegreIframeENT');
 	add_filter('template', 'modeIntegreIframeENT');
