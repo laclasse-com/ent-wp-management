@@ -3,14 +3,23 @@
 	Fichier de configuration du plugin de management de WP depuis un ENT.
 **********************************************************************/
 
-// tableau de configuration pour la connexion ˆ CAS.
+// tableau de configuration pour la connexion à CAS.
 
 $wpcas_options = array(
-	'cas_version' => '2.0',
-	'include_path' => '/var/www/html/CAS-1.2.0/CAS.php',
-	'server_hostname' => 'cas-erasme.erasme.lan', 
-	'server_port' => '443',
-	'server_path' => '/cas/'
+  'laclasse' => array(
+  	'cas_version' => '2.0',
+  	'include_path' => '/var/www/html/CAS-1.2.0/CAS.php',
+  	'server_hostname' => 'cas-erasme.erasme.lan', 
+  	'server_port' => '443',
+  	'server_path' => '/cas'
+	 ),
+	 'cybercollege42' => array(
+  	'cas_version' => '2.0',
+  	'include_path' => '/var/www/html/CAS-1.2.0/CAS.php',
+  	'server_hostname' => 'cas.cybercolleges42.fr', 
+  	'server_port' => '443',
+  	'server_path' => ''
+	 ) 
 	);
 
 // Nom du serveur ENT

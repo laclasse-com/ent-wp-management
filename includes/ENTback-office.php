@@ -6,92 +6,6 @@
 
 */
 require_once(ABSPATH  . '/wp-admin/includes/template.php');
-/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	
-	G E S T I O N   D U   D R O I T   "UPLOAD_FILE"   P O U R   L E 
-	R O L E   C O N T R I B U T E U R .
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
-/*
- function gestionUplodFileEleves() {
-
- 	// Ajout de la section 'student_media_section'
- 	add_settings_section('student_media_section',
-		'Ajuster le rôle "contributeur"',
-		'explicationUploadFile',
-		'media');
- 	
- 	// Ajout du champs "student-media-access" dans cette section
- 	add_settings_field('student-media-access',
-		'',
-		'formulaireUploadFile',
-		'media',
-		'student_media_section');
- 	
- 	// Enregistrement dans $_POST
- 	register_setting('media','student-media-access');
- }
-
- // ------------------------------------------------------------------
- // Paragraphe d'explication
- // ------------------------------------------------------------------
- function explicationUploadFile() {
- 	echo '<p>Vous pouvez modifier le rôle <strong>"contributeur"</strong> (par défaut affecté aux élèves) afin d\'autoriser les utilisateurs possédant ce rôle à charger des médias (images, sons, vidéos) lors de la rédaction de leurs articles.</p>';
- }
- 
- // ------------------------------------------------------------------
- // Formulaire
- // ------------------------------------------------------------------
- function formulaireUploadFile() {
- 	echo '<input name="student-media-access" id="student-media-access1" type="radio" value="1" class="code" ' . 
- 		checked( 1, get_option('student-media-access'), false ) . 
- 		' /> <strong>Oui</strong>, les contributeurs peuvent publier des médias.<br/>';
- 	echo '<input name="student-media-access" id="student-media-access0" type="radio" value="0" class="code" ' . 
- 		checked( 0, get_option('student-media-access'), false ) . 
- 		' /> <strong>Non</strong>, les contributeurs ne publient pas de média.';
- }
- 
- // ------------------------------------------------------------------
- // Fonction qui renvoie une signature anonyme ou pas en fonctions 
- //	des options du blog
- // ------------------------------------------------------------------
-  function canUploadMedia(){
-  	global $blog_id;
-  	$userId = get_current_user_id(); // 0 si pas loggué
-    $user_info = get_userdata($userId);
-  	$overrideUploadFileCap = get_blog_option($blog_id, 'student-media-access', 0);
-  	 
-  	 print_r ($user_info);
-  	 foreach($user_info->roles as $k => $role ) {
-  	     echo "<li>$k : $role</li>";
-  	 };
-  	 if (is_super_admin()) $role = 'administrator';
-  	 echo "<li>role : $role</li>";
-  	    
-  	 //$canUpload = $user_info->allcaps['upload_files'];
-  	 // Si le user ne peut pas uploader
-  	 if (!current_user_can('upload_file')) {
-  	     echo "<li>L'utilisateur n'a pas le droit 'upload_file'.</li>";
-  	     // si le rôle est contributeur
-  	     if ($role = 'contributor') {
-  	         // On regarde si le rôle a été modifié par un setting
-  	         if ($overrideUploadFileCap == 1) {
-  	             //On ajoute la capability "upload_file"
-  	             echo "faut ajouter 'upload_file'...";
-  	         }
-  	     }
-  	     
-  	 }
-  	 
-  	 echo "current_user_can('upload_file') = ".current_user_can('upload_file') ."<br>";
-  	// Récupérer la valeur de l'option d'anonymat
-  	$choixUploadMedia = get_blog_option($blog_id, 'student-media-access', 0);
-    echo "choixUploadMedia = $choixUploadMedia<br>";
-  	
-  	// $role->add_cap('upload_files');
-  
-  }
-*/
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	
@@ -182,16 +96,6 @@ require_once(ABSPATH  . '/wp-admin/includes/template.php');
   	$profil = get_usermeta( $comment->user_id, 'profil_ENT');
   	return getSignature($comment_author, $comment->user_id, $profil);  	
   }
-
-/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	
-	h o o k   G E S T I O N   D U   D R O I T   "UPLOAD_FILE"   P O U R   L E 
-	R O L E   C O N T R I B U T E U R .
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*
- add_action('admin_init', 'gestionUplodFileEleves', 10);
- add_filter('admin_footer', 'canUploadMedia');
-*/
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	

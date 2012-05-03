@@ -49,8 +49,6 @@ function restrict_manage_authors() {
 }
 */
 
-
-
 // --------------------------------------------------------------------------------
 // Paramétrage de l'extension USER_ROLE_EDITOR si elle est installée.
 // filter : admin_init
