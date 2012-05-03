@@ -48,6 +48,22 @@ function restrict_manage_authors() {
 
 }
 */
+
+// --------------------------------------------------------------------------------
+// Paramétrage de l'extension USER_ROLE_EDITOR si elle est installée.
+// filter : admin_init
+// http://www.shinephp.com/user-role-editor-wordpress-plugin/#faq
+// --------------------------------------------------------------------------------
+function user_role_editor_settings()
+{
+    // Voir si user_role_editor est installé
+    if (function_exists('ure_init') || function_exists('ure_install')) {
+        // Voir quelle version est installée    
+        define("URE_ENABLE_SIMPLE_ADMIN_FOR_MULTISITE", 1); 
+        define('URE_SHOW_ADMIN_ROLE', 0);
+    } // user role editor n'est pas installé
+}
+
 // --------------------------------------------------------------------------------
 // Suppression de l'éditeur de thème
 // filter : admin_init

@@ -49,5 +49,13 @@ body {width:auto;}
 		
 }
 
+// --------------------------------------------------------------------------------
+// fonction de log des traitements
+// --------------------------------------------------------------------------------
+function logIt($msg) {
+	global $logProvisioning;
+	if (isset($_GET['debug']) && $_GET['debug'] == "O")	$logProvisioning .= '<li>'.$msg.'</li>';
+}
+
 
 ?>

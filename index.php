@@ -145,6 +145,7 @@ http://www.geekpress.fr/wordpress/guide/7-conseils-securite-wordpress-802/
 remove_action('wp_head', 'wp_generator');
 // Supprimer l'accs ˆ la modification des thmes : editeur de thme
 add_action( 'admin_init', 'remove_editor_menu', 20);
+add_action( '_admin_menu', 'user_role_editor_settings', 25);
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	
@@ -262,4 +263,5 @@ if (isset($_REQUEST['ENT_action'])) {
 //	Dans ces cas, on arrte tout traitement d'affichage si nŽcessaire. 
 if ($mustDieAfterAction) die();
 }
+
 ?>

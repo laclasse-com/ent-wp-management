@@ -432,14 +432,6 @@ function errMsg($msg){
 }
 
 // --------------------------------------------------------------------------------
-// fonction de log des traitements
-// --------------------------------------------------------------------------------
-function logIt($msg) {
-	global $logProvisioning;
-	if (isset($_GET['debug']) && $_GET['debug'] == "O")	$logProvisioning .= '<li>'.$msg.'</li>';
-}
-
-// --------------------------------------------------------------------------------
 // fonction de redirection
 // --------------------------------------------------------------------------------
 function redirection($p_domaine) {
@@ -471,8 +463,7 @@ function endMessage($pmessage){
 // --------------------------------------------------------------------------------
 //  T R A I T E M E N T   D E   P R O V I S I O N I N G
 // --------------------------------------------------------------------------------
-// setup the WordPress environment
-define( "WP_INSTALLING", true );
+//define( "WP_INSTALLING", true );
 require_once( './wp-load.php' );
 require( 'wp-blog-header.php' );
 require_once( ABSPATH . WPINC . '/registration.php' );
@@ -498,11 +489,7 @@ add_filter("redirect_to", get_site_url()."?ENT_action=IFRAME");
 /* rŽcupŽrer les variable du jeton CAS */
 logIt("r&eacute;cup&eacute;rer les variables du jeton CAS"); 
 
-/////////// Est-ce nŽcessaire ? On l'a fait avant logiquement ...
-////////setCASdataInSession();
 $LaclasseAttributes = $_SESSION['phpCAS']['attributes'];
-
-//if (isset($_GET['debug']) && $_GET['debug'] == "O") print_r($LaclasseAttributes);
 
 $laclasseUserUid 		= $LaclasseAttributes['uid'];
 $laclasseUserCodeRne 	= $LaclasseAttributes['ENTPersonStructRattachRNE'];
@@ -537,20 +524,6 @@ if (!isset($_GET['blogname']) || $_GET['blogname'] == "") {
 		    $redir = home_url().$qry;
 	header("Location: ".$redir);
 	die();
-/*
-		// rŽcupŽration de l'id de l'utilisateur 
-		$userRec = get_user_by('login',$username);
-		$userId = $userRec->ID;
-		$tabBlogs = get_blogs_of_user($userId);
-		
-		$messagePlusieursBlogs  = "<h2>Vous &ecirc;tes rattach&eacute; &agrave; plusieurs blogs. O&ugrave; aller ?</h2><ul>";
-		foreach($tabBlogs as $blog) {
-			$messagePlusieursBlogs .=  "<li>&nbsp;<a href='".$blog->siteurl.$blog->path."'>".$blog->blogname."</a>&nbsp;</li>";
-		}
-		$messagePlusieursBlogs .=  "</ul><br />";
-		endMessage($messagePlusieursBlogs);
-		// Et la on continue d'afficher le site...
-*/
 	}
 	else errMsg("Le paramtre 'blogname' n'est pas renseignŽ.");
 }
@@ -645,7 +618,7 @@ logIt("path=".$path);
 	}
 
 	// --------------------------------------------------------------------------------
-	// Profil des personnel de l'Žducation nationale PROF, ADM_ETB, CPE, PRINCIPAL
+	// Profil des personnels de l'Žducation nationale PROF, ADM_ETB, CPE, PRINCIPAL
 	//	Ces profils peuvent crŽer des blogs et sont donc administrateur du blog crŽŽ.
 	// Si le blog existe dŽjˆ, alors l'utilisateur est rattachŽ au blog avec des droits
 	// d'Žditeur ("Editor") -> peut ecrire, valider des posts et valider les posts des autres.
