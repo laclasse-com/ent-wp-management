@@ -71,10 +71,6 @@ function wpcas_provisioning( $user_name ){
 }
 
 // --------------------------------------------------------------------------------
-//  Formulaire de saisie de données complémentaires
-// --------------------------------------------------------------------------------
-
-// --------------------------------------------------------------------------------
 //  Formulaire de choix d'un serveur de sso
 // --------------------------------------------------------------------------------
 function select_sso() {
@@ -104,7 +100,10 @@ class wpCAS {
 		logIt("Serveur d'authentification : http".$proto."://".$wpcas_options[$ent]['server_hostname'].":".$wpcas_options[$ent]['server_port'].$wpcas_options[$ent]['server_path'].".");
 
 		if ( !$cas_configured ) {
-			message('<h1>Aucun serveur d\'authentification trouv&eacute; pour l\'ENT "'.$ent.'".</h1><br/>S&eacute;lectionnez votre ENT : <br/><br/>' . select_sso());
+			message('<h1>Aucun serveur d\'authentification trouv&eacute; pour l\'ENT "'.$ent.'".</h1>'.
+			        '<br/>S&eacute;lectionnez votre ENT : <br/><br/>' . 
+			        select_sso()
+			       );
 			die();
 		}
 		if( phpCAS::isAuthenticated() ){

@@ -90,7 +90,7 @@ function createUserWP($p_username, $p_useremail, $p_role, $p_domain) {
 	$hasToUpdateUserData = true;
 	$userExists = false;
 	logIt("___/ Fonction : createUserWP");
-	
+		
 	// Vérification de l'existance du compte, par rapport à l'email (donnée unique de Wordpress).
 	$userId = get_user_id_from_string( $p_useremail );
 	if ($userId > 0) {
@@ -122,8 +122,10 @@ function createUserWP($p_username, $p_useremail, $p_role, $p_domain) {
 		mais l'authentification aura bien lieu avec le compte existant.");
 		}
 
-
-	if ($userExists) { // L'utilisateur existe déjà.
+  //
+  // L'utilisateur existe déjà.
+	//
+	if ($userExists) { 
 		// récupération des informations de l'utilisateur 
 
 		$userId = $userRec->ID;
@@ -132,8 +134,29 @@ function createUserWP($p_username, $p_useremail, $p_role, $p_domain) {
 		$NewUser = false;
 	
 	}
-	else // L'utilisateur n'existe pas.
+	//
+	// L'utilisateur n'existe pas.
+	//
+	else 
 	{
+
+    // On doit vérifier que toutes les données sont bonnes pour créer le compte.
+    
+    // Si ce jeton n'a pas ce qu'on attend, il faut proposer un formulaire à l'utilisateur 
+    // Pour saisir les données manquantes :email académique ou pas, nom, prénom.
+    // Tout ça c'et valable que si l'ent n'est pas laclasse.
+    if (
+        (isset($_REQUEST['ent']) &&  $_REQUEST['ent'] != 'laclasse' ) && 
+        (
+        !isset($LaclasseAttributes['LaclasseNom']) || $LaclasseAttributes['LaclasseNom'] == "" || 
+        //(isset($_GET['debug']) && $_GET['debug'] == "O")
+          !isset($LaclasseAttributes['LaclasseEmail']) || $LaclasseAttributes['LaclasseEmail'] == "" 
+        )
+       ) {
+      formulaire_sso();
+    }
+
+	
 		// création de l'utilisateur
 		logIt("Cr&eacute;ation de l'utilisateur '".$p_username."'");
 		wpmu_signup_user($p_username, $p_useremail, "");
@@ -460,10 +483,151 @@ function endMessage($pmessage){
 	exit;
 }
 
+
+// --------------------------------------------------------------------------------
+//  Formulaire de saisie de données complémentaires pour un sso extérieur, avec un
+//  jeton de type 3 (annexe sso du SDET).
+//  Ce formulaire va permettre de mettre en session les bonnes variables avant de provisionner 
+//  le compte.
+// --------------------------------------------------------------------------------
+function formulaire_sso() {
+  $complement_passer_etape = isset($_REQUEST['complement_passer_etape']) ? $_REQUEST['complement_passer_etape'] : "";
+  $complement_first_name = isset($_REQUEST['complement_first_name']) ? $_REQUEST['complement_first_name'] : "";
+  $complement_last_name = isset($_REQUEST['complement_last_name']) ? $_REQUEST['complement_last_name'] : "";
+  $complement_email = isset($_REQUEST['complement_email']) ? $_REQUEST['complement_email'] : "";
+  $complement_profil = isset($_REQUEST['complement_profil']) ? $_REQUEST['complement_profil'] : "";
+  
+  setSessionlaclasseProfil();
+  $laclasseProfil =  isset($_SESSION['phpCAS']['attributes']['LaclasseProfil'])? $_SESSION['phpCAS']['attributes']['LaclasseProfil'] : "";
+  
+  // Complement pour les PEN
+  if ($laclasseProfil != "ELEVE" && $laclasseProfil != "PARENT" ) {
+    $laiusEmail = "Saississez ici votre email acad&eacute;mique ou celui que vous utilisez habituellement dans votre ENT.";
+  }
+  
+  //
+  // Affichage du formulaire
+  //
+  if (
+        $complement_first_name == "" 
+        && $complement_passer_etape == "" 
+        &&  $complement_email == ""
+        && $complement_passer_etape == ""   
+    ) {
+    message("<h1>C'est votre premi&egrave;re connexion</h1><h4>Merci de renseigner les champs suivants :</h4>
+          <form id='your-profile' method='post' action=''>
+            <table class='form-table'>
+              <tbody>
+              <tr>
+                <th>
+                  <label for='complement_first_name'>Pr&eacute;nom</label>
+                </th>
+                <td>
+                  <input id='complement_first_name' class='regular-text' type='text' value='' name='complement_first_name'>
+                </td>
+              </tr>
+              <tr>
+                <th>
+                  <label for='complement_last_name'>Nom</label>
+                </th>
+                <td>
+                  <input id='complement_last_name' class='regular-text' type='text' value='' name='complement_last_name'>
+                </td>
+              </tr>
+              <tr>
+                <th>
+                  <label for='complement_profil'>Profil</label>
+                </th>
+                <td>
+                  <div class='regular-text'><em>".$laclasseProfil."</em></div>
+                  <input id='complement_profil' type='hidden' value='".$laclasseProfil."' name='complement_profil'>
+                </td>
+              </tr>
+              <tr>
+                <th>
+                  <label for='complement_email'>E-mail</label>
+                </th>
+                <td>
+                  <input id='complement_email' class='regular-text' type='text' value='' name='complement_email'>
+                  <br/><small>".$laiusEmail."</small>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+            
+            <p class='submit'>
+              <input id='complement_passer_etape' class='button-secondary' type='submit' value='Passer cette &eacute;tape' name='complement_passer_etape'>
+              <input id='submit' class='button-primary' type='submit' value='Valider' name='submit'>
+            </p>
+          </form>  
+            <hr/>Ces informations ne vous seront plus re-demand&eacute;es par la suite, mais vous y aurez acc&egrave;s en consultant votre profil dans WordPress.");
+      die();
+      // On ne va pas plus loin
+  }
+  //
+  // traitement des données
+  //
+  else 
+  {
+    $_SESSION['phpCAS']['attributes']['LOGIN'] = $_SESSION['phpCAS']['attributes']['uid']; // Pas de login dans ce jeton T3Sdet
+    $_SESSION['phpCAS']['attributes']['LaclasseProfil'] = $complement_profil;
+    // Si l'utilisateur a décidé de passer cette étape, il faut enregistrer des valeurs par défaut dans la session
+    if ($complement_passer_etape != "") {
+      $_SESSION['phpCAS']['attributes']['LaclasseEmail'] = "no_mail_" .substr( md5( uniqid( microtime( ))), 0, 6 ) . "@laclasse.com";
+      $_SESSION['phpCAS']['attributes']['LaclasseNom'] = $_SESSION['phpCAS']['attributes']['uid'];
+      $_SESSION['phpCAS']['attributes']['LaclassePrenom'] = "";
+    }
+    else // on met en session les nouveaux paramètres
+    {
+      $_SESSION['phpCAS']['attributes']['LaclasseEmail'] = $complement_email;
+      $_SESSION['phpCAS']['attributes']['LaclasseNom'] = $complement_last_name;
+      $_SESSION['phpCAS']['attributes']['LaclassePrenom'] = $complement_first_name;
+    }
+    print_r($_SESSION);
+  }
+}
+
+// --------------------------------------------------------------------------------
+// Une fonction de mise en session du profil, quel que soit le type de jeton CAS
+// --------------------------------------------------------------------------------
+function setSessionlaclasseProfil() {
+  // si le laclasseProfil n'est pas renseigné, on ,le renseigne.
+  if (!isset($_SESSION['phpCAS']['attributes']['LaclasseProfil']) || $_SESSION['phpCAS']['attributes']['LaclasseProfil'] == "" ) {
+    $profil =  isset($_SESSION['phpCAS']['attributes']['ENTPersonProfils'])? $_SESSION['phpCAS']['attributes']['ENTPersonProfils'] : "";
+    switch ($profil) {
+      case 'National_1' : // $libProfil = "&eacute;l&egrave;ve";
+                          $laclasseProfil = 'ELEVE';
+                          break;
+      case 'National_2' : // $libProfil = "parent";
+                          $laclasseProfil = 'PARENT';
+                          break;
+      case 'National_3' : // $libProfil = "enseignant";
+                          $laclasseProfil = 'PROF';
+                          break;
+      case 'National_4' : // $libProfil = "principal ou adjoint";
+                          $laclasseProfil = 'PRINCIPAL';
+                          break;
+      case 'National_5' : // $libProfil = "personnel de vie scolaire"; 
+                          $laclasseProfil = 'CPE';
+                          break;
+      case 'National_6' : // $libProfil = "personnel administratif";
+                          $laclasseProfil = 'INVITE';
+                          break;
+      case 'National_7' : // $libProfil = "personnel du rectorat";
+                          $laclasseProfil = 'INVITE';
+                          break;
+      default : $libProfil = "invit&eacute;";
+                $laclasseProfil = 'INVITE';
+                break;
+    }
+    $_SESSION['phpCAS']['attributes']['LaclasseProfil'] = $laclasseProfil;
+  }
+}
+
+
 // --------------------------------------------------------------------------------
 //  T R A I T E M E N T   D E   P R O V I S I O N I N G
 // --------------------------------------------------------------------------------
-//define( "WP_INSTALLING", true );
 require_once( './wp-load.php' );
 require( 'wp-blog-header.php' );
 require_once( ABSPATH . WPINC . '/registration.php' );
@@ -489,16 +653,29 @@ add_filter("redirect_to", get_site_url()."?ENT_action=IFRAME");
 /* récupérer les variable du jeton CAS */
 logIt("r&eacute;cup&eacute;rer les variables du jeton CAS"); 
 
+/*
+  Le jeton par défaut est celui de laclasse.com défini par laclasse.com pour laclasse.com
+  Rien à voir donc avec le jeton type 3 du SDET.
+
+  Le jeton du SDET à, quant à lui les attributs suivants.
+  uid,
+  ENTPersonStructRattach,
+  ENTEleveClasses,
+  ENTPersonStructRattachRNE,
+  ENTPersonProfils,
+  ENTEleveNivFormation
+*/
+
 $LaclasseAttributes = $_SESSION['phpCAS']['attributes'];
 
-$laclasseUserUid 		= $LaclasseAttributes['uid'];
-$laclasseUserCodeRne 	= $LaclasseAttributes['ENTPersonStructRattachRNE'];
-$laclasseUserId 		= $LaclasseAttributes['ENT_id'];
-$laclasseUserProfil		= $LaclasseAttributes['LaclasseProfil'];
-$laclasseUserClasse		= $LaclasseAttributes['ENTEleveClasses'];
-$laclasseUserNivClasse	= $LaclasseAttributes['ENTEleveNivFormation'];
-$laclasseUserMail		= $LaclasseAttributes['LaclasseEmail'];
-$laclasseUserMailAca	= $LaclasseAttributes['LaclasseEmailAca'];
+$laclasseUserUid 		    = $LaclasseAttributes['uid'];                        // Ok pour le T3 du Sdet
+$laclasseUserCodeRne 	  = $LaclasseAttributes['ENTPersonStructRattachRNE'];  // Ok pour le T3 du Sdet
+$laclasseUserId 		    = isset($LaclasseAttributes['ENT_id']) ? $LaclasseAttributes['ENT_id'] : "";                     // Pas dans le T3 du Sdet
+$laclasseUserProfil		  = isset($LaclasseAttributes['LaclasseProfil']) ? $LaclasseAttributes['LaclasseProfil'] : "";     // Pas dans le T3 du Sdet
+$laclasseUserClasse		  = $LaclasseAttributes['ENTEleveClasses'];            // Ok pour le T3 du Sdet
+$laclasseUserNivClasse	= $LaclasseAttributes['ENTEleveNivFormation'];       // Ok pour le T3 du Sdet
+$laclasseUserMail		    = isset($LaclasseAttributes['LaclasseEmail']) ? $LaclasseAttributes['LaclasseEmail'] : "";       // Pas dans le T3 du Sdet
+$laclasseUserMailAca	  = isset($LaclasseAttributes['LaclasseEmailAca']) ? $LaclasseAttributes['LaclasseEmailAca'] : ""; // Pas dans le T3 du Sdet
 
 logIt("-> uid=".$laclasseUserUid);
 logIt("-> rne=".$laclasseUserCodeRne);
@@ -508,6 +685,7 @@ logIt("-> Classe=".$laclasseUserClasse);
 logIt("-> Niveau=".$laclasseUserNivClasse);
 logIt("-> mail=".$laclasseUserMail);
 logIt("-> mailAca=".$laclasseUserMailAca);
+
 
 //
 // Vérification des paramètres d'entrée OBLIGATOIRES si l'utilisateur n'est pas admin
@@ -525,7 +703,9 @@ if (!isset($_GET['blogname']) || $_GET['blogname'] == "") {
 	header("Location: ".$redir);
 	die();
 	}
-	else errMsg("Le paramètre 'blogname' n'est pas renseigné.");
+	else {
+	 errMsg("Le paramètre 'blogname' n'est pas renseigné.");
+  }
 }
 
 logIt("blogname=".$_GET['blogname']);
@@ -552,7 +732,7 @@ $site_id = 1;
 
 */
 if ($laclasseUserMail != "" ) $user_email = $laclasseUserMail; 
-else if ($laclasseUserMailAca != "" && in_array($laclasseUserProfil, array("PROF","ADM_ETB","ADMIN","CPE"))) 
+else if ($laclasseUserMailAca != "" && in_array($laclasseUserProfil, array("PROF","ADM_ETB","ADMIN","CPE", "PRINCIPAL"))) 
 		$user_email = $laclasseUserMailAca; 
 	 else $user_email = ""; 
 
@@ -660,10 +840,10 @@ logIt("path=".$path);
 	}
 
 	// --------------------------------------------------------------------------------
-	// Profil PARENT : Il est uniquement lecteur du blog et peut gérer son profil.	
+	// Profil PARENT ou INVITE: Il est uniquement lecteur du blog et peut gérer son profil.	
 	// le profil WP s'appelle "Subscriber"
 	// --------------------------------------------------------------------------------
-	if ($laclasseUserProfil == "PARENT"){
+	if (in_array($laclasseUserProfil, array("PARENT","INVITE"))){
 		$wpUsrId = createUserWP($username, $user_email, "subscriber", $domain);	
 		rattachUserToHisBlog($domain, $path, $site_id, $wpUsrId, "subscriber");
 	}
