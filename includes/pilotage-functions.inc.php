@@ -61,22 +61,20 @@ function aUnRoleSurCeBlog($pUserId, $pBlogId){
 // --------------------------------------------------------------------------------
 // fonction qui renvoie true si l'utilisateur est administrateur de son domaine.
 // --------------------------------------------------------------------------------
-function hasRoleOnDomain($user, $pDom, $pRole){
-	//global $user;
-	$blogId = getBlogIdByDomain($pDom);
-
-		if( $user->ID != 0 ) {
-			// transformer l'objet user en tableau.
-			$cu = (array) $user;			
-			// Les roles sur le blogs son dans un tableau nommé en fct du blogid.
-			$rolesSurCeBlog = $cu["wp_".$blogId."_capabilities"];
-			// analyse de la valeur
-			if ($rolesSurCeBlog[strtolower($pRole)] == "1") 
-				return true;
+function isAdminOfBlog($user, $pBlogId){
+  switch_to_blog($pBlogId);
+	if( $user->ID != 0 ) {
+		// transformer l'objet user en tableau.
+		$cu = (array) $user;		
+		// Le [cap_key] doit être égal à "wp_".$blogId."_capabilities"	
+		if ($cu['cap_key'] =="wp_".$pBlogId."_capabilities") {
+	    // Alors le [roles] donne le tableau des roles sur le blog.
+	    if (in_array("administrator", $cu['roles'])) {
+	      return true;
+	    }
 		}
-	//}
+  }
 	return false;
-
 }
 
 // --------------------------------------------------------------------------------

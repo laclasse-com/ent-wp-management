@@ -66,13 +66,9 @@ function setCASdataInSession() {
 // --------------------------------------------------------------------------------
 //  Fonction de provisionning CAS
 // --------------------------------------------------------------------------------
-function wpcas_provisioning( $user_name ){
+function wpcas_provisioning(){
 	$ret = include( WP_PLUGIN_DIR."/".dirname( plugin_basename( __FILE__ )).'/provisionning-laclasse.php');
 }
-
-// --------------------------------------------------------------------------------
-//  Formulaire de saisie de données complémentaires
-// --------------------------------------------------------------------------------
 
 // --------------------------------------------------------------------------------
 //  Formulaire de choix d'un serveur de sso
@@ -104,21 +100,25 @@ class wpCAS {
 		logIt("Serveur d'authentification : http".$proto."://".$wpcas_options[$ent]['server_hostname'].":".$wpcas_options[$ent]['server_port'].$wpcas_options[$ent]['server_path'].".");
 
 		if ( !$cas_configured ) {
-			message('<h1>Aucun serveur d\'authentification trouv&eacute; pour l\'ENT "'.$ent.'".</h1><br/>S&eacute;lectionnez votre ENT : <br/><br/>' . select_sso());
+			message('<h1>Aucun serveur d\'authentification trouv&eacute; pour l\'ENT "'.$ent.'".</h1>'.
+			        '<br/>S&eacute;lectionnez votre ENT : <br/><br/>' . 
+			        select_sso()
+			       );
 			die();
 		}
 		if( phpCAS::isAuthenticated() ){
 			// CAS was successful so sets session variables
-			setCASdataInSession();
-			
 			$user = get_user_by('login', phpCAS::getUser());
 			if ( $user ){ // user already exists
 				// the CAS user has a WP account
 				wp_set_auth_cookie( $user->ID );
 				wp_set_current_user( $user->ID );
+				
+				// Enregistrement de l'ENT de provenance pour ce username
+				update_user_meta($user->ID, 'nom_ENT', $ent);
 			}
 			// On provisionne ce qu'il manque : user ou blog, ou les deux
-			wpcas_provisioning( phpCAS::getUser() );
+			wpcas_provisioning();
 		
 		}else{
 			// hey, authenticate
@@ -130,8 +130,9 @@ class wpCAS {
 	// renvoie l'url de login, selon le contexte : intégré dans une IFRAME ou normal
 	function get_url_login() {
 		global $ent, $wpcas_options;
+		
 		if ($_REQUEST['ENT_action'] == 'IFRAME') {
-			$qry = '?ENT_action=IFRAME';
+			$qry = '?ent='.$ent.'&ENT_action=IFRAME';
 			$url =  home_url().'/wp-login.php'.$qry;
 		}
 		// Si on n'est pas en mode intégré
@@ -142,25 +143,40 @@ class wpCAS {
   			   $wpcas_options[$ent]['server_hostname'].
   			   (($wpcas_options[$ent]['server_port'] != 80 )? ":".$wpcas_options[$ent]['server_port'] : "").
   			   $wpcas_options[$ent]['server_path'].
-  			   "/login?service=".urlencode(home_url()."/wp-login.php");
+  			   "/login?service=".urlencode(home_url()."/wp-login.php?ent=".$ent);
 			   
 		}
 		return $url;
 	}
 	
+	// Revoie l'url de logout selon l'ent de provenance.
+	function get_url_logout($wpLogoutUrl) {
+	  global $current_user;
+    get_currentuserinfo();
+    $nomEnt = get_user_meta( $current_user->ID, "nom_ENT", true);
+    
+		if ($_REQUEST['ENT_action'] == 'IFRAME') {
+			$iframe = '&ENT_action=IFRAME';
+		}
+		return $wpLogoutUrl . "&ent=".$nomEnt.$iframe;	
+	}
+	
 	// hook CAS logout to WP logout
 	function logout() {
-		global $cas_configured;
-
+		global $cas_configured, $current_user;
+    get_currentuserinfo();
+		$nomEnt = get_user_meta( $current_user->ID, "nom_ENT", true);
+		
 		if (!$cas_configured)
 			die( __( 'wpCAS plugin not configured', 'wpcas' ));
 			
-		if ($_REQUEST['ENT_action'] == 'IFRAME') 
-			$qry = '?ENT_action=IFRAME';
+		if ($_REQUEST['ENT_action'] == 'IFRAME') {
+			$iframe = '&ENT_action=IFRAME';
+		}
 
-        // Supprimer les cookies de WP
-        wp_clear_auth_cookie();
-		phpCAS::logout( array( 'url' => get_option( 'siteurl' ).$qry ));
+    // Supprimer les cookies de WP
+    wp_clear_auth_cookie();
+		phpCAS::logout( array( 'url' => get_option( 'siteurl' )."?ent=".$nomEnt.$iframe ));
 		exit();
 	}
 
