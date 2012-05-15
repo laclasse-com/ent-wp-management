@@ -59,15 +59,10 @@ add_action('retrieve_password', array('wpCAS', 'disable_function_pwd'));
 add_action('check_passwords', array('wpCAS', 'check_passwords'), 10, 3);
 add_action('password_reset', array('wpCAS', 'disable_function_pwd'));
 add_filter('show_password_fields', array('wpCAS', 'show_password_fields'));
-
-// supprimer l'apparition du formulaire d'ajout d'un utilisateurs (connexion avec CAS).
-/* dépréquétide in WP 3.1
-add_action('show_adduser_fields', array('wpCAS', 'disable_function_user'));
-*/
 add_action('show_network_site_users_add_new_form', array('wpCAS', 'disable_function_user'));
 
-
 add_filter('login_url',array('wpCAS', 'get_url_login'));
+add_filter('logout_url',array('wpCAS', 'get_url_logout'));
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	
@@ -217,8 +212,7 @@ if (isset($_REQUEST['ENT_action'])) {
 			exit;
 		}
 		else {
-			switch_to_blog($blogId);
-			if(hasRoleOnDomain($user, $domain, "administrator") || is_super_admin())  {
+			if(isAdminOfBlog($user, $blogId) || is_super_admin())  {
 				wpmu_delete_blog ($blogId, true);	
 				message("Le blog '$domain' a &eacute;t&eacute; supprim&eacute;.");
 			}
@@ -240,8 +234,7 @@ if (isset($_REQUEST['ENT_action'])) {
 			exit;
 		}
 		else {
-			switch_to_blog($blogId);
-			if(hasRoleOnDomain($user, $domain, "administrator") || is_super_admin())  {
+			if(isAdminOfBlog($user, $blogId) || is_super_admin())  {
 				include_once('scripts/migrer_data_ENT.php');
 			}
 			else message("Vous n'&ecirc;tes pas administrateur du blog '$domain'.");

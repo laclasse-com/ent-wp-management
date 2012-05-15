@@ -81,14 +81,42 @@ $logProvisioning = "";
 $NewUser = false;
 
 // --------------------------------------------------------------------------------
+// Récupérer une données dan le jeton, à défaut en GET
+// --------------------------------------------------------------------------------
+function getAttr($TokenAttrName, $defaultValue= "") {
+  return isset($_SESSION['phpCAS']['attributes'][$TokenAttrName]) ? $_SESSION['phpCAS']['attributes'][$TokenAttrName] : $defaultValue; 
+}
+
+// --------------------------------------------------------------------------------
+// setter une données dan la session $_SESSION
+// --------------------------------------------------------------------------------
+function setAttr($TokenAttrName, $value= "") {
+  $_SESSION['phpCAS']['attributes'][$TokenAttrName] = $value; 
+}
+
+// --------------------------------------------------------------------------------
+// test existence attribut
+// --------------------------------------------------------------------------------
+function existsAttr($TokenAttrName) {
+  return isset($_SESSION['phpCAS']['attributes'][$TokenAttrName]);
+}
+
+// --------------------------------------------------------------------------------
+// tester sur attribut vide
+// --------------------------------------------------------------------------------
+function emptyAttr($TokenAttrName) {
+  return ($_SESSION['phpCAS']['attributes'][$TokenAttrName] == "");
+}
+
+// --------------------------------------------------------------------------------
 // fonction création d'un utilisateur
 // --------------------------------------------------------------------------------
 function createUserWP($p_username, $p_useremail, $p_role, $p_domain) {
 	global $NewUser;
 	$mailExists = false;
 	$loginExists = false;
-	$hasToUpdateUserData = true;
 	$userExists = false;
+	$hasToUpdateUserData = true;
 	logIt("___/ Fonction : createUserWP");
 		
 	// Vérification de l'existance du compte, par rapport à l'email (donnée unique de Wordpress).
@@ -104,11 +132,12 @@ function createUserWP($p_username, $p_useremail, $p_role, $p_domain) {
 
 	$loginId = username_exists( $p_username );
 	if ($loginId > 0 && !isset($userRec)) {
-		logIt("V&eacute;rification de l'existence du compte, par rapport &agrave; au login '".$p_username."'.");
+		logIt("V&eacute;rification de l'existence du compte, par rapport au login '".$p_username."'.");
 		$loginExists = true;
 		$userExists = true;
-		$userRec = get_user_by('login',$loginId);
-		logIt("R&eacute;cup&eacute;ration des infos de l'utilisateur #$userId via son login.");
+		//$userRec = get_user_by('login',$loginId);
+		$userRec = get_userdata($loginId);
+		logIt("R&eacute;cup&eacute;ration des infos de l'utilisateur #$loginId via son login.");
 	}
 	
 	// Récupération des données du user s'il existe.
@@ -139,24 +168,6 @@ function createUserWP($p_username, $p_useremail, $p_role, $p_domain) {
 	//
 	else 
 	{
-
-    // On doit vérifier que toutes les données sont bonnes pour créer le compte.
-    
-    // Si ce jeton n'a pas ce qu'on attend, il faut proposer un formulaire à l'utilisateur 
-    // Pour saisir les données manquantes :email académique ou pas, nom, prénom.
-    // Tout ça c'et valable que si l'ent n'est pas laclasse.
-    if (
-        (isset($_REQUEST['ent']) &&  $_REQUEST['ent'] != 'laclasse' ) && 
-        (
-        !isset($LaclasseAttributes['LaclasseNom']) || $LaclasseAttributes['LaclasseNom'] == "" || 
-        //(isset($_GET['debug']) && $_GET['debug'] == "O")
-          !isset($LaclasseAttributes['LaclasseEmail']) || $LaclasseAttributes['LaclasseEmail'] == "" 
-        )
-       ) {
-      formulaire_sso();
-    }
-
-	
 		// création de l'utilisateur
 		logIt("Cr&eacute;ation de l'utilisateur '".$p_username."'");
 		wpmu_signup_user($p_username, $p_useremail, "");
@@ -165,16 +176,17 @@ function createUserWP($p_username, $p_useremail, $p_role, $p_domain) {
 		logIt("validation de l'utilisateur '".$p_username."'");
 		$wpError = wpmu_validate_user_signup($p_username, $p_useremail); 
 		
-		if (is_wp_error($wpError) )
+		if (is_wp_error($wpError) ) {
    			errMsg($wpError->get_error_message());
+   	}
    	
-   		// récupérer la clé d'activation du username créé
-   		$validKey = get_activation_key($p_username);
-   		logIt("validKey=".$validKey);
-   	
-   		// activer le username nouvellement créé.
-   		$activated = wpmu_activate_signup($validKey);
-   		logIt("Activation automatique du compte");
+ 		// récupérer la clé d'activation du username créé
+ 		$validKey = get_activation_key($p_username);
+ 		logIt("validKey=".$validKey);
+ 	
+ 		// activer le username nouvellement créé.
+ 		$activated = wpmu_activate_signup($validKey);
+ 		logIt("Activation automatique du compte");
 
 		if (is_wp_error($activated) ) {
    			errMsg($activated->get_error_message());
@@ -191,6 +203,7 @@ function createUserWP($p_username, $p_useremail, $p_role, $p_domain) {
 	}
 	
 	// maj des données utilisateur
+	logIt("hasToUpdateUserData='$hasToUpdateUserData'");
 	if ($hasToUpdateUserData) majWPUserMetData($userId);
 	
 	// cookie d'authentification WP
@@ -337,19 +350,29 @@ function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $si
 // fonction de mise à jour des données utilisateurs en fonction de la sesison php
 // --------------------------------------------------------------------------------
 function majWPUserMetData($p_userId) {
+  global $ent;
 	// Maj des données
 	logIt("maj des donn&eacute;es de l'utilisateur");
-	if (isset($_GET['debug']) && $_GET['debug'] == "O") print_r($_SESSION['phpCAS']['attributes']);
-	update_user_meta($p_userId, 'uid_ENT', 			$_SESSION['phpCAS']['attributes']['uid']);
-	update_user_meta($p_userId, 'etablissement_ENT', $_SESSION['phpCAS']['attributes']['ENTPersonStructRattachRNE']);
-	update_user_meta($p_userId, 'display_name',  	$_SESSION['phpCAS']['attributes']['LaclasseNom'].' '.$_SESSION['phpCAS']['attributes']['LaclassePrenom']);
-	update_user_meta($p_userId, 'first_name', 		$_SESSION['phpCAS']['attributes']['LaclassePrenom']);
-	update_user_meta($p_userId, 'last_name', 		$_SESSION['phpCAS']['attributes']['LaclasseNom']);
-	update_user_meta($p_userId, 'profil_ENT', 		$_SESSION['phpCAS']['attributes']['LaclasseProfil']);
+	update_user_meta($p_userId, 'uid_ENT', 	         getAttr('uid'));
+	update_user_meta($p_userId, 'etablissement_ENT', getAttr('ENTPersonStructRattachRNE'));
+	update_user_meta($p_userId, 'profil_ENT', 		   getAttr('LaclasseProfil'));
+	update_user_meta($p_userId, 'nom_ENT', 		       $ent);
+
+  // FIXME : Comprends pas pourquoi $_SESSION ne comporte pas tojours les valeurs que je lui  mets.
+  if (!emptyAttr('LaclassePrenom') && !emptyAttr('LaclasseNom')) {
+     wp_update_user( 
+            array (
+              'ID' => $p_userId, 
+              'first_name' => getAttr('LaclassePrenom'), 
+              'last_name' => getAttr('LaclasseNom'),
+              'display_name' => getAttr('LaclasseNom').' '.getAttr('LaclassePrenom')
+                   )
+     );
+  }
 	// Classe de l'élève
-	if ($_SESSION['phpCAS']['attributes']['LaclasseProfil'] == "ELEVE") {
+	if (getAttr('LaclasseProfil') == "ELEVE") {
 		logIt("classe de l'utilisateur");
-		update_user_meta($p_userId, 'classe_ENT', $_SESSION['phpCAS']['attributes']['ENTEleveClasses']);
+		update_user_meta($p_userId, 'classe_ENT', getAttr('ENTEleveClasses'));
 	}
 }
 
@@ -360,6 +383,7 @@ function setWPCookie($p_usrId) {
 	// authentification
 	logIt("Authentification userId #$p_usrId.");
 	wp_set_auth_cookie( $p_usrId );
+	wp_set_current_user( $p_usrId );
 }
 
 // --------------------------------------------------------------------------------
@@ -404,7 +428,7 @@ function rattachUserToHisBlog($p_domain, $p_path, $p_site_id, $p_wpUsrId, $p_rol
 // --------------------------------------------------------------------------------
 function rattachSuperUserToTheBLog($p_userId, $p_role) {
 		// On s'occupe du profil
-		if ($_SESSION['phpCAS']['attributes']['LaclasseProfil'] == "ADMIN" && $p_role == "administrator") {
+		if (getAtttr('LaclasseProfil') == "ADMIN" && $p_role == "administrator") {
 			// Ajout des droits super administrateur sur le blog des blogs.
 			add_user_to_blog(1, $p_userId, $p_role);
 			logIt("Ajout des droits administrateur sur le blog des blogs");
@@ -440,28 +464,38 @@ function get_activation_key($user) {
 
 
 // --------------------------------------------------------------------------------
-// Fonction de'affichage dun message d'erreur.
-// --------------------------------------------------------------------------------
-function errMsg($msg){
-	if (isset($_GET['debug']) && $_GET['debug'] == "O") logIt("<span style='color:red;'>".$msg."</span>");
-	else
-		endMessage('
-		<h2>Oops...</h2>
-		<p>Il semble qu\'il se soit produit une erreur.</p>
-		<p>'.$msg.'.</p>
-		<p>Vous pouvez contacter le support 
-		<a href="mailto:supportblog@laclasse.com" target="_blank">supportblog@laclasse.com</a>.</p>'
-		);
-}
-
-// --------------------------------------------------------------------------------
 // fonction de redirection
 // --------------------------------------------------------------------------------
 function redirection($p_domaine) {
 	global $logProvisioning;
-	// Lorsqu'on arrive ici, tout s'est bien passé, les blogs et les users sont créés
+	$scriptName = ""; 
+	$qry = Array();
+	
+	// S'occuper de l'embeded
+	if ($_REQUEST['ENT_action'] == 'IFRAME' || isset($_REQUEST['blogname'])) {
+   logIt("On est dans une IFRAME.");
+    $qry[] = 'ENT_action=IFRAME';
+  }
+  
+  // Si le blog est un blog d'établisement on supprime la 2° colonne
+  if ($_REQUEST["blogtype"] == 'ETB') {
+    $qry[] = 'ENT_display=CENTRAL';
+  }
+  
+  // Si le paramètre 'ent' est défini, il faut le reporter pour le log out
+  if (isset($_REQUEST['ent']) || $_REQUEST['ent'] != 'laclasse') {
+    $qry[] = "ent=".$_REQUEST['ent'];
+  }
+
+  $query = '?';
+  foreach($qry as $v) {
+    $query .= $v . "&";
+  }
+  $query = substr($query, 0, -1);
+  
+  // Lorsqu'on arrive ici, tout s'est bien passé, les blogs et les users sont créés
 	// On redirige donc vers le bon domaine.
-	logIt("Ici on va rediriger vers <a href='http://".$p_domaine."/?ENT_action=IFRAME'>http://".$p_domaine."/?ENT_action=IFRAME</a>");
+	logIt("Ici on va rediriger vers <a href='http://".$p_domaine.$scriptName.$query."'>http://".$p_domaine.$scriptName.$query."</a>");
 	
 	if (isset($_GET['debug']) && $_GET['debug'] == "O") {
 		endMessage("<ul>".$logProvisioning ."</ul>". "Mode DEBUG activ&eacute; : Pas de redirection.");
@@ -469,20 +503,9 @@ function redirection($p_domaine) {
 	else {
 		// Si le blog est de type Etablissement (ETB) on enlève la sidebar
 		// Car la place dans la page est étroite.
-		if ($_REQUEST["blogtype"] == 'ETB')	header('Location: http://'.$p_domaine.'/?ENT_action=IFRAME&ENT_display=CENTRAL');
-		else header('Location: http://'.$p_domaine.'/?ENT_action=IFRAME');
+		header('Location: http://'.$p_domaine.$scriptName.$query);
 	}
 }
-
-
-// --------------------------------------------------------------------------------
-//  Fonction d'affichage d'un message de retour d'une action de pilotage.
-// --------------------------------------------------------------------------------
-function endMessage($pmessage){
-    message($pmessage);
-	exit;
-}
-
 
 // --------------------------------------------------------------------------------
 //  Formulaire de saisie de données complémentaires pour un sso extérieur, avec un
@@ -490,7 +513,7 @@ function endMessage($pmessage){
 //  Ce formulaire va permettre de mettre en session les bonnes variables avant de provisionner 
 //  le compte.
 // --------------------------------------------------------------------------------
-function formulaire_sso() {
+function formulaire_sso($pSiteName) {
   $complement_passer_etape = isset($_REQUEST['complement_passer_etape']) ? $_REQUEST['complement_passer_etape'] : "";
   $complement_first_name = isset($_REQUEST['complement_first_name']) ? $_REQUEST['complement_first_name'] : "";
   $complement_last_name = isset($_REQUEST['complement_last_name']) ? $_REQUEST['complement_last_name'] : "";
@@ -498,11 +521,11 @@ function formulaire_sso() {
   $complement_profil = isset($_REQUEST['complement_profil']) ? $_REQUEST['complement_profil'] : "";
   
   setSessionlaclasseProfil();
-  $laclasseProfil =  isset($_SESSION['phpCAS']['attributes']['LaclasseProfil'])? $_SESSION['phpCAS']['attributes']['LaclasseProfil'] : "";
+  $laclasseProfil =  getAttr('LaclasseProfil', "");
   
   // Complement pour les PEN
   if ($laclasseProfil != "ELEVE" && $laclasseProfil != "PARENT" ) {
-    $laiusEmail = "Saississez ici votre email acad&eacute;mique ou celui que vous utilisez habituellement dans votre ENT.";
+    $laiusEmail = "Saississez ici votre email acad&eacute;mique.";
   }
   
   //
@@ -511,11 +534,11 @@ function formulaire_sso() {
   if (
         $complement_first_name == "" 
         && $complement_passer_etape == "" 
-        &&  $complement_email == ""
+        && $complement_email == ""
         && $complement_passer_etape == ""   
     ) {
-    message("<h1>C'est votre premi&egrave;re connexion</h1><h4>Merci de renseigner les champs suivants :</h4>
-          <form id='your-profile' method='post' action=''>
+    message("<h1>C'est votre premi&egrave;re connexion sur <strong>".$pSiteName."</strong></h1><h4>Merci de renseigner les champs suivants :</h4>
+          <form id='your-profile' method='post' action='".$_SERVER['PHP_SELF']."?".$_SERVER['QUERY_STRING']."'>
             <table class='form-table'>
               <tbody>
               <tr>
@@ -556,7 +579,7 @@ function formulaire_sso() {
             </table>
             
             <p class='submit'>
-              <input id='complement_passer_etape' class='button-secondary' type='submit' value='Passer cette &eacute;tape' name='complement_passer_etape'>
+              <!--input id='complement_passer_etape' class='button-secondary' type='submit' value='Passer cette &eacute;tape' name='complement_passer_etape'-->
               <input id='submit' class='button-primary' type='submit' value='Valider' name='submit'>
             </p>
           </form>  
@@ -569,21 +592,27 @@ function formulaire_sso() {
   //
   else 
   {
-    $_SESSION['phpCAS']['attributes']['LOGIN'] = $_SESSION['phpCAS']['attributes']['uid']; // Pas de login dans ce jeton T3Sdet
-    $_SESSION['phpCAS']['attributes']['LaclasseProfil'] = $complement_profil;
+    setAttr('ENT_id', getAttr('uid')); // Pas de login dans ce jeton T3Sdet
+    setAttr('LOGIN', getAttr('uid')); // Pas de login dans ce jeton T3Sdet
+    setAttr('LaclasseProfil', $complement_profil);
     // Si l'utilisateur a décidé de passer cette étape, il faut enregistrer des valeurs par défaut dans la session
     if ($complement_passer_etape != "") {
-      $_SESSION['phpCAS']['attributes']['LaclasseEmail'] = "no_mail_" .substr( md5( uniqid( microtime( ))), 0, 6 ) . "@laclasse.com";
-      $_SESSION['phpCAS']['attributes']['LaclasseNom'] = $_SESSION['phpCAS']['attributes']['uid'];
-      $_SESSION['phpCAS']['attributes']['LaclassePrenom'] = "";
+      setAttr('LaclasseEmail', "no_mail_" .substr( md5( uniqid( microtime( ))), 0, 6 ) . "@laclasse.com");
+      setAttr('LaclasseNom', getAttr('uid'));
+      setAttr('LaclassePrenom', "");
     }
     else // on met en session les nouveaux paramètres
     {
-      $_SESSION['phpCAS']['attributes']['LaclasseEmail'] = $complement_email;
-      $_SESSION['phpCAS']['attributes']['LaclasseNom'] = $complement_last_name;
-      $_SESSION['phpCAS']['attributes']['LaclassePrenom'] = $complement_first_name;
+      setAttr('LaclasseEmail', $complement_email);
+      setAttr('LaclasseNom', $complement_last_name);
+      setAttr('LaclassePrenom', $complement_first_name);
     }
-    print_r($_SESSION);
+    // Si l'utilisateur a rentré un mail académique, on lui passe son profil de "INVITE" à "PROF"
+    $pos = strrpos(getAttr('LaclasseEmail'), "ac-lyon.fr");
+    if ($pos !== false) { 
+      setAttr('LaclasseEmailAca', getAttr('LaclasseEmail'));
+  		setAttr('LaclasseProfil', "PROF");
+    }
   }
 }
 
@@ -592,8 +621,8 @@ function formulaire_sso() {
 // --------------------------------------------------------------------------------
 function setSessionlaclasseProfil() {
   // si le laclasseProfil n'est pas renseigné, on ,le renseigne.
-  if (!isset($_SESSION['phpCAS']['attributes']['LaclasseProfil']) || $_SESSION['phpCAS']['attributes']['LaclasseProfil'] == "" ) {
-    $profil =  isset($_SESSION['phpCAS']['attributes']['ENTPersonProfils'])? $_SESSION['phpCAS']['attributes']['ENTPersonProfils'] : "";
+  if (!existsAttr('LaclasseProfil') || emptyAttr('LaclasseProfil') ) {
+    $profil =  getAttr('ENTPersonProfils', "");
     switch ($profil) {
       case 'National_1' : // $libProfil = "&eacute;l&egrave;ve";
                           $laclasseProfil = 'ELEVE';
@@ -620,25 +649,47 @@ function setSessionlaclasseProfil() {
                 $laclasseProfil = 'INVITE';
                 break;
     }
-    $_SESSION['phpCAS']['attributes']['LaclasseProfil'] = $laclasseProfil;
+    setAttr('LaclasseProfil', $laclasseProfil);
   }
 }
 
-
 // --------------------------------------------------------------------------------
-//  T R A I T E M E N T   D E   P R O V I S I O N I N G
+// --------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------
+//
+//              T R A I T E M E N T   D E   P R O V I S I O N I N G
+//
+// --------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------
 require_once( './wp-load.php' );
 require( 'wp-blog-header.php' );
 require_once( ABSPATH . WPINC . '/registration.php' );
 require_once( ABSPATH . 'wp-admin/includes/ms.php' );
-global $domain, $base; // these variables aren't reliable. It's actually better to force them as you'll see below.
+global $domain, $base;
+
+// $url est l'url vers laquelle on va rediriger
+$url = "";
+// Complément de query http
+$qry = "";
+// nom du site, s'il faut le créer
+$sitename = "";
+// Le domaine est le sitename+ le domai,e de bog
+$domain = "";
+// Le path sert à créer les blogs.
+$path = '/'; 
+// Le username est donné par l'authentification CAS.
+$username = "";
+// Setting des variables couramment utilisées dans les api WP
+$site_id = 1;
 
 // no SSL validation for the CAS server
 phpCAS::setNoCasServerValidation();
 
 // ensure the user is authenticated via CAS
-if( !phpCAS::isAuthenticated() || !$username = phpCAS::getUser() ){
+if( !phpCAS::isAuthenticated() || !$username = strtolower(phpCAS::getUser()) ){
 	wpCAS::authenticate();
 	die( 'requires authentication' );
 }
@@ -650,8 +701,56 @@ function signuppageheaders() {
 add_action( 'wp_head', 'signuppageheaders' ) ;
 add_filter("redirect_to", get_site_url()."?ENT_action=IFRAME"); 
 
-/* récupérer les variable du jeton CAS */
-logIt("r&eacute;cup&eacute;rer les variables du jeton CAS"); 
+// activer l'affichage des erreurs
+error_reporting("E_ALL");
+
+//
+// Définition du routage
+//
+
+logIt("____________________D&eacute;finition Routage____________________");
+// si blogname n'est pas renseigné, on le calcule.
+if (isset($_REQUEST['blogname']) && $_REQUEST['blogname'] != "") {
+  logIt("Blogname est renseign&eacute;.");
+  $url = str_replace("http://", "", $_REQUEST['blogname'].".".BLOG_DOMAINE);
+  $sitename = $_GET['blogname'];
+}
+else {
+  logIt("Blogname n'est pas renseign&eacute;.");
+  $url = str_replace("http://", "", home_url());
+  $sitename = str_replace(".".BLOG_DOMAINE, "", $url);
+}
+
+logIt("url : '".$url."'.");
+// On regarde si le blog existe car s'il faut le créer, il nous faut le blogtype.
+$wpBlgId = get_blog_id_by_domain($url);
+if ($wpBlgId > 0) {
+  logIt("le blog existe, #".$wpBlgId.".");
+} 
+else {
+  logIt("le blog n'existe pas.");
+  // on doit vérifier que'on a bien blogtype sinon, pas de création possible... c'est comme ça.
+  if (isset($_REQUEST['blogtype']) && $_REQUEST['blogtype'] != "") {
+    $TypeDeBlog = $_GET['blogtype'];
+  }
+  else {
+    message("<h1>erreur</h1>Impossible de cr&eacute;er le blog '".$url."', son type n'a pas &eacute;t&eacute; pr&eacute;cis&eacute;.");
+    die();
+    // FIN.
+  }
+}
+
+// Si on ne peut pas le calculer le blogname, on redirige vers le blog des blogs #1.
+if ($url == "") {
+  redirection(BLOG_DOMAINE);
+  // FIN.
+}
+
+$domain = $sitename . '.' .BLOG_DOMAINE; 
+
+logIt("sitename=".$sitename);
+logIt("domain=".$domain);
+logIt("TypeDeBlog=".$TypeDeBlog);
 
 /*
   Le jeton par défaut est celui de laclasse.com défini par laclasse.com pour laclasse.com
@@ -664,18 +763,59 @@ logIt("r&eacute;cup&eacute;rer les variables du jeton CAS");
   ENTPersonStructRattachRNE,
   ENTPersonProfils,
   ENTEleveNivFormation
+  
 */
+logIt("____________________Traitement du jeton et compl&eacute;ments d'information____________________");
 
-$LaclasseAttributes = $_SESSION['phpCAS']['attributes'];
+// Si certaines données sont vide, il faut les complèter :
+// Si ce jeton n'a pas ce qu'on attend, il faut proposer un formulaire à l'utilisateur 
+// Pour saisir les données manquantes :email académique ou pas, nom, prénom.
+// Tout ça c'est valable que si l'ent n'est pas *laclasse*.
+if (
+    (isset($_REQUEST['ent']) &&  $_REQUEST['ent'] != 'laclasse' ) && 
+    (!existsAttr('LaclasseNom') || emptyAttr('LaclasseNom') || !existsAttr('LaclasseEmail') || emptyAttr('LaclasseEmail'))
+   ) {
+  // Si l'utilisateur n'existe pas on lui présente le formulaire, sinon, on va chercher ses données dans la base.
+  $uId = username_exists($username);
+  if ($uId > 0) {
+    logIt("L'utilisateur existe (#".$uId."), pas besoin de compl&eacute;ment d'information."); 
+    // On set ses email,nom et prénom correctement pour que la suite se passe bien.
+    $uRec = get_userdata($uId);
+    setAttr('LaclasseEmail', $uRec->user_email);
+    setAttr('laclasseNom', $uRec->last_name);
+    setAttr('laclassePrenom', $uRec->first_name);
+    setAttr('LaclasseProfil', get_user_meta( $uRec->ID, "profil_ENT", true));
+  }
+  else {
+    //
+    // Demande d'informations complémentaires
+    //
+    formulaire_sso($sitename);
+    }
+}
 
-$laclasseUserUid 		    = $LaclasseAttributes['uid'];                        // Ok pour le T3 du Sdet
-$laclasseUserCodeRne 	  = $LaclasseAttributes['ENTPersonStructRattachRNE'];  // Ok pour le T3 du Sdet
-$laclasseUserId 		    = isset($LaclasseAttributes['ENT_id']) ? $LaclasseAttributes['ENT_id'] : "";                     // Pas dans le T3 du Sdet
-$laclasseUserProfil		  = isset($LaclasseAttributes['LaclasseProfil']) ? $LaclasseAttributes['LaclasseProfil'] : "";     // Pas dans le T3 du Sdet
-$laclasseUserClasse		  = $LaclasseAttributes['ENTEleveClasses'];            // Ok pour le T3 du Sdet
-$laclasseUserNivClasse	= $LaclasseAttributes['ENTEleveNivFormation'];       // Ok pour le T3 du Sdet
-$laclasseUserMail		    = isset($LaclasseAttributes['LaclasseEmail']) ? $LaclasseAttributes['LaclasseEmail'] : "";       // Pas dans le T3 du Sdet
-$laclasseUserMailAca	  = isset($LaclasseAttributes['LaclasseEmailAca']) ? $LaclasseAttributes['LaclasseEmailAca'] : ""; // Pas dans le T3 du Sdet
+$laclasseUserUid        = getAttr('uid', $username);
+$laclasseUserCodeRne    = getAttr('ENTPersonStructRattachRNE', "");
+$laclasseUserId         = getAttr('ENT_id', "");
+$laclasseUserProfil     = getAttr('LaclasseProfil', "");
+$laclasseUserClasse     = getAttr('ENTEleveClasses', "");
+$laclasseUserNivClasse  = getAttr('ENTEleveNivFormation', "");
+$laclasseUserMail       = getAttr('LaclasseEmail', "");
+$laclasseUserMailAca    = getAttr('LaclasseEmailAca', "");
+$laclasseUserNom        = getAttr('laclasseNom', "");
+$laclasseUserPrenom     = getAttr('laclassePrenom', "");
+
+
+// Gestion de l'email académique.
+if ($laclasseUserMail != "" ) $user_email = $laclasseUserMail; 
+else if ($laclasseUserMailAca != "" && in_array($laclasseUserProfil, array("PROF","ADM_ETB","ADMIN","CPE", "PRINCIPAL"))) 
+		$user_email = $laclasseUserMailAca; 
+	 else $user_email = ""; 
+	 
+// Si le profil est nul, il faut qu'on y mette le profil par défaut : INVITE
+if ($laclasseUserProfil == "" ) {
+  $laclasseUserProfil = 'INVITE';
+}
 
 logIt("-> uid=".$laclasseUserUid);
 logIt("-> rne=".$laclasseUserCodeRne);
@@ -685,96 +825,15 @@ logIt("-> Classe=".$laclasseUserClasse);
 logIt("-> Niveau=".$laclasseUserNivClasse);
 logIt("-> mail=".$laclasseUserMail);
 logIt("-> mailAca=".$laclasseUserMailAca);
+logIt("-> username=".$username);
+logIt("-> nom=".$laclasseUserNom);
+logIt("-> prenom=".$laclasseUserPrenom);
 
 
 //
-// Vérification des paramètres d'entrée OBLIGATOIRES si l'utilisateur n'est pas admin
+// ICI ON ENTRE DANS LA PARTIE "CREATION DE BLOGS ET DE USERS"
 //
-error_reporting("E_ALL");
-
-//// => blogname
-logIt("V&eacute;rification des param&egrave;tres.");
-if (!isset($_GET['blogname']) || $_GET['blogname'] == "") {
-	// Si l'utilisateur existe déjà, on le route vers son blog en posant le cookie d'authentification.		
-	if ( username_exists( $username ) ) { 
-		if ($_REQUEST['ENT_action'] == 'IFRAME') 
-			$qry = '?ENT_action=IFRAME';
-		    $redir = home_url().$qry;
-	header("Location: ".$redir);
-	die();
-	}
-	else {
-	 errMsg("Le paramètre 'blogname' n'est pas renseigné.");
-  }
-}
-
-logIt("blogname=".$_GET['blogname']);
-	
-if ($laclasseUserProfil != "ADMIN") {
-	//// => blogtype
-	if (!isset($_GET['blogtype']) || $_GET['blogtype'] == "") {
-		errMsg("Le paramètre 'blogtype' n'est pas renseigné.");
-	}
-	if (!in_array($_GET['blogtype'], array("CLS", "ENV", "ETB", "GRP", "USR"))) {
-		errMsg("La valeur du param&egrave;tre 'blogtype' doit &ecirc;tre prise dans la liste ['CLS', 'ENV', 'ETB', 'GRP', 'USR'].");
-	}
-	logIt("blogtype=".$_GET['blogtype']);
-}
-
-//
-// Setting des variables couramment utilisées dans les api WP
-//
-$site_id = 1;
-
-/*
-	Set the information about the user and his/her new blog.
-	Make changes here as appropriate for your site.
-
-*/
-if ($laclasseUserMail != "" ) $user_email = $laclasseUserMail; 
-else if ($laclasseUserMailAca != "" && in_array($laclasseUserProfil, array("PROF","ADM_ETB","ADMIN","CPE", "PRINCIPAL"))) 
-		$user_email = $laclasseUserMailAca; 
-	 else $user_email = ""; 
-
-$username = strtolower($username);
-
-/*
-	Nom du site à créer.
-	La plateforme laclasse DOIT générer un nom de site unique.
-	A défaut d'un nom passé en get, le user name est utilisé.
-		
-*/
-
-if (isset($_GET['blogname']) && $_GET['blogname'] != "") $sitename = $_GET['blogname'];
-else $sitename = str_replace('_','-',$username);
-
-$sitename = strtolower($sitename);
-
-/*
-	Type de blog à créer : ETB, CLS, GRP, ENV, ou USR.
-*/
-if (isset($_GET['blogtype']) && $_GET['blogtype'] != "") $TypeDeBlog = $_GET['blogtype'];
-else $TypeDeBlog = "USR";
-
-
-
-/*
-	We can't use the global $domain, it turns out, because it isn't set to the 
-	base domain, but to the subdomain of whatever blog the user is currently visiting.
-*/
-
-$domain = $sitename . '.' .BLOG_DOMAINE; //'.blogs.laclasse.lan';
-
-$path = '/'; 
-
-
-logIt("site_id=".$site_id);
-logIt("username=".$username);
-logIt("sitename=".$sitename);
-logIt("TypeDeBlog=".$TypeDeBlog);
-logIt("domain=".$domain);
-logIt("path=".$path);
-
+logIt("____________________Provisionning Blog et User____________________");
 
 	// --------------------------------------------------------------------------------
 	// Si l'utilisateur est SUPER ADMIN de laclasse.com, il a des droits sur le bakoffice général de WP.
@@ -803,7 +862,7 @@ logIt("path=".$path);
 	// Si le blog existe déjà, alors l'utilisateur est rattaché au blog avec des droits
 	// d'éditeur ("Editor") -> peut ecrire, valider des posts et valider les posts des autres.
 	// --------------------------------------------------------------------------------
-	if (in_array($laclasseUserProfil, array("PROF","ADM_ETB","CPE", "PRINCIPAL"))) {
+	if (in_array($laclasseUserProfil, array("PROF", "ADM_ETB", "CPE", "PRINCIPAL"))) {
 
 		// Si le domaine existe
 		if (domain_exists($domain, $path, $site_id)) {	
@@ -811,9 +870,15 @@ logIt("path=".$path);
 			// il est par défaut "éditeur" car c'est un un adulte de l'Ed.Nat.
 			$profilBlog = "editor";
 			
-			// Si c'est un prinncipal et qu'il vient sur le blog de son établissement, il est admin
+			// Si c'est un principal et qu'il vient sur le blog de son établissement, il est admin
 			$codeUAIBlog = get_blog_option($site_id, 'etablissement_ENT');
-			logIt("ce blog est rattaché à l'établissement  '".$codeUAIBlog."'.");
+			logIt(
+			       (
+			         ($codeUAIBlog == "") ? 
+			         "ce blog n'est pas rattach&eacute; &agrave; un &eacute;tablissement." : 
+			         "ce blog est rattach&eacute; &agrave; l'&eacute;tablissement  '".$codeUAIBlog."'."
+			       )
+			     );
 			
 			if ( $laclasseUserProfil == "PRINCIPAL" && $codeUAIBlog == $laclasseUserCodeRne ) $profilBlog = "administrator";
 			
@@ -854,5 +919,6 @@ logIt("path=".$path);
 	logIt("Redirection");
 	// rediretion si le script n'est pas en mode débug.
 	redirection($domain);
+
 
 ?>

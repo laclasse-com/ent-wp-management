@@ -54,8 +54,33 @@ body {width:auto;}
 // --------------------------------------------------------------------------------
 function logIt($msg) {
 	global $logProvisioning;
-	if (isset($_GET['debug']) && $_GET['debug'] == "O")	$logProvisioning .= '<li>'.$msg.'</li>';
+	if (isset($_GET['debug']) && $_GET['debug'] == "O")	$logProvisioning .= "<li>".$msg."</li>\n";
 }
+
+
+// --------------------------------------------------------------------------------
+//  Fonction d'affichage d'un message de retour d'une action de pilotage.
+// --------------------------------------------------------------------------------
+function endMessage($pmessage){
+    message($pmessage);
+	exit;
+}
+
+// --------------------------------------------------------------------------------
+// Fonction de'affichage dun message d'erreur.
+// --------------------------------------------------------------------------------
+function errMsg($msg){
+	if (isset($_GET['debug']) && $_GET['debug'] == "O") logIt("<span style='color:red;'>".$msg."</span>");
+	else
+		endMessage('
+		<h2>Oops...</h2>
+		<p>Il semble qu\'il se soit produit une erreur.</p>
+		<p>'.$msg.'.</p>
+		<p>Vous pouvez contacter le support 
+		<a href="mailto:supportblog@laclasse.com" target="_blank">supportblog@laclasse.com</a>.</p>'
+		);
+}
+
 
 
 ?>
