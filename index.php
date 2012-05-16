@@ -76,6 +76,10 @@ add_filter('admin_footer_text', 'addEntName', 10, 0);
 // Marquage Ministériel
 add_action('wp_footer', 'xiti_MEN_et_google', 10, 0);
 
+// Maîtriser les headers http qui sont envoyés
+add_action( 'login_init', 'remove_frame_options_header',12, 0 );
+add_action( 'admin_init', 'remove_frame_options_header', 12, 0 );
+
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	
 	l i s t e   d e s   u t i l i s a t e u r s 
