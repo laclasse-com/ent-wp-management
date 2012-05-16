@@ -470,7 +470,6 @@ function redirection($p_domaine) {
 	global $logProvisioning;
 	$scriptName = ""; 
 	$qry = Array();
-	
 	// S'occuper de l'embeded
 	if ($_REQUEST['ENT_action'] == 'IFRAME' || isset($_REQUEST['blogname'])) {
    logIt("On est dans une IFRAME.");
@@ -522,6 +521,8 @@ function formulaire_sso($pSiteName) {
   
   setSessionlaclasseProfil();
   $laclasseProfil =  getAttr('LaclasseProfil', "");
+  $laclasseNom =  getAttr('LaclasseNom', "");
+  $laclassePrenom =  getAttr('LaclassePrenom', "");
   
   // Complement pour les PEN
   if ($laclasseProfil != "ELEVE" && $laclasseProfil != "PARENT" ) {
@@ -546,7 +547,7 @@ function formulaire_sso($pSiteName) {
                   <label for='complement_first_name'>Pr&eacute;nom</label>
                 </th>
                 <td>
-                  <input id='complement_first_name' class='regular-text' type='text' value='' name='complement_first_name'>
+                  <input id='complement_first_name' class='regular-text' type='text' value='".$laclassePrenom."' name='complement_first_name'>
                 </td>
               </tr>
               <tr>
@@ -554,7 +555,7 @@ function formulaire_sso($pSiteName) {
                   <label for='complement_last_name'>Nom</label>
                 </th>
                 <td>
-                  <input id='complement_last_name' class='regular-text' type='text' value='' name='complement_last_name'>
+                  <input id='complement_last_name' class='regular-text' type='text' value='".$laclasseNom."' name='complement_last_name'>
                 </td>
               </tr>
               <tr>
@@ -772,7 +773,7 @@ logIt("____________________Traitement du jeton et compl&eacute;ments d'informati
 // Pour saisir les données manquantes :email académique ou pas, nom, prénom.
 // Tout ça c'est valable que si l'ent n'est pas *laclasse*.
 if (
-    (isset($_REQUEST['ent']) &&  $_REQUEST['ent'] != 'laclasse' ) && 
+//    (isset($_REQUEST['ent']) &&  $_REQUEST['ent'] != 'laclasse' ) && 
     (!existsAttr('LaclasseNom') || emptyAttr('LaclasseNom') || !existsAttr('LaclasseEmail') || emptyAttr('LaclasseEmail'))
    ) {
   // Si l'utilisateur n'existe pas on lui présente le formulaire, sinon, on va chercher ses données dans la base.
