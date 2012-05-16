@@ -160,8 +160,7 @@ function createUserWP($p_username, $p_useremail, $p_role, $p_domain) {
 		$userId = $userRec->ID;
 		logIt("L'utilisateur existe d&eacute;j&agrave; dans WP : id=".$userId);
 		// positionnement du booléen $NewUser
-		$NewUser = false;
-	
+		$NewUser = false;	
 	}
 	//
 	// L'utilisateur n'existe pas.
@@ -190,7 +189,7 @@ function createUserWP($p_username, $p_useremail, $p_role, $p_domain) {
 
 		if (is_wp_error($activated) ) {
    			errMsg($activated->get_error_message());
-   		}
+   	}
    	
 		// récupération des information de l'utilisateur 
 		$userRec = get_user_by('login',$p_username);
@@ -428,7 +427,7 @@ function rattachUserToHisBlog($p_domain, $p_path, $p_site_id, $p_wpUsrId, $p_rol
 // --------------------------------------------------------------------------------
 function rattachSuperUserToTheBLog($p_userId, $p_role) {
 		// On s'occupe du profil
-		if (getAtttr('LaclasseProfil') == "ADMIN" && $p_role == "administrator") {
+		if (getAttr('LaclasseProfil') == "ADMIN" && $p_role == "administrator") {
 			// Ajout des droits super administrateur sur le blog des blogs.
 			add_user_to_blog(1, $p_userId, $p_role);
 			logIt("Ajout des droits administrateur sur le blog des blogs");
@@ -766,6 +765,7 @@ logIt("TypeDeBlog=".$TypeDeBlog);
   ENTEleveNivFormation
   
 */
+
 logIt("____________________Traitement du jeton et compl&eacute;ments d'information____________________");
 
 // Si certaines données sont vide, il faut les complèter :
@@ -843,6 +843,7 @@ logIt("____________________Provisionning Blog et User____________________");
 	if ($laclasseUserProfil == "ADMIN") {
 		$wpUsrId = createUserWP($username, $user_email, "administrator", $domain);
 		// Si le domaine existe
+
 		if (domain_exists($domain, $path, $site_id)) {	
 			// L'utilisateur n'est pas le premier à venir pour ce domaine, 
 			// il est par défaut "administrateur de la plateforme" car il est super admin dans l'ENT
