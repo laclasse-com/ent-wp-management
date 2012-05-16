@@ -133,6 +133,13 @@ function disableThisFunc() {
 	return false;
 }
 
+/*************************************************************************************
+fonction remove_frame_options_header : Maîtriser le paramètre de XSS dans les IFRAMES.
+action : login_init, admin_init
+*************************************************************************************/
+function remove_frame_options_header() {
+  header_remove("x-frame-options");
+}
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	
