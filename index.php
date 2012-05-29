@@ -110,8 +110,8 @@ add_action( 'myblogs_allblogs_options', 'actionsBlog', 10, 0);
 	l i s t e   d e s   a r t i c l e s 
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
-// selectbox pourréduire la liste par auteur
-// BUG ???   add_action('restrict_manage_posts', 'restrict_manage_authors');
+// selectbox pour réduire la liste par auteur
+add_action('restrict_manage_posts', 'restrict_manage_authors');
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	

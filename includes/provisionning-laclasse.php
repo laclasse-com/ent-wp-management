@@ -357,7 +357,7 @@ function majWPUserMetData($p_userId) {
 	update_user_meta($p_userId, 'profil_ENT', 		   getAttr('LaclasseProfil'));
 	update_user_meta($p_userId, 'nom_ENT', 		       $ent);
 
-  // FIXME : Comprends pas pourquoi $_SESSION ne comporte pas tojours les valeurs que je lui  mets.
+  // FIXME : Comprends pas pourquoi $_SESSION ne comporte pas tojours les valeurs que je lui mets.
   if (!emptyAttr('LaclassePrenom') && !emptyAttr('LaclasseNom')) {
      wp_update_user( 
             array (
@@ -579,7 +579,7 @@ function formulaire_sso($pSiteName) {
             </table>
             
             <p class='submit'>
-              <!--input id='complement_passer_etape' class='button-secondary' type='submit' value='Passer cette &eacute;tape' name='complement_passer_etape'-->
+              <input id='complement_passer_etape' class='button-secondary' type='submit' value='Passer cette &eacute;tape' name='complement_passer_etape'>
               <input id='submit' class='button-primary' type='submit' value='Valider' name='submit'>
             </p>
           </form>  
@@ -599,7 +599,7 @@ function formulaire_sso($pSiteName) {
     if ($complement_passer_etape != "") {
       setAttr('LaclasseEmail', "no_mail_" .substr( md5( uniqid( microtime( ))), 0, 6 ) . "@laclasse.com");
       setAttr('LaclasseNom', getAttr('uid'));
-      setAttr('LaclassePrenom', "");
+      setAttr('LaclassePrenom', getAttr('uid'));
     }
     else // on met en session les nouveaux paramètres
     {

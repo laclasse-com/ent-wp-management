@@ -13,42 +13,29 @@
 // Proposer une selectbox de restriction par auteur sur la liste des articles
 // filter : restrict_manage_posts
 // http://www.geekpress.fr/wordpress/astuce/ajouter-filtre-auteur-administration-wordpress-563/
-
-//                  MARCHE PAS ???
 // --------------------------------------------------------------------------------
-/*
 function restrict_manage_authors() {
-    $default_post_type = (isset($_GET['post_type']))? isset($_GET['post_type']) : 'post';
-//        if (  post_type_exists($_GET['post_type'])
-//        &&    in_array( strtolower($_GET['post_type'] ), get_post_types() ) ) {
-                global $wpdb;
-                global $blog_id;
-                // On prepare la requete pour recuperer tous les auteurs qui ont publiés au moins 1 article
-                $query = $wpdb->prepare( 'SELECT DISTINCT U.ID, U.display_name
-                    FROM ' . $wpdb->get_blog_prefix( $blog_id ). 'posts as P, '.$wpdb->users .' as U
+  global $wpdb, $typenow;
+  // On prepare la requete pour recuperer tous les auteurs qui ont publiés au moins 1 article
+  $query = $wpdb->prepare( 'SELECT DISTINCT post_author
+      FROM '. $wpdb->posts . '
+      WHERE post_type = %s
+  ', $typenow );
 
-                    WHERE U.ID = P.post_author
-                    AND P.post_type = %s
-                    AND P.post_status = "publish"
-                ', $_GET['post_type'] );
-                // On recupere les id
-                $users = $wpdb->get_col($query);
-                
-               // On génére le select avec la liste des auteurs
-                wp_dropdown_users(array(
-                        'show_option_all'       => __('Voir tous les auteurs'),
-                        'show_option_none'      => false,
-                        'name'                  => 'author',
-                        'include'				=> $wpdb->get_results($query), //$users,
-                        'selected'              => !empty($_GET['author']) ? (int)$_GET['author'] : 0,
-                        'include_selected'      => false
-                ));
-                
-//        }
+  // On recupere les id
+  $users = $wpdb->get_col($query);
+
+ // On génére le select avec la liste des auteurs
+  wp_dropdown_users(array(
+          'show_option_all'       => __('Voir tous les auteurs'),
+          'show_option_none'      => false,
+          'name'                  => 'author',
+          'include'		            => $users,
+          'selected'              => !empty($_GET['author']) ? (int)$_GET['author'] : 0,
+          'include_selected'      => true
+  ));
 
 }
-*/
-
 // --------------------------------------------------------------------------------
 // Paramétrage de l'extension USER_ROLE_EDITOR si elle est installée.
 // filter : admin_init
