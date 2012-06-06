@@ -193,9 +193,11 @@ if (isset($_REQUEST['ENT_action'])) {
 	//
 	case 'LOGOUT' :	
 		global $current_user;
-		$current_user = get_user_by('login',phpCAS::getUser());
-		$urlLogOut = htmlspecialchars_decode(wp_logout_url());
-		header('Location: '.$urlLogOut);
+		if (phpCAS::isAuthenticated()) {
+			$current_user = get_user_by('login',phpCAS::getUser());
+			$urlLogOut = htmlspecialchars_decode(wp_logout_url());
+			header('Location: '.$urlLogOut);
+		}
 		$mustDieAfterAction = true;
 		break;
 	//
