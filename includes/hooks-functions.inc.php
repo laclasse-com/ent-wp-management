@@ -260,10 +260,7 @@ function actionsBlog() {
 	if ($action == 'DESINSCRIRE') {
 		if (aUnRoleSurCeBlog($current_user->ID, $blogid)) {
 			$cu = (array) $current_user;
-			foreach ($cu["wp_".$blogid."_capabilities"] as $role => $val) {
-
-				remove_user_from_blog($current_user->ID, $blogid);
-			}
+      remove_user_from_blog($current_user->ID, $blogid);
 		}
 	}
 }
