@@ -192,7 +192,12 @@ if (isset($_REQUEST['ENT_action'])) {
 	// Logout de WP.
 	//
 	case 'LOGOUT' :	
-		wpCas::logout();
+		global $current_user;
+		if (phpCAS::isAuthenticated()) {
+			$current_user = get_user_by('login',phpCAS::getUser());
+			$urlLogOut = htmlspecialchars_decode(wp_logout_url());
+			header('Location: '.$urlLogOut);
+		}
 		$mustDieAfterAction = true;
 		break;
 	//
