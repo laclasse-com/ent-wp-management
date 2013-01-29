@@ -8,7 +8,8 @@ $casToken = "";
 // Récupérer une données dan le jeton, à défaut en GET
 // --------------------------------------------------------------------------------
 function getAttr($TokenAttrName, $defaultValue= "") {
-  return isset($_SESSION['phpCAS']['attributes'][$TokenAttrName]) ? $_SESSION['phpCAS']['attributes'][$TokenAttrName] : $defaultValue; 
+  global $casToken;
+  return isset($casToken[$TokenAttrName]) ? $casToken[$TokenAttrName] : $defaultValue; 
 }
 
 // --------------------------------------------------------------------------------
@@ -38,7 +39,5 @@ function emptyAttr($TokenAttrName) {
 function setToken() {
   global $casToken;
   $casToken = isset($_SESSION['phpCAS']['attributes']) ? $_SESSION['phpCAS']['attributes'] : "";
+
 }
-
-
-?>

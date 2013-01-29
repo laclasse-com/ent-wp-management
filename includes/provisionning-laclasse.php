@@ -138,6 +138,7 @@ logIt("TypeDeBlog=".$TypeDeBlog);
 */
 
 logIt("____________________Traitement du jeton et compl&eacute;ments d'information____________________");
+setToken($_SESSION['phpCAS']['attributes']);
 
 // Si certaines données sont vide, il faut les complèter :
 // Si ce jeton n'a pas ce qu'on attend, il faut proposer un formulaire à l'utilisateur 
