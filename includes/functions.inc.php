@@ -2,6 +2,7 @@
 // --------------------------------------------------------------------------------
 // fonctions utilitaires du plugin ENT-WP-Management.
 // --------------------------------------------------------------------------------
+$logProvisioning = "";
 
 // --------------------------------------------------------------------------------
 // fonction d'envoie d'un GET HTTP.
@@ -57,6 +58,13 @@ function logIt($msg) {
 	if (isset($_GET['debug']) && $_GET['debug'] == "O")	$logProvisioning .= "<li>".$msg."</li>\n";
 }
 
+// --------------------------------------------------------------------------------
+// fonction de renvoie du log pour affichage
+// --------------------------------------------------------------------------------
+function getLog() {
+	global $logProvisioning;
+  return $logProvisioning;
+}
 
 // --------------------------------------------------------------------------------
 //  Fonction d'affichage d'un message de retour d'une action de pilotage.
