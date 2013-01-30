@@ -2,7 +2,7 @@
 /**********************************************************************************
 	Fonctions de manipulation du jeton CAS.
 **********************************************************************************/
-$casToken = "";
+$casToken = array();
 
 // --------------------------------------------------------------------------------
 // Récupérer une données dan le jeton, à défaut en GET
@@ -16,28 +16,37 @@ function getAttr($TokenAttrName, $defaultValue= "") {
 // setter une données dan la session $_SESSION
 // --------------------------------------------------------------------------------
 function setAttr($TokenAttrName, $value= "") {
-  $_SESSION['phpCAS']['attributes'][$TokenAttrName] = $value; 
+  global $casToken;
+  $casToken[$TokenAttrName] = $value; 
 }
 
 // --------------------------------------------------------------------------------
 // test existence attribut
 // --------------------------------------------------------------------------------
 function existsAttr($TokenAttrName) {
-  return isset($_SESSION['phpCAS']['attributes'][$TokenAttrName]);
+  global $casToken;
+  return isset($casToken[$TokenAttrName]);
 }
 
 // --------------------------------------------------------------------------------
 // tester sur attribut vide
 // --------------------------------------------------------------------------------
 function emptyAttr($TokenAttrName) {
-  return ($_SESSION['phpCAS']['attributes'][$TokenAttrName] == "");
+  global $casToken;
+  return ($casToken[$TokenAttrName] == "");
 }
 
 // --------------------------------------------------------------------------------
 // setter Le jeton reçu de CAS
 // --------------------------------------------------------------------------------
-function setToken() {
+function setToken($token) {
   global $casToken;
-  $casToken = isset($_SESSION['phpCAS']['attributes']) ? $_SESSION['phpCAS']['attributes'] : "";
-
+  $casToken =  $token;
+}
+// --------------------------------------------------------------------------------
+// getter sur Le jeton reçu de CAS
+// --------------------------------------------------------------------------------
+function getToken() {
+  global $casToken;
+  return $casToken;
 }
