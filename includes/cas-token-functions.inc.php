@@ -41,7 +41,7 @@ function emptyAttr($TokenAttrName) {
 // --------------------------------------------------------------------------------
 function setToken($token) {
   global $casToken;
-  $casToken =  $token;
+  $casToken = $token;
 }
 // --------------------------------------------------------------------------------
 // getter sur Le jeton reçu de CAS

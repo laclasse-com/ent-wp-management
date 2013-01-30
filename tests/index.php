@@ -19,7 +19,7 @@ require_once( '../includes/cas-token-functions.inc.php');
 require_once( '../includes/provisionning-functions.inc.php');
 
 $mockToken = array();
-$mockToken['phpCas'] = array();
+$mockToken['phpCAS'] = array();
 $mockToken['phpCAS']['attributes'] = array();
 $mockToken['phpCAS']['attributes']['LaclasseProfil'] = "";
 
@@ -46,23 +46,87 @@ foreach ($pIn as $i => $p) {
 
 /*
   Le test consiste à avoir un utilisateur de test et un site de test.
-  On lui affecte tous les profils à tour de role et on regarde si le comportement est celui qu'on attend.
-   
+  On lui affecte tous les profils à tour de role et on regarde si le 
+  comportement est celui qu'on attend, dans les 3 modes suivants :
+  
+    1. Création du user et  creation du blog
+    2. Création du user     rattachement à son blog
+    3. Maj du User et       rattachement à son blog
+    4. Maj du User et       creation du blog
+    
+  Pour les élèves et les parents :
+    
+    1. Création du user rattachement à son blog
+    2. Maj du User et   rattachement à son blog
+    3. Création du user NON creation de blog
+    4. Maj du User et   NON creation de blog
+    
+  Et ça pour tous les types de blogs : CLS, GRP, ENV, ETB
+    
 */
-// Mock du jeton d'uthentification
-$laclasseUserUid        = getAttr('uid', $username);
-$laclasseUserCodeRne    = getAttr('ENTPersonStructRattachRNE', "");
-$laclasseUserId         = getAttr('ENT_id', "");
-$laclasseUserProfil     = getAttr('LaclasseProfil', "");
-$laclasseUserClasse     = getAttr('ENTEleveClasses', "");
-$laclasseUserNivClasse  = getAttr('ENTEleveNivFormation', "");
-$laclasseUserMail       = getAttr('LaclasseEmail', "");
-$laclasseUserMailAca    = getAttr('LaclasseEmailAca', "");
-$laclasseUserNom        = getAttr('laclasseNom', "");
-$laclasseUserPrenom     = getAttr('laclassePrenom', "");
+// Mock du jeton d'authentification
+$_SESSION['phpCAS'] = array();
+$_SESSION['phpCAS']['attributes'] = array();
+setAttr('uid', 'VZZ69999');
+setAttr('ENTPersonStructRattachRNE', "0699990Z");
+setAttr('ENT_id', "0");
+setAttr('LaclasseEmail', "tests-unitaires-wp@laclasse.com");
+setAttr('laclasseNom', "tests-unitaires-wp");
+setAttr('laclassePrenom', "tests-unitaires-wp");
 
-// Création de l'utilisateur. Si celui-ci existe, il est juste mis a jour.
+$_GET['debug'] = 'O';
+$_REQUEST['ENT_action'] = 'IFRAME';
+$_REQUEST['ent'] = 'laclasse';
+$_REQUEST['blogname'] = 'tests-unitaires-wp';
 
-$USERID = createUserWP('Tests-Unitaires', 'tests-unitaires@laclasse.com', 'administrator', 'tests-unitaires'.'.' .BLOG_DOMAINE);
-echo "UserId = ".$USERID;
-echo "<br>deleted ? " .wp_delete_user( $USERID );
+/* création d'un user WP */
+$p_username = getAttr('laclasseNom');
+$p_useremail = getAttr('LaclasseEmail');
+wpmu_signup_user($p_username, $p_useremail, "");
+$wpError = wpmu_validate_user_signup($p_username, $p_useremail); 
+if (is_wp_error($wpError) ) logIt($wpError->get_error_message());
+$validKey = get_activation_key($p_username);
+$activated = wpmu_activate_signup($validKey);
+if (is_wp_error($activated) ) logIt($activated->get_error_message());
+$userRec = get_user_by('login',$p_username);
+$userId = $userRec->ID;
+
+
+
+/****************************************************************************
+ B L O G   D E   C L A S S E  :  'CLS'
+****************************************************************************/
+$_REQUEST['blogtype'] = 'CLS';
+
+  //-------------------------------------------------------------------------
+  // Profils enfant : ELEVE
+  //-------------------------------------------------------------------------
+  // Logout avant tout chose
+  wp_clear_auth_cookie();
+  
+  phpCAS::setNoCasServerValidation();
+  // ensure the user is authenticated via CAS
+  if( !phpCAS::isAuthenticated() || !$username = strtolower(phpCAS::getUser()) ){
+  	wpCAS::authenticate();
+  	die( 'requires authentication' );
+  }
+  setWPCookie($userId);
+  
+  setAttr('ENTEleveClasses', "6EME5");
+  setAttr('ENTEleveNivFormation', "6EME");
+  
+  setAttr('LaclasseProfil', "ELEVE");
+  setAttr("ENTPersonProfils", 'National_1');
+  // Appel du script de provisionning
+  include('../includes/provisionning-laclasse.php');
+
+ 
+//$USERID = createUserWP('Tests-Unitaires', 'tests-unitaires@laclasse.com', 'administrator', 'tests-unitaires'.'.' .BLOG_DOMAINE);//
+//echo "UserId = ".$USERID;
+//echo "<br>deleted ? " .wp_delete_user( $USERID );
+
+
+//
+// Profils adultes 
+//
+//setAttr('LaclasseEmailAca', "");

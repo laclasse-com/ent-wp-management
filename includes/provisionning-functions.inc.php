@@ -434,7 +434,7 @@ function redirection($p_domaine) {
     $qry[] = 'ENT_display=CENTRAL';
   }
   
-  // Si le paramètre 'ent' est défini, il faut le reporter pour le log out
+  // Si le paramètre 'ent' est défini, il faut le reporter pour le logout
   if (isset($_REQUEST['ent']) || $_REQUEST['ent'] != 'laclasse') {
     $qry[] = "ent=".$_REQUEST['ent'];
   }

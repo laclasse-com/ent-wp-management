@@ -31,8 +31,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307	 USA
 // --------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------
 // Requires WordPress
-require_once( './wp-load.php' );
-require( 'wp-blog-header.php' );
+require_once( $_SERVER["DOCUMENT_ROOT"] . '/wp-load.php' );
+require_once( $_SERVER["DOCUMENT_ROOT"] . '/wp-blog-header.php' );
 require_once( ABSPATH . WPINC . '/registration.php' );
 require_once( ABSPATH . 'wp-admin/includes/ms.php' );
 // Requires applicatifs
@@ -84,7 +84,7 @@ logIt("____________________D&eacute;finition Routage____________________");
 if (isset($_REQUEST['blogname']) && $_REQUEST['blogname'] != "") {
   logIt("Blogname est renseign&eacute;.");
   $url = str_replace("http://", "", $_REQUEST['blogname'].".".BLOG_DOMAINE);
-  $sitename = $_GET['blogname'];
+  $sitename = $_REQUEST['blogname'];
 }
 else {
   logIt("Blogname n'est pas renseign&eacute;.");
@@ -102,7 +102,7 @@ else {
   logIt("le blog n'existe pas.");
   // on doit vérifier que'on a bien blogtype sinon, pas de création possible... c'est comme ça.
   if (isset($_REQUEST['blogtype']) && $_REQUEST['blogtype'] != "") {
-    $TypeDeBlog = $_GET['blogtype'];
+    $TypeDeBlog = $_REQUEST['blogtype'];
   }
   else {
     message("<h1>erreur</h1>Impossible de cr&eacute;er le blog '".$url."', son type n'a pas &eacute;t&eacute; pr&eacute;cis&eacute;.");
@@ -139,6 +139,8 @@ logIt("TypeDeBlog=".$TypeDeBlog);
 
 logIt("____________________Traitement du jeton et compl&eacute;ments d'information____________________");
 setToken($_SESSION['phpCAS']['attributes']);
+
+logIt("Jeton xml issue de CAS : <pre>".print_r(getToken(), true)."</pre>");
 
 // Si certaines données sont vide, il faut les complèter :
 // Si ce jeton n'a pas ce qu'on attend, il faut proposer un formulaire à l'utilisateur 
