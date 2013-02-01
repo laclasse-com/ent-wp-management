@@ -58,12 +58,11 @@ $site_id = 1;
 
 // no SSL validation for the CAS server
 phpCAS::setNoCasServerValidation();
-
 // ensure the user is authenticated via CAS
 if( !phpCAS::isAuthenticated() || !$username = strtolower(phpCAS::getUser()) ){
 	wpCAS::authenticate();
 	die( 'requires authentication' );
-}
+} 
 
 // we don't want crawlers to index this page, if they ever get here.
 function signuppageheaders() {
@@ -295,6 +294,5 @@ logIt("____________________Provisionning Blog et User____________________");
 	logIt("Redirection");
 	// rediretion si le script n'est pas en mode dŽbug.
 	redirection($domain);
-
 
 ?>
