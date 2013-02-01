@@ -18,17 +18,37 @@ require_once( '../includes/cas-token-functions.inc.php');
 require_once( '../includes/provisionning-functions.inc.php');
 require_once( '../includes/unittest.inc.php');
 
+/********************************************************************************
+  Paramétrage de la request pour simuler un pilotage deuis laclasse.Com
+********************************************************************************/
 // Pour loguer il nous faut debug à 'O'
 $_GET['debug'] = 'O';
 // Paramétrage de la request par défaut
 $_REQUEST['ENT_action'] = 'IFRAME';
 $_REQUEST['ent'] = 'laclasse';
 $_REQUEST['blogname'] = 'tests-unitaires-wp';
+//$_REQUEST['ENT_action'] = '';
 
-$domain = $_REQUEST['blogname'] . '.' .BLOG_DOMAINE; 
-$site_id = 1;
-$path = '/';
+/********************************************************************************
+  Suppression de l'authentification CAS pour les tests
+********************************************************************************/
+logit('Suppression de l\'authentification CAS pour les tests');
+/* suppression de l'authentification CAS */
+remove_all_actions('wp_authenticate');
+remove_all_actions('wp_logout');
+remove_all_actions('lost_password');
+remove_all_actions('retrieve_password');
+remove_all_actions('check_passwords');
+remove_all_actions('password_reset');
+remove_all_actions('show_password_fields');
+remove_all_actions('show_network_site_users_add_new_form');
 
+remove_filter('login_url',array('wpCAS', 'get_url_login'));
+remove_filter('logout_url',array('wpCAS', 'get_url_logout'));
+
+/********************************************************************************
+  Tests unitaires
+********************************************************************************/
 logIt('<h1>Test unitaires du '.date("Y-m-d H:i:s").'</h1>');
 
 $mockToken = array();
@@ -77,49 +97,38 @@ foreach ($pIn as $i => $p) {
   Et ça pour tous les types de blogs : CLS, GRP, ENV, ETB
     
 ********************************************************************************/
+include('../includes/provisionning-laclasse.php');
+
+logIt('<h1>Test de provisionning du '.date("Y-m-d H:i:s").'</h1>');
 
 /********************************************************************************
 Authentification obligatoire pour effectuer les tests
 ********************************************************************************/
+//  foreach ($_SESSION['phpCAS']['attributes'] as $n => $v) {
+//    unset($_SESSION['phpCAS']['attributes'][$n] = "titi";
+//  }
 
-phpCAS::setNoCasServerValidation();
-// ensure the user is authenticated via CAS
-if( !phpCAS::isAuthenticated())	wpCAS::authenticate();        
-	                               
-
-logIt ('auhtentifi&eacute; ! username='.strtolower(phpCAS::getUser()));
+if (!isset($_SESSION['phpCAS'])) $_SESSION['phpCAS'] = array();
+if (!isset($_SESSION['phpCAS']['attributes'])) $_SESSION['phpCAS']['attributes'] = array();
 
 // Mock de la session et du jeton d'authentification
-$_SESSION['phpCAS'] = array();
-$_SESSION['phpCAS']['attributes'] = array();
-$_SESSION['phpCAS']['attributes']['uid'] = '';
-$_SESSION['phpCAS']['attributes']['login'] = '';
-$_SESSION['phpCAS']['attributes']['ENT_id'] = '';
-$_SESSION['phpCAS']['attributes']['laclasseNom'] = '';
-$_SESSION['phpCAS']['attributes']['LaclasseSexe'] = '';
-$_SESSION['phpCAS']['attributes']['LaclasseEmail'] = '';
-$_SESSION['phpCAS']['attributes']['laclassePrenom'] = '';
+//$_SESSION['phpCAS'] = array();
+//$_SESSION['phpCAS']['attributes'] = array();
+$_SESSION['phpCAS']['attributes']['uid'] = 'VZZ69999';
+$_SESSION['phpCAS']['attributes']['login'] = 'tests-unitaires-wp';
+$_SESSION['phpCAS']['attributes']['ENT_id'] = '0';
+$_SESSION['phpCAS']['attributes']['LaclasseNom'] = 'tests-unitaires-wp';
+$_SESSION['phpCAS']['attributes']['LaclasseSexe'] = 'F';
+$_SESSION['phpCAS']['attributes']['LaclasseEmail'] = 'tests-unitaires-wp@laclasse.com';
+$_SESSION['phpCAS']['attributes']['laclassePrenom'] = 'tests-unitaires-wp';
 $_SESSION['phpCAS']['attributes']['LaclasseProfil'] = '';
 $_SESSION['phpCAS']['attributes']['ENTEleveClasses'] = '';
-$_SESSION['phpCAS']['attributes']['LaclasseCivilite'] = '';
+$_SESSION['phpCAS']['attributes']['LaclasseCivilite'] = 'Mme';
 $_SESSION['phpCAS']['attributes']['ENTPersonProfils'] = '';
 $_SESSION['phpCAS']['attributes']['ENTEleveNivFormation'] = '';
-$_SESSION['phpCAS']['attributes']['ENTPersonStructRattachRNE'] = '';
+$_SESSION['phpCAS']['attributes']['ENTPersonStructRattachRNE'] = '0699990Z';
 
-setToken($_SESSION['phpCAS']['attributes']);
-
-setAttr('uid', 'VZZ69999');
-setAttr('login', "tests-unitaires-wp");
-setAttr('ENT_id', "0");
-setAttr('laclasseNom', "tests-unitaires-wp");
-setAttr('LaclasseSexe', "F");
-setAttr('LaclasseEmail', "tests-unitaires-wp@laclasse.com");
-setAttr('laclassePrenom', "tests-unitaires-wp");
-setAttr('LaclasseCivilite', "Mme");
-setAttr('ENTPersonStructRattachRNE', "0699990Z");
-
-
-/* création du user WP de test*/
+/* création du user WP de test si besoin */
 $p_username = getAttr('login');
 $p_useremail = getAttr('LaclasseEmail');
 $userId = get_user_id_from_string($p_useremail);
@@ -134,7 +143,7 @@ if ($userId == 0) {
     $userId = $userRec->ID;
 }
 logit('Utilisateur de test #'.$userId);
-
+$blogId = getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE );
 
 /****************************************************************************
  B L O G   D E   C L A S S E  :  'CLS'
@@ -143,29 +152,32 @@ $_REQUEST['blogtype'] = 'CLS';
 
   //-------------------------------------------------------------------------
   // Profils enfant : ELEVE
-  //-------------------------------------------------------------------------
-  // Logout avant tout chose
-//  wp_clear_auth_cookie();
+  //-------------------------------------------------------------------------  
+  $_SESSION['phpCAS']['attributes']['LaclasseProfil'] = "ELEVE";
+  $_SESSION['phpCAS']['attributes']['ENTEleveClasses'] = "6EME5";
+  $_SESSION['phpCAS']['attributes']['ENTEleveNivFormation'] = "6EME";
+  $_SESSION['phpCAS']['attributes']['ENTPersonProfils'] = 'National_1';
+  setToken($_SESSION['phpCAS']['attributes']);
   
-  setAttr('ENTEleveClasses', "6EME5");
-  setAttr('ENTEleveNivFormation', "6EME");
+  logit('Jeton simul&eacute; : <pre style="font-size:11px;">'.print_r(getToken(), true).'</pre>');
   
-  setAttr('LaclasseProfil', "ELEVE");
-  setAttr("ENTPersonProfils", 'National_1');
+  // Logout 
+  wp_clear_auth_cookie();
+  // Login
+  setWPCookie($userId);
+  // test du provisionning
+  provision_comptes_laclasse();
   
-  logit('<pre>'.print_r(getToken(), true).'</pre>');
+  echo aUnRoleSurCeBlog($userId, $blogId);
   
-  rattachUserToHisBlog($domain, $path, $site_id, $userId, "contributor");
+  //
   
-//  setWPCookie($userId);
+// endMessage("<ul>".getLog() ."</ul>");
+// die();
 
-//endMessage("<ul>".getLog() ."</ul>");
-//die();
-//
   // Appel du script de provisionning
-//  include('../includes/provisionning-laclasse.php');
-
- 
+  
+   
 //$USERID = createUserWP('Tests-Unitaires', 'tests-unitaires@laclasse.com', 'administrator', 'tests-unitaires'.'.' .BLOG_DOMAINE);//
 //echo "UserId = ".$USERID;
 //echo "<br>deleted ? " .wp_delete_user( $USERID );

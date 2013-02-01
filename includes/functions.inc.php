@@ -70,7 +70,7 @@ function getLog() {
 //  Fonction d'affichage d'un message de retour d'une action de pilotage.
 // --------------------------------------------------------------------------------
 function endMessage($pmessage){
-    message($pmessage);
+  message($pmessage);
 	exit;
 }
 

@@ -17,7 +17,7 @@ function getAttr($TokenAttrName, $defaultValue= "") {
 // --------------------------------------------------------------------------------
 function setAttr($TokenAttrName, $value= "") {
   global $casToken;
-  $casToken[$TokenAttrName] = $value; 
+  $casToken[$TokenAttrName] = $value;
 }
 
 // --------------------------------------------------------------------------------
