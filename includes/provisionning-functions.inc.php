@@ -450,7 +450,12 @@ function redirection($p_domaine) {
 	logIt("Ici on va rediriger vers <a href='http://".$p_domaine.$scriptName.$query."'>http://".$p_domaine.$scriptName.$query."</a>");
 	
 	if (isset($_GET['debug']) && $_GET['debug'] == "O") {
-		endMessage("<ul>".getLog() ."</ul>". "Mode DEBUG activ&eacute; : Pas de redirection.");
+    $log = "<ul>".getLog() ."</ul>". "Mode DEBUG activ&eacute; : Pas de redirection.";
+    // Ici on ajoute un petit hack pour pouvoir continuer ou analyer le log en mode test
+    if (isset($_GET['mode_test']) && $_GET['mode_test'] == "O") {
+      // ici rien car ce qu'on voudrait c'est récupérer le log et pas forcément l'afficher.
+    }
+    else endMessage($log);
 	}
 	else {
 		// Si le blog est de type Etablissement (ETB) on enlève la sidebar

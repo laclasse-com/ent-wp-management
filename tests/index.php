@@ -23,6 +23,7 @@ require_once( '../includes/unittest.inc.php');
 ********************************************************************************/
 // Pour loguer il nous faut debug à 'O'
 $_GET['debug'] = 'O';
+$_GET['mode_test'] = 'O';
 // Paramétrage de la request par défaut
 $_REQUEST['ENT_action'] = 'IFRAME';
 $_REQUEST['ent'] = 'laclasse';
@@ -62,10 +63,10 @@ equalType('Type doit etre', "array", getToken());
 
 // test setAttr/getAttr
 setAttr("LaclasseProfil", "123456789");
-equal("Valeur lue doit etre", "123456789", getAttr('LaclasseProfil'));
+equal("Valeur avec setAttr,", "123456789", getAttr('LaclasseProfil'));
 
 setAttr("LaclasseProfil", "");
-equal("Valeur lue doit etre", "", getAttr('LaclasseProfil'));
+equal("Valeur lue avec setAttr", "", getAttr('LaclasseProfil'));
 
 // test de la fonction setSessionlaclasseProfil
 $pIn = array ('National_1','National_2','National_3','National_4','National_5','National_6','National_7', 'Profil_Inexistant???');
@@ -74,7 +75,7 @@ foreach ($pIn as $i => $p) {
   setAttr("LaclasseProfil", "");
   setAttr("ENTPersonProfils", $p);
   setSessionlaclasseProfil();
-  equal("Profil doit etre", $pOut[$i], getAttr('LaclasseProfil'));
+  equal("Test du profil issu de setSessionlaclasseProfil (".$p.")", $pOut[$i], getAttr('LaclasseProfil'));
 }
 
 /********************************************************************************
@@ -104,16 +105,10 @@ logIt('<h1>Test de provisionning du '.date("Y-m-d H:i:s").'</h1>');
 /********************************************************************************
 Authentification obligatoire pour effectuer les tests
 ********************************************************************************/
-//  foreach ($_SESSION['phpCAS']['attributes'] as $n => $v) {
-//    unset($_SESSION['phpCAS']['attributes'][$n] = "titi";
-//  }
-
 if (!isset($_SESSION['phpCAS'])) $_SESSION['phpCAS'] = array();
 if (!isset($_SESSION['phpCAS']['attributes'])) $_SESSION['phpCAS']['attributes'] = array();
 
 // Mock de la session et du jeton d'authentification
-//$_SESSION['phpCAS'] = array();
-//$_SESSION['phpCAS']['attributes'] = array();
 $_SESSION['phpCAS']['attributes']['uid'] = 'VZZ69999';
 $_SESSION['phpCAS']['attributes']['login'] = 'tests-unitaires-wp';
 $_SESSION['phpCAS']['attributes']['ENT_id'] = '0';
@@ -128,10 +123,16 @@ $_SESSION['phpCAS']['attributes']['ENTPersonProfils'] = '';
 $_SESSION['phpCAS']['attributes']['ENTEleveNivFormation'] = '';
 $_SESSION['phpCAS']['attributes']['ENTPersonStructRattachRNE'] = '0699990Z';
 
+$_SESSION['phpCAS']['attributes']['LaclasseProfil'] = "ELEVE";
+$_SESSION['phpCAS']['attributes']['ENTEleveClasses'] = "6EME5";
+$_SESSION['phpCAS']['attributes']['ENTEleveNivFormation'] = "6EME";
+$_SESSION['phpCAS']['attributes']['ENTPersonProfils'] = 'National_1';
+setToken($_SESSION['phpCAS']['attributes']);
+
 /* création du user WP de test si besoin */
 $p_username = getAttr('login');
 $p_useremail = getAttr('LaclasseEmail');
-$userId = get_user_id_from_string($p_useremail);
+$userId = get_user_id_from_string($p_username);
 if ($userId == 0) {
     wpmu_signup_user($p_username, $p_useremail, "");
     $wpError = wpmu_validate_user_signup($p_username, $p_useremail); 
@@ -144,7 +145,6 @@ if ($userId == 0) {
 }
 logit('Utilisateur de test #'.$userId);
 $blogId = getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE );
-
 /****************************************************************************
  B L O G   D E   C L A S S E  :  'CLS'
 ****************************************************************************/
@@ -153,11 +153,6 @@ $_REQUEST['blogtype'] = 'CLS';
   //-------------------------------------------------------------------------
   // Profils enfant : ELEVE
   //-------------------------------------------------------------------------  
-  $_SESSION['phpCAS']['attributes']['LaclasseProfil'] = "ELEVE";
-  $_SESSION['phpCAS']['attributes']['ENTEleveClasses'] = "6EME5";
-  $_SESSION['phpCAS']['attributes']['ENTEleveNivFormation'] = "6EME";
-  $_SESSION['phpCAS']['attributes']['ENTPersonProfils'] = 'National_1';
-  setToken($_SESSION['phpCAS']['attributes']);
   
   logit('Jeton simul&eacute; : <pre style="font-size:11px;">'.print_r(getToken(), true).'</pre>');
   
@@ -167,8 +162,17 @@ $_REQUEST['blogtype'] = 'CLS';
   setWPCookie($userId);
   // test du provisionning
   provision_comptes_laclasse();
+  // test du profil sur le blog.
+  equal("le user #".$userId." doit avoir un role sur le blog #".$blogId, true, aUnRoleSurCeBlog($userId, $blogId));
   
-  echo aUnRoleSurCeBlog($userId, $blogId);
+  global $current_user;
+  get_currentuserinfo();
+  // ?????????????????????????????????
+  print_r($GLOBALS);
+  
+  equal("le user #".$userId." doit avoir le role 'contributor' sur le blog #".$blogId, true, aLeRoleSurCeBlog($userId, $blogId, 'contributor'));
+  
+  
   
   //
   

@@ -6,11 +6,11 @@ define('SUCCESS','<b><span style="color:green;">OK !</span></b><br/>');
 define('ERR','<b><span style="color:red;">KO !</span></b><br/>');
 
 function ok($should="", $expected="", $hadgot=""){
-  logIt($should.' &eacute;gal &agrave; "'. $expected .'", obtenu : "' .$hadgot . '", ' . SUCCESS );
+  echo($should.'. Attendu "'. $expected .'", obtenu : "' .$hadgot . '", ' . SUCCESS );
 }
 
 function ko($should="", $expected="", $hadgot=""){
-  logIt($should.' &eacute;gal &agrave; "'. $expected .'", obtenu : "' .$hadgot . '", ' . ERR );
+  echo($should.'. Attendu "'. $expected .'", obtenu : "' .$hadgot . '", ' . ERR );
 }
 
 function equal($should, $expected, $hadgot){
