@@ -69,12 +69,14 @@ function provision_comptes_laclasse() {
     logIt('<b>Pas d\'autentification CAS !</b>');
   }
   
+/*
   // we don't want crawlers to index this page, if they ever get here.
   function signuppageheaders() {
   	echo "<meta name='robots' content='noindex,nofollow' />\n";
   }
   add_action( 'wp_head', 'signuppageheaders' ) ;
   add_filter("redirect_to", get_site_url()."?ENT_action=IFRAME"); 
+*/  
   
   // activer l'affichage des erreurs
   error_reporting("E_ALL");

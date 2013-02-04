@@ -19,7 +19,7 @@ require_once( '../includes/provisionning-functions.inc.php');
 require_once( '../includes/unittest.inc.php');
 
 /********************************************************************************
-  Paramétrage de la request pour simuler un pilotage deuis laclasse.Com
+  Paramétrage de la request pour simuler un pilotage depuis laclasse.Com
 ********************************************************************************/
 // Pour loguer il nous faut debug à 'O'
 $_GET['debug'] = 'O';
@@ -30,10 +30,12 @@ $_REQUEST['ent'] = 'laclasse';
 $_REQUEST['blogname'] = 'tests-unitaires-wp';
 //$_REQUEST['ENT_action'] = '';
 
+startTest('<h1>Test unitaires du '.date("Y-m-d H:i:s").'</h1>');
+
 /********************************************************************************
   Suppression de l'authentification CAS pour les tests
 ********************************************************************************/
-logit('Suppression de l\'authentification CAS pour les tests');
+echo('Suppression de l\'authentification CAS pour les tests');
 /* suppression de l'authentification CAS */
 remove_all_actions('wp_authenticate');
 remove_all_actions('wp_logout');
@@ -50,7 +52,6 @@ remove_filter('logout_url',array('wpCAS', 'get_url_logout'));
 /********************************************************************************
   Tests unitaires
 ********************************************************************************/
-logIt('<h1>Test unitaires du '.date("Y-m-d H:i:s").'</h1>');
 
 $mockToken = array();
 $mockToken['phpCAS'] = array();
@@ -100,7 +101,7 @@ foreach ($pIn as $i => $p) {
 ********************************************************************************/
 include('../includes/provisionning-laclasse.php');
 
-logIt('<h1>Test de provisionning du '.date("Y-m-d H:i:s").'</h1>');
+echo('<h1>Test de provisionning du '.date("Y-m-d H:i:s").'</h1>');
 
 /********************************************************************************
 Authentification obligatoire pour effectuer les tests
@@ -131,19 +132,10 @@ setToken($_SESSION['phpCAS']['attributes']);
 
 /* création du user WP de test si besoin */
 $p_username = getAttr('login');
+$p_password = $p_username;
 $p_useremail = getAttr('LaclasseEmail');
 $userId = get_user_id_from_string($p_username);
-if ($userId == 0) {
-    wpmu_signup_user($p_username, $p_useremail, "");
-    $wpError = wpmu_validate_user_signup($p_username, $p_useremail); 
-    if (is_wp_error($wpError) ) logIt($wpError->get_error_message());
-    $validKey = get_activation_key($p_username);
-    $activated = wpmu_activate_signup($validKey);
-    if (is_wp_error($activated) ) logIt($activated->get_error_message());
-    $userRec = get_user_by('login',$p_username);
-    $userId = $userRec->ID;
-}
-logit('Utilisateur de test #'.$userId);
+echo('Utilisateur de test #'.$userId);
 $blogId = getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE );
 /****************************************************************************
  B L O G   D E   C L A S S E  :  'CLS'
@@ -154,23 +146,67 @@ $_REQUEST['blogtype'] = 'CLS';
   // Profils enfant : ELEVE
   //-------------------------------------------------------------------------  
   
-  logit('Jeton simul&eacute; : <pre style="font-size:11px;">'.print_r(getToken(), true).'</pre>');
-  
-  // Logout 
+  echo('<hr/><h1>=> élève</h1>Jeton simul&eacute; : <pre style="font-size:11px;">'.print_r(getToken(), true).'</pre>');
+  // Logout + login
   wp_clear_auth_cookie();
-  // Login
-  setWPCookie($userId);
+  $r = wp_authenticate($p_username, $p_password);
   // test du provisionning
   provision_comptes_laclasse();
+  
   // test du profil sur le blog.
   equal("le user #".$userId." doit avoir un role sur le blog #".$blogId, true, aUnRoleSurCeBlog($userId, $blogId));
-  
-  global $current_user;
-  get_currentuserinfo();
-  // ?????????????????????????????????
-  print_r($GLOBALS);
-  
   equal("le user #".$userId." doit avoir le role 'contributor' sur le blog #".$blogId, true, aLeRoleSurCeBlog($userId, $blogId, 'contributor'));
+  non_equal("le user #".$userId." ne doit avoir le role 'subscriber' sur le blog #".$blogId, true, aLeRoleSurCeBlog($userId, $blogId, 'subscriber'));
+  non_equal("le user #".$userId." ne doit avoir le role 'editor' sur le blog #".$blogId, true, aLeRoleSurCeBlog($userId, $blogId, 'editor'));
+  non_equal("le user #".$userId." ne doit avoir le role 'administrator' sur le blog #".$blogId, true, aLeRoleSurCeBlog($userId, $blogId, 'administrator'));
+  
+  //-------------------------------------------------------------------------
+  // Profils enfant : PARENT
+  //-------------------------------------------------------------------------  
+  
+  $_SESSION['phpCAS']['attributes']['LaclasseProfil'] = "PARENT";
+  $_SESSION['phpCAS']['attributes']['ENTEleveClasses'] = "";
+  $_SESSION['phpCAS']['attributes']['ENTEleveNivFormation'] = "";
+  $_SESSION['phpCAS']['attributes']['ENTPersonProfils'] = 'National_2';
+  setToken($_SESSION['phpCAS']['attributes']);
+  
+  echo('<hr/><h1>=> parent</h1>Jeton simul&eacute; : <pre style="font-size:11px;">'.print_r(getToken(), true).'</pre>');
+  // Logout + login
+  wp_clear_auth_cookie();
+  $r = wp_authenticate($p_username, $p_password);
+  // test du provisionning
+  provision_comptes_laclasse();
+  
+  // test du profil sur le blog.
+  equal("le user #".$userId." doit avoir un role sur le blog #".$blogId, true, aUnRoleSurCeBlog($userId, $blogId));
+  equal("le user #".$userId." doit avoir le role 'subscriber' sur le blog #".$blogId, true, aLeRoleSurCeBlog($userId, $blogId, 'subscriber'));
+  non_equal("le user #".$userId."  ne doit avoir le role 'contributor' sur le blog #".$blogId, true, aLeRoleSurCeBlog($userId, $blogId, 'contributor'));
+  non_equal("le user #".$userId." ne doit avoir le role 'editor' sur le blog #".$blogId, true, aLeRoleSurCeBlog($userId, $blogId, 'editor'));
+  non_equal("le user #".$userId." ne doit avoir le role 'administrator' sur le blog #".$blogId, true, aLeRoleSurCeBlog($userId, $blogId, 'administrator'));
+  
+  //-------------------------------------------------------------------------
+  // Profils enfant : PROF
+  //-------------------------------------------------------------------------  
+  
+  $_SESSION['phpCAS']['attributes']['LaclasseProfil'] = "PROF";
+  $_SESSION['phpCAS']['attributes']['ENTEleveClasses'] = "";
+  $_SESSION['phpCAS']['attributes']['ENTEleveNivFormation'] = "";
+  $_SESSION['phpCAS']['attributes']['ENTPersonProfils'] = 'National_3';
+  setToken($_SESSION['phpCAS']['attributes']);
+  
+  echo('<hr/><h1>=> prof</h1>Jeton simul&eacute; : <pre style="font-size:11px;">'.print_r(getToken(), true).'</pre>');
+  // Logout + login
+  wp_clear_auth_cookie();
+  $r = wp_authenticate($p_username, $p_password);
+  // test du provisionning
+  provision_comptes_laclasse();
+  
+  // test du profil sur le blog.
+  equal("le user #".$userId." doit avoir un role sur le blog #".$blogId, true, aUnRoleSurCeBlog($userId, $blogId));
+  equal("le user #".$userId." doit avoir le role 'subscriber' sur le blog #".$blogId, true, aLeRoleSurCeBlog($userId, $blogId, 'subscriber'));
+  non_equal("le user #".$userId."  ne doit avoir le role 'contributor' sur le blog #".$blogId, true, aLeRoleSurCeBlog($userId, $blogId, 'contributor'));
+  non_equal("le user #".$userId." ne doit avoir le role 'editor' sur le blog #".$blogId, true, aLeRoleSurCeBlog($userId, $blogId, 'editor'));
+  non_equal("le user #".$userId." ne doit avoir le role 'administrator' sur le blog #".$blogId, true, aLeRoleSurCeBlog($userId, $blogId, 'administrator'));
   
   
   
@@ -191,3 +227,4 @@ $_REQUEST['blogtype'] = 'CLS';
 // Profils adultes 
 //
 //setAttr('LaclasseEmailAca', "");
+endTest();
