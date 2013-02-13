@@ -55,26 +55,85 @@ function modifierParams($domain) {
 // fonction qui renvoie vrai si l'utilisateur a un role quelconque sur le blog donné.
 // --------------------------------------------------------------------------------
 function aUnRoleSurCeBlog($pUserId, $pBlogId){
-  return is_blog_user($pBlogId);
+  switch_to_blog($pBlogId);
+  $res = is_blog_user($pBlogId);
+  restore_current_blog();
+  return $res;
 }
 
 // --------------------------------------------------------------------------------
 // fonction qui renvoie true si l'utilisateur est administrateur de son domaine.
+/*
+
+Structure de l'objet WP_User une fois qu'on a switché sur le bon blog.
+
+WP_User Object
+(
+    [data] => stdClass Object
+        (
+            [ID] => 99
+            [user_login] => tests-unitaires-wp
+            [user_pass] => $P$BUx4pmexHS38a2AJ.IuoXOvtetM2a7.
+            [user_nicename] => tests-unitaires-wp
+            [user_email] => tests-unitaires-wp@laclasse.com
+            [user_url] => 
+            [user_registered] => 2013-01-30 14:53:48
+            [user_activation_key] => 
+            [user_status] => 0
+            [display_name] => tests-unitaires-wp
+            [spam] => 0
+            [deleted] => 0
+        )
+
+    [ID] => 99
+    [caps] => Array
+        (
+            [author] => 1
+        )
+
+    [cap_key] => wp_125_capabilities
+    [roles] => Array
+        (
+            [0] => author
+        )
+
+    [allcaps] => Array
+        (
+            [upload_files] => 1
+            [edit_posts] => 1
+            [edit_published_posts] => 1
+            [publish_posts] => 1
+            [read] => 1
+            [level_2] => 1
+            [level_1] => 1
+            [level_0] => 1
+            [delete_posts] => 1
+            [delete_published_posts] => 1
+            [author] => 1
+        )
+
+    [filter] => 
+)
+*/
 // --------------------------------------------------------------------------------
-function isAdminOfBlog($user, $pBlogId){
-  switch_to_blog($pBlogId);
-	if( $user->ID != 0 ) {
-		// transformer l'objet user en tableau.
-		$cu = (array) $user;		
-		// Le [cap_key] doit être égal à "wp_".$blogId."_capabilities"	
-		if ($cu['cap_key'] =="wp_".$pBlogId."_capabilities") {
-	    // Alors le [roles] donne le tableau des roles sur le blog.
-	    if (in_array("administrator", $cu['roles'])) {
-	      return true;
-	    }
-		}
+function aLeRoleSurCeBlog($userId, $pBlogId, $role){
+  $can = false;
+  if ( is_multisite() ) {
+    // D'abord swicher sur le bon blog, sinon rien ne fonctionne en terme de capabilities.
+    switch_to_blog($pBlogId);
+    // ensuite récupérer l'objet current_user, qui devrait être peuplé correctement
+    $cu = (array) wp_get_current_user();
+    // Le [cap_key] doit être égal à "wp_".$blogId."_capabilities"	
+    if ($cu['cap_key'] =="wp_".$pBlogId."_capabilities") {  
+      // Alors $cu[roles] donne le tableau des roles sur ce blog.
+      if (in_array($role, $cu['roles'])) {
+        $can = true;
+      }
+    }
+    restore_current_blog();
+    return $can;
   }
-	return false;
+  return false;
 }
 
 // --------------------------------------------------------------------------------
