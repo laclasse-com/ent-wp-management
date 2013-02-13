@@ -38,8 +38,9 @@ $_GET['mode_test'] = 'O';
 $_REQUEST['ENT_action'] = 'IFRAME';
 $_REQUEST['ent'] = 'laclasse';
 $_REQUEST['blogname'] = 'tests-unitaires-wp';
-//$_REQUEST['ENT_action'] = '';
+$_REQUEST['blogtype'] = 'CLS';
 
+//$_REQUEST['ENT_action'] = '';
 
 /********************************************************************************
   Logout + login et lancement du script de provisionning
@@ -113,12 +114,19 @@ function teste($libelle, $shouldBe, $shouldBeSuperAdmin=false){
 /********************************************************************************
   Fonction de restauration du contexte de test pour les test suivants
 ********************************************************************************/
-function restaurer_contexte_tests() {
+function trashBlog($blogname) {
   // Pour le blog
-  $blogId = getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE );
-  wpmu_delete_blog($blogId, true );
+  $blogId = getBlogIdByDomain( $blogname . '.' . BLOG_DOMAINE );
+  if ($blogname != 'tests-unitaires-wp') {
+    wpmu_delete_blog($blogId, true );
+  }
   echo 'Le blog #'.$blogId.' a &eacute;t&eacute; supprim&eacute; !';
-  $_REQUEST['blogname'] = 'tests-unitaires-wp';
+  setBlog('tests-unitaires-wp');
+}
+
+function setBlog($blogname, $blogtype='CLS'){
+  $_REQUEST['blogname'] = $blogname;
+    $_REQUEST['blogtype'] = $blogtype;
 }
 
 
@@ -223,12 +231,22 @@ $_SESSION['phpCAS']['attributes']['ENTEleveNivFormation'] = '';
 $_SESSION['phpCAS']['attributes']['ENTPersonStructRattachRNE'] = '0699990Z';
 setToken($_SESSION['phpCAS']['attributes']);
 
-//$blogId = getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE );
-
+// On commence par créer le blog s'il n'existe pas sinon ça fout tous les tests en l'air.
+if (!getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE )) {
+  echo "création du blog de tests unitaires";
+  creerNouveauBlog(
+            $_REQUEST['blogname'] . '.' . BLOG_DOMAINE,
+            '/', 
+            $_REQUEST['blogname'], 
+            getAttr("LaclasseNom"), 
+            getAttr("LaclasseEmail"), 
+            1, 1, 
+            $_REQUEST['blogtype'],
+            getAttr("ENTPersonStructRattachRNE"));
+}
 /****************************************************************************
  B L O G   D E   C L A S S E  :  'CLS'
 ****************************************************************************/
-$_REQUEST['blogtype'] = 'CLS';
 
 
   //-------------------------------------------------------------------------
@@ -241,20 +259,33 @@ $_REQUEST['blogtype'] = 'CLS';
   setToken($_SESSION['phpCAS']['attributes']);
   
   // 1. BLOG EXISTANT et COMPTE A CREER
-  // 'subscriber','contributor','author','editor','administrator'
+  setBlog('tests-unitaires-wp');
   $droits = array(false, true, false, false, false);
   $userId = teste('ELEVE, BLOG EXISTANT et COMPTE A CREER', $droits);
   
   // 2. BLOG A CREER et COMPTE EXISTANT
-  $_REQUEST['blogname'] = 'tests-unitaires-wp-ne-devrait-pas-exister';
-
+  setBlog('tests-unitaires-wp-ne-devrait-pas-exister');
   $droits = array(false, false, false, false, false);
   $userId = teste('ELEVE, BLOG A CREER et COMPTE EXISTANT', $droits);
 
-  // 3. Restauration des variables de tests pour la suite
-  restaurer_contexte_tests();
+  // 3. BLOG EXISTANT et COMPTE EXISTANT
+  setBlog('tests-unitaires-wp');
+  $droits = array(false, true, false, false, false);
+  $userId = teste('ELEVE, BLOG EXISTANT et COMPTE EXISTANT', $droits);
+  
+  // 4. L'eleve a changé de role dans WP, on n'écrase pas ce nouveau role par le role par défaut.
+  // On lui met 'author'
+  $blogId = getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE );
+  switch_to_blog($blogId);
+  add_user_to_blog($blogId, $userId, 'author');
+  restore_current_blog();
+  $droits = array(false, false, true, false, false);
+  $userId = teste("ELEVE, BLOG EXISTANT et COMPTE EXISTANT - L'eleve a changé de role dans WP, on n'écrase pas ce nouveau role par le role par défaut.", $droits);
+  
+  // 5. Restauration des variables de tests pour la suite
+  trashBlog('tests-unitaires-wp-ne-devrait-pas-exister');
   trashUser($userId);
-   
+
   //-------------------------------------------------------------------------
   // Profils adulte : PARENT
   //-------------------------------------------------------------------------  
@@ -266,17 +297,31 @@ $_REQUEST['blogtype'] = 'CLS';
   setToken($_SESSION['phpCAS']['attributes']);
 
   // 1. BLOG EXISTANT et COMPTE A CREER
+  setBlog('tests-unitaires-wp');
   $droits = array(true, false, false, false, false);
   $userId = teste('PARENT, BLOG EXISTANT et COMPTE A CREER', $droits);
   
   // 2. BLOG A CREER et COMPTE EXISTANT
-  $_REQUEST['blogname'] = 'tests-unitaires-wp-ne-devrait-pas-exister';
-
+  setBlog('tests-unitaires-wp-ne-devrait-pas-exister');
   $droits = array(false, false, false, false, false);
   $userId = teste('PARENT, BLOG A CREER et COMPTE EXISTANT', $droits);
 
-  // 3. Restauration des variables de tests pour la suite
-  restaurer_contexte_tests();
+  // 3. BLOG EXISTANT et COMPTE EXISTANT
+  setBlog('tests-unitaires-wp');
+  $droits = array(true, false, false, false, false);
+  $userId = teste('PARENT, BLOG EXISTANT et COMPTE EXISTANT', $droits);
+
+  // 4. Le parent a changé de role dans WP, on n'écrase pas ce nouveau role par le role par défaut.
+  // On lui met 'contributor'
+  $blogId = getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE );
+  switch_to_blog($blogId);
+  add_user_to_blog($blogId, $userId, 'contributor');
+  restore_current_blog();
+  $droits = array(false, true, false, false, false);
+  $userId = teste("PARENT, BLOG EXISTANT et COMPTE EXISTANT - Le parent a changé de role dans WP, on n'écrase pas ce nouveau role par le role par défaut.", $droits);
+  
+  // 5. Restauration des variables de tests pour la suite
+  trashBlog('tests-unitaires-wp-ne-devrait-pas-exister');
   trashUser($userId);
   
   //-------------------------------------------------------------------------
@@ -290,17 +335,31 @@ $_REQUEST['blogtype'] = 'CLS';
   setToken($_SESSION['phpCAS']['attributes']);
     
   // 1. BLOG EXISTANT et COMPTE A CREER
+  setBlog('tests-unitaires-wp');
   $droits = array(false, false, false, true, false);
   $userId = teste('PROF, BLOG EXISTANT et COMPTE A CREER', $droits);
   
   // 2. BLOG A CREER et COMPTE EXISTANT
-  $_REQUEST['blogname'] = 'tests-unitaires-wp-ne-devrait-pas-exister';
-
+  setBlog('tests-unitaires-wp-ne-devrait-pas-exister');
   $droits = array(false, false, false, false, true);
   $userId = teste('PROF, BLOG A CREER et COMPTE EXISTANT', $droits);
 
-  // 3. Restauration des variables de tests pour la suite
-  restaurer_contexte_tests();
+  // 3. BLOG EXISTANT et COMPTE EXISTANT
+  setBlog('tests-unitaires-wp');
+  $droits = array(false, false, false, true, false);
+  $userId = teste('PROF, BLOG EXISTANT et COMPTE EXISTANT', $droits);
+
+  // 4. Le prof a changé de role dans WP, on n'écrase pas ce nouveau role par le role par défaut.
+  // On lui met 'administrator'
+  $blogId = getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE );
+  switch_to_blog($blogId);
+  add_user_to_blog($blogId, $userId, 'administrator');
+  restore_current_blog();
+  $droits = array(false, false, false, false, true);
+  $userId = teste("PROF, BLOG EXISTANT et COMPTE EXISTANT - Le prof a changé de role dans WP, on n'écrase pas ce nouveau role par le role par défaut.", $droits);
+  
+  // 5. Restauration des variables de tests pour la suite
+  trashBlog('tests-unitaires-wp-ne-devrait-pas-exister');
   trashUser($userId);
 
   //-------------------------------------------------------------------------
@@ -314,17 +373,31 @@ $_REQUEST['blogtype'] = 'CLS';
   setToken($_SESSION['phpCAS']['attributes']);
   
   // 1. BLOG EXISTANT et COMPTE A CREER
+  setBlog('tests-unitaires-wp');
   $droits = array(false, false, false, true, false);
   $userId = teste('ADM_ETB, BLOG EXISTANT et COMPTE A CREER', $droits);
   
   // 2. BLOG A CREER et COMPTE EXISTANT
-  $_REQUEST['blogname'] = 'tests-unitaires-wp-ne-devrait-pas-exister';
-
+  setBlog('tests-unitaires-wp-ne-devrait-pas-exister');
   $droits = array(false, false, false, false, true);
   $userId = teste('ADM_ETB, BLOG A CREER et COMPTE EXISTANT', $droits);
 
-  // 3. Restauration des variables de tests pour la suite
-  restaurer_contexte_tests();
+  // 3. BLOG EXISTANT et COMPTE EXISTANT
+  setBlog('tests-unitaires-wp');
+  $droits = array(false, false, false, true, false);
+  $userId = teste('ADM_ETB, BLOG EXISTANT et COMPTE EXISTANT', $droits);
+
+  // 4. L'adm_etb a changé de role dans WP, on n'écrase pas ce nouveau role par le role par défaut.
+  // On lui met 'administrator'
+  $blogId = getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE );
+  switch_to_blog($blogId);
+  add_user_to_blog($blogId, $userId, 'administrator');
+  restore_current_blog();
+  $droits = array(false, false, false, false, true);
+  $userId = teste("ADM_ETB, BLOG EXISTANT et COMPTE EXISTANT - L'adm_etb a changé de role dans WP, on n'écrase pas ce nouveau role par le role par défaut.", $droits);
+  
+  // 5. Restauration des variables de tests pour la suite
+  trashBlog('tests-unitaires-wp-ne-devrait-pas-exister');
   trashUser($userId);
   
   //-------------------------------------------------------------------------
@@ -336,17 +409,41 @@ $_REQUEST['blogtype'] = 'CLS';
   setToken($_SESSION['phpCAS']['attributes']);
   
   // 1. BLOG EXISTANT et COMPTE A CREER
+  setBlog('tests-unitaires-wp');
   $droits = array(false, false, false, true, false);
   $userId = teste('PRINCIPAL, BLOG EXISTANT et COMPTE A CREER', $droits);
   
   // 2. BLOG A CREER et COMPTE EXISTANT
-  $_REQUEST['blogname'] = 'tests-unitaires-wp-ne-devrait-pas-exister';
-
+  setBlog('tests-unitaires-wp-ne-devrait-pas-exister');
   $droits = array(false, false, false, false, true);
   $userId = teste('PRINCIPAL, BLOG A CREER et COMPTE EXISTANT', $droits);
 
   // 3. Restauration des variables de tests pour la suite
-  restaurer_contexte_tests();
+  trashBlog('tests-unitaires-wp-ne-devrait-pas-exister');
+  
+  // 4. BLOG EXISTANT et COMPTE EXISTANT
+  setBlog('tests-unitaires-wp');
+  $droits = array(false, false, false, true, false);
+  $userId = teste('PRINCIPAL, BLOG EXISTANT et COMPTE EXISTANT', $droits);
+
+  // 5. Le principal a changé de role dans WP, on n'écrase pas ce nouveau role par le role par défaut.
+  // On lui met 'administrator'
+  $blogId = getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE );
+  switch_to_blog($blogId);
+  add_user_to_blog($blogId, $userId, 'administrator');
+  restore_current_blog();
+  $droits = array(false, false, false, false, true);
+  $userId = teste("PRINCIPAL, BLOG EXISTANT et COMPTE EXISTANT - Le principal a changé de role dans WP, on n'écrase pas ce nouveau role par le role par défaut.", $droits);
+  
+  // 6. BLOG A CREER et COMPTE EXISTANT - Blog d'établissement
+  setBlog('tests-unitaires-wp-blog-d-etablissement', 'ETB');
+  
+  $droits = array(false, false, false, false, true);
+  $userId = teste('PRINCIPAL, BLOG A CREER et COMPTE EXISTANT - Blog d\'établissement', $droits);
+  
+  // 7. Restauration du contexte de tests
+  trashBlog('tests-unitaires-wp-ne-devrait-pas-exister');
+  trashBlog('tests-unitaires-wp-blog-d-etablissement');
   trashUser($userId);
   
   //-------------------------------------------------------------------------
@@ -358,17 +455,31 @@ $_REQUEST['blogtype'] = 'CLS';
   setToken($_SESSION['phpCAS']['attributes']);
   
   // 1. BLOG EXISTANT et COMPTE A CREER
+  setBlog('tests-unitaires-wp');
   $droits = array(false, false, false, true, false);
   $userId = teste('CPE, BLOG EXISTANT et COMPTE A CREER', $droits);
   
   // 2. BLOG A CREER et COMPTE EXISTANT
-  $_REQUEST['blogname'] = 'tests-unitaires-wp-ne-devrait-pas-exister';
-
+  setBlog('tests-unitaires-wp-ne-devrait-pas-exister');
   $droits = array(false, false, false, false, true);
   $userId = teste('CPE, BLOG A CREER et COMPTE EXISTANT', $droits);
 
-  // 3. Restauration des variables de tests pour la suite
-  restaurer_contexte_tests();
+  // 3. BLOG EXISTANT et COMPTE EXISTANT
+  setBlog('tests-unitaires-wp');
+  $droits = array(false, false, false, true, false);
+  $userId = teste('CPE, BLOG EXISTANT et COMPTE EXISTANT', $droits);
+
+  // 4. Le CPE a changé de role dans WP, on n'écrase pas ce nouveau role par le role par défaut.
+  // On lui met 'administrator'
+  $blogId = getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE );
+  switch_to_blog($blogId);
+  add_user_to_blog($blogId, $userId, 'administrator');
+  restore_current_blog();
+  $droits = array(false, false, false, false, true);
+  $userId = teste("CPE, BLOG EXISTANT et COMPTE EXISTANT - Le CPE a changé de role dans WP, on n'écrase pas ce nouveau role par le role par défaut.", $droits);
+  
+  // 5. Restauration des variables de tests pour la suite
+  trashBlog('tests-unitaires-wp-ne-devrait-pas-exister');
   trashUser($userId);
   
   //-------------------------------------------------------------------------
@@ -380,24 +491,38 @@ $_REQUEST['blogtype'] = 'CLS';
   setToken($_SESSION['phpCAS']['attributes']);
   
   // 1. BLOG EXISTANT et COMPTE A CREER
+  setBlog('tests-unitaires-wp');
   $droits = array(false, false, false, false, true);
   $userId = teste('ADMIN, BLOG EXISTANT et COMPTE A CREER', $droits, true);
-  echo getLog();
-  // 2. BLOG A CREER et COMPTE EXISTANT
-  $_REQUEST['blogname'] = 'tests-unitaires-wp-ne-devrait-pas-exister';
 
+  // 2. BLOG A CREER et COMPTE EXISTANT
+  setBlog('tests-unitaires-wp-ne-devrait-pas-exister');
   $droits = array(false, false, false, false, true);
   $userId = teste('ADMIN, BLOG A CREER et COMPTE EXISTANT', $droits, true);
-  echo getLog();
-  // 3. Restauration des variables de tests pour la suite
-  restaurer_contexte_tests();
-   trashUser($userId);
+  
+  // 3. BLOG EXISTANT et COMPTE EXISTANT
+  setBlog('tests-unitaires-wp');
+  $droits = array(false, false, false, false, true);
+  $userId = teste('ADMIN, BLOG EXISTANT et COMPTE EXISTANT', $droits, true);
+
+  // 4. L'ADMIN a changé de role dans WP, on n'écrase pas ce nouveau role par le role par défaut.
+  // On lui met 'editor'
+  $blogId = getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE );
+  switch_to_blog($blogId);
+  add_user_to_blog($blogId, $userId, 'editor');
+  restore_current_blog();
+  $droits = array(false, false, false, true, false);
+  $userId = teste("ADMIN, BLOG EXISTANT et COMPTE EXISTANT - L'ADMIN a changé de role dans WP, on n'écrase pas ce nouveau role par le role par défaut.", $droits, true);
+  
+  // 5. Restauration des variables de tests pour la suite
+  trashBlog('tests-unitaires-wp-ne-devrait-pas-exister');
+  trashUser($userId);
   
   
   /*
   @TODO : 
-    - BLOG A CREER et COMPTE EXISTANT
     - BLOG A CREER et COMPTE A CREER
+    - Profil INVITE
   */
   
 endTest();
