@@ -192,7 +192,12 @@ if (isset($_REQUEST['ENT_action'])) {
 	// Logout de WP.
 	//
 	case 'LOGOUT' :	
-		wpCas::logout();
+		global $current_user;
+		if (phpCAS::isAuthenticated()) {
+			$current_user = get_user_by('login',phpCAS::getUser());
+			$urlLogOut = htmlspecialchars_decode(wp_logout_url());
+			header('Location: '.$urlLogOut);
+		}
 		$mustDieAfterAction = true;
 		break;
 	//
@@ -216,7 +221,7 @@ if (isset($_REQUEST['ENT_action'])) {
 			exit;
 		}
 		else {
-			if(isAdminOfBlog($user, $blogId) || is_super_admin())  {
+			if(aLeRoleSurCeBlog($user, $blogId, "administrator") || is_super_admin())  {
 				wpmu_delete_blog ($blogId, true);	
 				message("Le blog '$domain' a &eacute;t&eacute; supprim&eacute;.");
 			}
@@ -238,7 +243,7 @@ if (isset($_REQUEST['ENT_action'])) {
 			exit;
 		}
 		else {
-			if(isAdminOfBlog($user, $blogId) || is_super_admin())  {
+			if(aLeRoleSurCeBlog($user, $blogId, "administrator") || is_super_admin())  {
 				include_once('scripts/migrer_data_ENT.php');
 			}
 			else message("Vous n'&ecirc;tes pas administrateur du blog '$domain'.");

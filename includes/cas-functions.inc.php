@@ -31,6 +31,7 @@
 // --------------------------------------------------------------------------------
 function wpcas_provisioning(){
 	$ret = include( WP_PLUGIN_DIR."/".dirname( plugin_basename( __FILE__ )).'/provisionning-laclasse.php');
+	provision_comptes_laclasse();
 }
 
 // --------------------------------------------------------------------------------
