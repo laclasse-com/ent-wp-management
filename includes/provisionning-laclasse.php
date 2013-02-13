@@ -231,8 +231,8 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   		if (domain_exists($domain, $path, $site_id)) {	
   			// L'utilisateur n'est pas le premier à venir pour ce domaine, 
   			// il est par défaut "administrateur de la plateforme" car il est super admin dans l'ENT
-  			rattachSuperUserToTheBLog($wpUsrId, "administrator");
   			rattachUserToHisBlog($domain, $path, $site_id, $wpUsrId, "administrator");
+  			rattachSuperUserToTheBLog($wpUsrId, "administrator");
   		}
   		else {
   			// ici le domaine n'existe pas : 
@@ -303,15 +303,6 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   	// --------------------------------------------------------------------------------
   	// Pour tous les profils 
   	// --------------------------------------------------------------------------------
-  	// Etre sûr que personne ne récupère les droits de super-admin 
-    if ($laclasseUserProfil != "ADMIN"){
-      logIt("Suppression des droits super-admin pour le user #".$wpUsrId.", (".$laclasseUserProfil.").");
-      global $super_admins;
-      // On supprime tout override de cette variable globale sinon grant_super_admin() ne fonctionne pas .... BUG WORDPRESS ?????
-      $super_admins = null;
-      revoke_super_admin($wpUsrId);
-    }
-
     // calcule de la Redirection
   	logIt("Redirection");
   	// rediretion si le script n'est pas en mode débug.

@@ -91,7 +91,7 @@ function testerTousLesRoles($userId, $blogId, $shouldBe, $shouldBeSuperAdmin=fal
   et de true et on vérifie pour chaque role qu'on a bien false ou true.
 ********************************************************************************/
 function trashUser($userId) {
-  if (wpmu_delete_user($userId, 1)) echo 'Le user #'.$userId.' a &eacute;t&eacute; supprim&eacute; !';
+  if (wpmu_delete_user($userId, 1)) echo 'Le user #'.$userId.' a &eacute;t&eacute; supprim&eacute; !<br/>';
 }
 
 /********************************************************************************
@@ -120,7 +120,7 @@ function trashBlog($blogname) {
   if ($blogname != 'tests-unitaires-wp') {
     wpmu_delete_blog($blogId, true );
   }
-  echo 'Le blog #'.$blogId.' a &eacute;t&eacute; supprim&eacute; !';
+  echo 'Le blog #'.$blogId.' a &eacute;t&eacute; supprim&eacute; !<br/>';
   setBlog('tests-unitaires-wp');
 }
 
@@ -557,7 +557,7 @@ if (!getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE )) {
   
   // 5. Restauration des variables de tests pour la suite
   trashBlog('tests-unitaires-wp-ne-devrait-pas-exister');
-  //trashUser($userId);
+  trashUser($userId);
   
 
   

@@ -348,9 +348,14 @@ function setWPCookie($p_usrId) {
 // --------------------------------------------------------------------------------
 function rattachUserToHisBlog($p_domain, $p_path, $p_site_id, $p_wpUsrId, $p_role) {
 	global $NewUser;
-    logIt("___/ Fonction : rattachUserToHisBlog");	
-    // Suppression du droit même minimum sur le blog des blogs.
-    remove_user_from_blog($p_wpUsrId, 1, 1);
+  logIt("___/ Fonction : rattachUserToHisBlog");	
+  // Suppression du droit même minimum sur le blog des blogs.
+  remove_user_from_blog($p_wpUsrId, 1, 1);
+    
+	 // Pour tout nouvel utilisateur, on s'assure qu'il n'aura pas les droit de super admin.
+	 if ($NewUser) {
+	   dontBeChief($p_wpUsrId);
+	 }
 
 	// Si le domaine existe
 	if (domain_exists($p_domain, $p_path, $p_site_id)) {
@@ -370,8 +375,9 @@ function rattachUserToHisBlog($p_domain, $p_path, $p_site_id, $p_wpUsrId, $p_rol
 			 logIt("Ajout du role '".$p_role."' sur le blog #".$wpBlogId.".");
 			 add_user_to_blog($wpBlogId, $p_wpUsrId, $p_role);
 		}
-		else logIt("L'utilisateur #".$p_wpUsrId." a d&eacute;j&agrave; un role sur le blog #".$wpBlogId." : on ne modifie pas son role.");
-
+		else {
+		  logIt("L'utilisateur #".$p_wpUsrId." a d&eacute;j&agrave; un role sur le blog #".$wpBlogId." : on ne modifie pas son role.");
+		}
 	}
 	else {
 		// le domaine n'existe pas : cette connexion ne vient sans doute pas de laclasse.com => message d'erreur 
@@ -389,20 +395,39 @@ function rattachSuperUserToTheBLog($p_userId, $p_role) {
 			// Ajout des droits super administrateur sur le blog des blogs.
 			add_user_to_blog(1, $p_userId, $p_role);
 			logIt("Ajout des droits administrateur sur le blog des blogs");
-				
-			if (!is_super_admin()) {
-			   global $super_admins;
-			   // On supprime tout override de cette variable globale sinon grant_super_admin() ne fonctionne pas .... BUG WORDPRESS ?????
-			 	 $super_admins = null;
-
-				if (grant_super_admin($p_userId) ) 
-			 		logIt("Ajout des droits super administrateur");
-			 	else {
-			 	 logIt("Pas de droits SUPER ADMIN, mais je ne sais pas pourquoi...");
-			 	 }
-			 	}
-			else logIt("L'utilisateur est d&eacute;j&agrave; superAdmin.");
+			beChief($p_userId);
 		}
+}
+
+// --------------------------------------------------------------------------------
+//  Fonction qui set l'utilisateur admin du réseau
+// --------------------------------------------------------------------------------
+function beChief( $p_userId ) {
+	if (!is_super_admin()) {
+	   global $super_admins;
+	   // On supprime tout override de cette variable globale sinon grant_super_admin() ne fonctionne pas .... 
+	   //Ca pue le BUG WORDPRESS ?????
+	 	 $super_admins = null;
+
+		if (grant_super_admin($p_userId) ) 
+	 		logIt("Ajout des droits super administrateur");
+	 	else {
+	 	 logIt("Pas de droits SUPER ADMIN, mais je ne sais pas pourquoi...");
+	 	 }
+	 	}
+	else logIt("L'utilisateur est d&eacute;j&agrave; superAdmin.");
+}
+
+// --------------------------------------------------------------------------------
+//  Fonction qui unset l'utilisateur admin du réseau
+// --------------------------------------------------------------------------------
+function dontBeChief( $p_userId ) {
+      logIt("Suppression des droits super-admin pour le user #".$p_userId);
+      global $super_admins;
+      // On supprime tout override de cette variable globale sinon grant_super_admin() ne fonctionne pas .... 
+      // Ca pue le BUG WORDPRESS ?????
+      $super_admins = null;
+      revoke_super_admin($p_userId);
 }
 
 // --------------------------------------------------------------------------------
