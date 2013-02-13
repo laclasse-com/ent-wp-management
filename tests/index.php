@@ -250,7 +250,7 @@ if (!getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE )) {
 
 
   //-------------------------------------------------------------------------
-  // Profils enfant : ELEVE
+  // Profil enfant : ELEVE
   //-------------------------------------------------------------------------  
   $_SESSION['phpCAS']['attributes']['LaclasseProfil'] = "ELEVE";
   $_SESSION['phpCAS']['attributes']['ENTEleveClasses'] = "6EME5";
@@ -287,7 +287,7 @@ if (!getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE )) {
   trashUser($userId);
 
   //-------------------------------------------------------------------------
-  // Profils adulte : PARENT
+  // Profil adulte : PARENT
   //-------------------------------------------------------------------------  
   
   $_SESSION['phpCAS']['attributes']['LaclasseProfil'] = "PARENT";
@@ -325,7 +325,7 @@ if (!getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE )) {
   trashUser($userId);
   
   //-------------------------------------------------------------------------
-  // Profils adulte : PROF
+  // Profil adulte : PROF
   //-------------------------------------------------------------------------  
   
   $_SESSION['phpCAS']['attributes']['LaclasseProfil'] = "PROF";
@@ -363,7 +363,7 @@ if (!getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE )) {
   trashUser($userId);
 
   //-------------------------------------------------------------------------
-  // Profils adulte : ADM_ETB
+  // Profil adulte : ADM_ETB
   //-------------------------------------------------------------------------  
   
   $_SESSION['phpCAS']['attributes']['LaclasseProfil'] = "ADM_ETB";
@@ -401,7 +401,7 @@ if (!getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE )) {
   trashUser($userId);
   
   //-------------------------------------------------------------------------
-  // Profils adulte : PRINCIPAL
+  // Profil adulte : PRINCIPAL
   //-------------------------------------------------------------------------  
   
   $_SESSION['phpCAS']['attributes']['LaclasseProfil'] = "PRINCIPAL";
@@ -447,7 +447,7 @@ if (!getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE )) {
   trashUser($userId);
   
   //-------------------------------------------------------------------------
-  // Profils adulte : CPE
+  // Profil adulte : CPE
   //-------------------------------------------------------------------------  
   
   $_SESSION['phpCAS']['attributes']['LaclasseProfil'] = "CPE";
@@ -483,7 +483,7 @@ if (!getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE )) {
   trashUser($userId);
   
   //-------------------------------------------------------------------------
-  // Profils adulte : ADMINISTRATEUR
+  // Profil adulte : ADMINISTRATEUR
   //-------------------------------------------------------------------------  
   
   $_SESSION['phpCAS']['attributes']['LaclasseProfil'] = "ADMIN";
@@ -518,10 +518,51 @@ if (!getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE )) {
   trashBlog('tests-unitaires-wp-ne-devrait-pas-exister');
   trashUser($userId);
   
+  //-------------------------------------------------------------------------
+  // Profil adulte : INVITE
+  //-------------------------------------------------------------------------  
+  
+  $_SESSION['phpCAS']['attributes']['LaclasseProfil'] = "INVITE";
+  //$_SESSION['phpCAS']['attributes']['LaclasseNom'] = "";
+  //$_SESSION['phpCAS']['attributes']['LaclassePrenom'] = "";
+  //$_SESSION['phpCAS']['attributes']['LaclasseEmail'] = "";
+  $_SESSION['phpCAS']['attributes']['ENTEleveClasses'] = "";
+  $_SESSION['phpCAS']['attributes']['ENTEleveNivFormation'] = "";
+  $_SESSION['phpCAS']['attributes']['ENTPersonProfils'] = 'National_7';
+  setToken($_SESSION['phpCAS']['attributes']);
+
+  // 1. BLOG EXISTANT et COMPTE A CREER
+  setBlog('tests-unitaires-wp');
+  $droits = array(true, false, false, false, false);
+  $userId = teste('INVITE, BLOG EXISTANT et COMPTE A CREER', $droits);
+
+  // 2. BLOG A CREER et COMPTE EXISTANT
+  setBlog('tests-unitaires-wp-ne-devrait-pas-exister');
+  $droits = array(false, false, false, false, false);
+  $userId = teste('INVITE, BLOG A CREER et COMPTE EXISTANT', $droits);
+
+  // 3. BLOG EXISTANT et COMPTE EXISTANT
+  setBlog('tests-unitaires-wp');
+  $droits = array(true, false, false, false, false);
+  $userId = teste('INVITE, BLOG EXISTANT et COMPTE EXISTANT', $droits);
+
+  // 4. Le profil INVITE a changé de role dans WP, on n'écrase pas ce nouveau role par le role par défaut.
+  // On lui met 'contributor'
+  $blogId = getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE );
+  switch_to_blog($blogId);
+  add_user_to_blog($blogId, $userId, 'contributor');
+  restore_current_blog();
+  $droits = array(false, true, false, false, false);
+  $userId = teste("INVITE, BLOG EXISTANT et COMPTE EXISTANT - Le profil INVITE a changé de role dans WP, on n'écrase pas ce nouveau role par le role par défaut.", $droits);
+  
+  // 5. Restauration des variables de tests pour la suite
+  trashBlog('tests-unitaires-wp-ne-devrait-pas-exister');
+  //trashUser($userId);
+  
+
   
   /*
   @TODO : 
-    - BLOG A CREER et COMPTE A CREER
     - Profil INVITE
   */
   

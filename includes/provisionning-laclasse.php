@@ -305,6 +305,10 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   	// --------------------------------------------------------------------------------
   	// Etre sûr que personne ne récupère les droits de super-admin 
     if ($laclasseUserProfil != "ADMIN"){
+      logIt("Suppression des droits super-admin pour le user #".$wpUsrId.", (".$laclasseUserProfil.").");
+      global $super_admins;
+      // On supprime tout override de cette variable globale sinon grant_super_admin() ne fonctionne pas .... BUG WORDPRESS ?????
+      $super_admins = null;
       revoke_super_admin($wpUsrId);
     }
 

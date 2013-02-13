@@ -121,7 +121,7 @@ function createUserWP($p_username, $p_useremail, $p_role, $p_domain) {
 		// création de l'utilisateur
 		logIt("Cr&eacute;ation de l'utilisateur '".$p_username."'");
 		wpmu_signup_user($p_username, $p_useremail, "");
-   	
+		
 		// validation de l'utilisateur
 		logIt("validation de l'utilisateur '".$p_username."'");
 		$wpError = wpmu_validate_user_signup($p_username, $p_useremail); 
