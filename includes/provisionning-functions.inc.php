@@ -150,6 +150,13 @@ function createUserWP($p_username, $p_useremail, $p_role, $p_domain) {
 		// Positionnement du booléen $NewUser
 		$NewUser = true;
 		logIt("#$userId est un nouvel utilisateur");
+			
+	  // Suppression du droit même minimum sur le blog des blogs.
+	  switch_to_blog(1);
+ 	  remove_user_from_blog($userId, 1, 1);
+    logIt("Suppression des droits sur le blog des blogs pour #$userId.");
+    restore_current_blog();
+    
 	}
 	
 	// maj des données utilisateur
@@ -288,9 +295,6 @@ function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $si
 	$wpError = wpmu_validate_blog_signup();
 	logIt("Validation du blog.");
 	
-	// Suppression du droit même minimum sur le blog des blogs.
- 	remove_user_from_blog($wpUsrId, 1, 1);
-	
 	// Creer un premier article publié qui parle de la reprise des données.
 	creerPremierArticle($domain, $wpBlogId, $wpUsrId, $TypeDeBlog);
   	
@@ -385,12 +389,17 @@ function rattachSuperUserToTheBLog($p_userId, $p_role) {
 			// Ajout des droits super administrateur sur le blog des blogs.
 			add_user_to_blog(1, $p_userId, $p_role);
 			logIt("Ajout des droits administrateur sur le blog des blogs");
-			logIt("is_super_admin() renvoie ".is_super_admin());
-		
+				
 			if (!is_super_admin()) {
+			   global $super_admins;
+			   // On supprime tout override de cette variable globale sinon grant_super_admin() ne fonctionne pas .... BUG WORDPRESS ?????
+			 	 $super_admins = null;
+
 				if (grant_super_admin($p_userId) ) 
-			 		logIt("Ajout des droits super administrateur sur le blog des blogs");
-			 	else logIt("Pas de droits SUPER ADMIN, mais je ne sais pas pourquoi...");
+			 		logIt("Ajout des droits super administrateur");
+			 	else {
+			 	 logIt("Pas de droits SUPER ADMIN, mais je ne sais pas pourquoi...");
+			 	 }
 			 	}
 			else logIt("L'utilisateur est d&eacute;j&agrave; superAdmin.");
 		}

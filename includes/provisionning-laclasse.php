@@ -39,7 +39,7 @@ require_once( ABSPATH . 'wp-admin/includes/ms.php' );
 require_once(dirname(__FILE__) . '/cas-token-functions.inc.php');
 require_once(dirname(__FILE__) . '/provisionning-functions.inc.php');
 
-function provision_comptes_laclasse() {
+function provision_comptes_laclasse($User_Mode_Test="") {
   global $domain, $base;
   // $url est l'url vers laquelle on va rediriger
   $url = "";
@@ -67,6 +67,8 @@ function provision_comptes_laclasse() {
     } 
   } else {
     logIt('<b>Pas d\'autentification CAS !</b>');
+    $username = $User_Mode_Test;
+    logIt('L\'utilisateur de test "<b>'.$User_Mode_Test.'</b>" va &ecirc;tre employ&eacute; pour la suite du script.');
   }
   
 /*
@@ -230,6 +232,7 @@ function provision_comptes_laclasse() {
   			// L'utilisateur n'est pas le premier à venir pour ce domaine, 
   			// il est par défaut "administrateur de la plateforme" car il est super admin dans l'ENT
   			rattachSuperUserToTheBLog($wpUsrId, "administrator");
+  			rattachUserToHisBlog($domain, $path, $site_id, $wpUsrId, "administrator");
   		}
   		else {
   			// ici le domaine n'existe pas : 
@@ -300,6 +303,12 @@ function provision_comptes_laclasse() {
   	// --------------------------------------------------------------------------------
   	// Pour tous les profils 
   	// --------------------------------------------------------------------------------
+  	// Etre sûr que personne ne récupère les droits de super-admin 
+    if ($laclasseUserProfil != "ADMIN"){
+      revoke_super_admin($wpUsrId);
+    }
+
+    // calcule de la Redirection
   	logIt("Redirection");
   	// rediretion si le script n'est pas en mode débug.
   	redirection($domain);

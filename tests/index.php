@@ -3,6 +3,16 @@
 	Fichier de tests unitaire pour le provisionning laclasse.
 	@file UnitTest.php
 	@author PGL pgl@erasme.org
+	
+	
+  Super Admin   - Someone with access to the blog network administration features controlling the entire network (See Create a Network).
+  Administrator - Somebody who has access to all the administration features
+  Editor        - Somebody who can publish and manage posts and pages as well as manage other users' posts, etc.
+  Author        - Somebody who can publish and manage their own posts
+  Contributor   - Somebody who can write and manage their posts but not publish them
+  Subscriber    - Somebody who can only manage their profile 
+
+
 
 ********************************************************************************/
 
@@ -30,6 +40,93 @@ $_REQUEST['ent'] = 'laclasse';
 $_REQUEST['blogname'] = 'tests-unitaires-wp';
 //$_REQUEST['ENT_action'] = '';
 
+
+/********************************************************************************
+  Logout + login et lancement du script de provisionning
+********************************************************************************/
+function login_et_provisionne($profil){
+  $usr = getAttr('login');
+  $pwd = $usr;
+
+  echo('<hr/><h1>profil '.$profil.'</h1><hr/>');
+  echo('<!--Jeton simul&eacute; : <pre style="font-size:11px;">'.print_r(getToken(), true).'</pre>-->');
+
+  // Logout
+  wp_clear_auth_cookie();
+  //login 
+  //$r = wp_authenticate($usr, $pwd); // A priori pas besoin.  
+  
+  // test du provisionning
+  resetLog();
+  provision_comptes_laclasse($usr);
+  
+  //echo getLog();
+  $userId = get_user_id_from_string( $usr );
+  return $userId;
+}
+
+/********************************************************************************
+  Fonction de test de tous les roles de wordPress : On passe un tableau de false 
+  et de true et on vérifie pour chaque role qu'on a bien false ou true.
+********************************************************************************/
+function testerTousLesRoles($userId, $blogId, $shouldBe, $shouldBeSuperAdmin=false){
+  $rolesATester = array('subscriber', 'contributor', 'author', 'editor', 'administrator');
+  
+  // test du profil sur le blog.
+  equal("le user #".$userId." doit-il être super-admin ?", $shouldBeSuperAdmin, is_super_admin($userId));
+  if ( $blogId ) {
+    equal("le user #".$userId." doit avoir un role sur le blog #".$blogId, true, aUnRoleSurCeBlog($userId, $blogId));
+  } else {
+    equal("le user #".$userId." ne doit pas avoir un role sur le blog #".$blogId, false, aUnRoleSurCeBlog($userId, $blogId));
+  }
+  // Test de tout les profils
+  foreach ($rolesATester as $k => $rol) {
+    equal("le user #".$userId.", rôle '".$rol."', blog #".$blogId, $shouldBe[$k], aLeRoleSurCeBlog($userId, $blogId, $rol));
+  }
+}
+
+/********************************************************************************
+  Fonction de test de tous les roles de wordPress : On passe un tableau de false 
+  et de true et on vérifie pour chaque role qu'on a bien false ou true.
+********************************************************************************/
+function trashUser($userId) {
+  if (wpmu_delete_user($userId, 1)) echo 'Le user #'.$userId.' a &eacute;t&eacute; supprim&eacute; !';
+}
+
+/********************************************************************************
+  Fonction de test globale.
+********************************************************************************/
+function teste($libelle, $shouldBe, $shouldBeSuperAdmin=false){
+  // Récupérer le blogID
+  $blogId = getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE );
+  $userId = login_et_provisionne($libelle);
+  
+  // Il se peut qu'il existe pas ce blogid quand on test la creation de blog par exemple.
+  // On le resélectionne après provisionning pour voir...
+  if (!$blogId) $blogId = getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE );
+  
+  testerTousLesRoles($userId, $blogId, $shouldBe, $shouldBeSuperAdmin);
+  // Renvoyer le userId pour d'autres usages
+  return $userId;
+}
+
+/********************************************************************************
+  Fonction de restauration du contexte de test pour les test suivants
+********************************************************************************/
+function restaurer_contexte_tests() {
+  // Pour le blog
+  $blogId = getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE );
+  wpmu_delete_blog($blogId, true );
+  echo 'Le blog #'.$blogId.' a &eacute;t&eacute; supprim&eacute; !';
+  $_REQUEST['blogname'] = 'tests-unitaires-wp';
+}
+
+
+/********************************************************************************
+*********************************************************************************
+*****************       S T A R T I N G   T E S T S         *********************
+*********************************************************************************
+********************************************************************************/
 startTest('<h1>Test unitaires du '.date("Y-m-d H:i:s").'</h1>');
 
 /********************************************************************************
@@ -101,7 +198,7 @@ foreach ($pIn as $i => $p) {
 ********************************************************************************/
 include('../includes/provisionning-laclasse.php');
 
-echo('<h1>Test de provisionning du '.date("Y-m-d H:i:s").'</h1>');
+echo('<hr/><h1>Test de provisionning du '.date("Y-m-d H:i:s").'</h1><hr/>');
 
 /********************************************************************************
 Authentification obligatoire pour effectuer les tests
@@ -110,6 +207,7 @@ if (!isset($_SESSION['phpCAS'])) $_SESSION['phpCAS'] = array();
 if (!isset($_SESSION['phpCAS']['attributes'])) $_SESSION['phpCAS']['attributes'] = array();
 
 // Mock de la session et du jeton d'authentification
+$_SESSION['phpCAS']['user'] = 'tests-unitaires-wp';
 $_SESSION['phpCAS']['attributes']['uid'] = 'VZZ69999';
 $_SESSION['phpCAS']['attributes']['login'] = 'tests-unitaires-wp';
 $_SESSION['phpCAS']['attributes']['ENT_id'] = '0';
@@ -123,45 +221,42 @@ $_SESSION['phpCAS']['attributes']['LaclasseCivilite'] = 'Mme';
 $_SESSION['phpCAS']['attributes']['ENTPersonProfils'] = '';
 $_SESSION['phpCAS']['attributes']['ENTEleveNivFormation'] = '';
 $_SESSION['phpCAS']['attributes']['ENTPersonStructRattachRNE'] = '0699990Z';
-
-$_SESSION['phpCAS']['attributes']['LaclasseProfil'] = "ELEVE";
-$_SESSION['phpCAS']['attributes']['ENTEleveClasses'] = "6EME5";
-$_SESSION['phpCAS']['attributes']['ENTEleveNivFormation'] = "6EME";
-$_SESSION['phpCAS']['attributes']['ENTPersonProfils'] = 'National_1';
 setToken($_SESSION['phpCAS']['attributes']);
 
-/* création du user WP de test si besoin */
-$p_username = getAttr('login');
-$p_password = $p_username;
-$p_useremail = getAttr('LaclasseEmail');
-$userId = get_user_id_from_string($p_username);
-echo('Utilisateur de test #'.$userId);
-$blogId = getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE );
+//$blogId = getBlogIdByDomain( $_REQUEST['blogname'] . '.' . BLOG_DOMAINE );
+
 /****************************************************************************
  B L O G   D E   C L A S S E  :  'CLS'
 ****************************************************************************/
 $_REQUEST['blogtype'] = 'CLS';
 
+
   //-------------------------------------------------------------------------
   // Profils enfant : ELEVE
   //-------------------------------------------------------------------------  
+  $_SESSION['phpCAS']['attributes']['LaclasseProfil'] = "ELEVE";
+  $_SESSION['phpCAS']['attributes']['ENTEleveClasses'] = "6EME5";
+  $_SESSION['phpCAS']['attributes']['ENTEleveNivFormation'] = "6EME";
+  $_SESSION['phpCAS']['attributes']['ENTPersonProfils'] = 'National_1';
+  setToken($_SESSION['phpCAS']['attributes']);
   
-  echo('<hr/><h1>=> élève</h1>Jeton simul&eacute; : <pre style="font-size:11px;">'.print_r(getToken(), true).'</pre>');
-  // Logout + login
-  wp_clear_auth_cookie();
-  $r = wp_authenticate($p_username, $p_password);
-  // test du provisionning
-  provision_comptes_laclasse();
+  // 1. BLOG EXISTANT et COMPTE A CREER
+  // 'subscriber','contributor','author','editor','administrator'
+  $droits = array(false, true, false, false, false);
+  $userId = teste('ELEVE, BLOG EXISTANT et COMPTE A CREER', $droits);
   
-  // test du profil sur le blog.
-  equal("le user #".$userId." doit avoir un role sur le blog #".$blogId, true, aUnRoleSurCeBlog($userId, $blogId));
-  equal("le user #".$userId." doit avoir le role 'contributor' sur le blog #".$blogId, true, aLeRoleSurCeBlog($userId, $blogId, 'contributor'));
-  non_equal("le user #".$userId." ne doit avoir le role 'subscriber' sur le blog #".$blogId, true, aLeRoleSurCeBlog($userId, $blogId, 'subscriber'));
-  non_equal("le user #".$userId." ne doit avoir le role 'editor' sur le blog #".$blogId, true, aLeRoleSurCeBlog($userId, $blogId, 'editor'));
-  non_equal("le user #".$userId." ne doit avoir le role 'administrator' sur le blog #".$blogId, true, aLeRoleSurCeBlog($userId, $blogId, 'administrator'));
-  
+  // 2. BLOG A CREER et COMPTE EXISTANT
+  $_REQUEST['blogname'] = 'tests-unitaires-wp-ne-devrait-pas-exister';
+
+  $droits = array(false, false, false, false, false);
+  $userId = teste('ELEVE, BLOG A CREER et COMPTE EXISTANT', $droits);
+
+  // 3. Restauration des variables de tests pour la suite
+  restaurer_contexte_tests();
+  trashUser($userId);
+   
   //-------------------------------------------------------------------------
-  // Profils enfant : PARENT
+  // Profils adulte : PARENT
   //-------------------------------------------------------------------------  
   
   $_SESSION['phpCAS']['attributes']['LaclasseProfil'] = "PARENT";
@@ -169,23 +264,23 @@ $_REQUEST['blogtype'] = 'CLS';
   $_SESSION['phpCAS']['attributes']['ENTEleveNivFormation'] = "";
   $_SESSION['phpCAS']['attributes']['ENTPersonProfils'] = 'National_2';
   setToken($_SESSION['phpCAS']['attributes']);
+
+  // 1. BLOG EXISTANT et COMPTE A CREER
+  $droits = array(true, false, false, false, false);
+  $userId = teste('PARENT, BLOG EXISTANT et COMPTE A CREER', $droits);
   
-  echo('<hr/><h1>=> parent</h1>Jeton simul&eacute; : <pre style="font-size:11px;">'.print_r(getToken(), true).'</pre>');
-  // Logout + login
-  wp_clear_auth_cookie();
-  $r = wp_authenticate($p_username, $p_password);
-  // test du provisionning
-  provision_comptes_laclasse();
-  
-  // test du profil sur le blog.
-  equal("le user #".$userId." doit avoir un role sur le blog #".$blogId, true, aUnRoleSurCeBlog($userId, $blogId));
-  equal("le user #".$userId." doit avoir le role 'subscriber' sur le blog #".$blogId, true, aLeRoleSurCeBlog($userId, $blogId, 'subscriber'));
-  non_equal("le user #".$userId."  ne doit avoir le role 'contributor' sur le blog #".$blogId, true, aLeRoleSurCeBlog($userId, $blogId, 'contributor'));
-  non_equal("le user #".$userId." ne doit avoir le role 'editor' sur le blog #".$blogId, true, aLeRoleSurCeBlog($userId, $blogId, 'editor'));
-  non_equal("le user #".$userId." ne doit avoir le role 'administrator' sur le blog #".$blogId, true, aLeRoleSurCeBlog($userId, $blogId, 'administrator'));
+  // 2. BLOG A CREER et COMPTE EXISTANT
+  $_REQUEST['blogname'] = 'tests-unitaires-wp-ne-devrait-pas-exister';
+
+  $droits = array(false, false, false, false, false);
+  $userId = teste('PARENT, BLOG A CREER et COMPTE EXISTANT', $droits);
+
+  // 3. Restauration des variables de tests pour la suite
+  restaurer_contexte_tests();
+  trashUser($userId);
   
   //-------------------------------------------------------------------------
-  // Profils enfant : PROF
+  // Profils adulte : PROF
   //-------------------------------------------------------------------------  
   
   $_SESSION['phpCAS']['attributes']['LaclasseProfil'] = "PROF";
@@ -193,38 +288,116 @@ $_REQUEST['blogtype'] = 'CLS';
   $_SESSION['phpCAS']['attributes']['ENTEleveNivFormation'] = "";
   $_SESSION['phpCAS']['attributes']['ENTPersonProfils'] = 'National_3';
   setToken($_SESSION['phpCAS']['attributes']);
+    
+  // 1. BLOG EXISTANT et COMPTE A CREER
+  $droits = array(false, false, false, true, false);
+  $userId = teste('PROF, BLOG EXISTANT et COMPTE A CREER', $droits);
   
-  echo('<hr/><h1>=> prof</h1>Jeton simul&eacute; : <pre style="font-size:11px;">'.print_r(getToken(), true).'</pre>');
-  // Logout + login
-  wp_clear_auth_cookie();
-  $r = wp_authenticate($p_username, $p_password);
-  // test du provisionning
-  provision_comptes_laclasse();
-  
-  // test du profil sur le blog.
-  equal("le user #".$userId." doit avoir un role sur le blog #".$blogId, true, aUnRoleSurCeBlog($userId, $blogId));
-  equal("le user #".$userId." doit avoir le role 'subscriber' sur le blog #".$blogId, true, aLeRoleSurCeBlog($userId, $blogId, 'subscriber'));
-  non_equal("le user #".$userId."  ne doit avoir le role 'contributor' sur le blog #".$blogId, true, aLeRoleSurCeBlog($userId, $blogId, 'contributor'));
-  non_equal("le user #".$userId." ne doit avoir le role 'editor' sur le blog #".$blogId, true, aLeRoleSurCeBlog($userId, $blogId, 'editor'));
-  non_equal("le user #".$userId." ne doit avoir le role 'administrator' sur le blog #".$blogId, true, aLeRoleSurCeBlog($userId, $blogId, 'administrator'));
-  
-  
-  
-  //
-  
-// endMessage("<ul>".getLog() ."</ul>");
-// die();
+  // 2. BLOG A CREER et COMPTE EXISTANT
+  $_REQUEST['blogname'] = 'tests-unitaires-wp-ne-devrait-pas-exister';
 
-  // Appel du script de provisionning
+  $droits = array(false, false, false, false, true);
+  $userId = teste('PROF, BLOG A CREER et COMPTE EXISTANT', $droits);
+
+  // 3. Restauration des variables de tests pour la suite
+  restaurer_contexte_tests();
+  trashUser($userId);
+
+  //-------------------------------------------------------------------------
+  // Profils adulte : ADM_ETB
+  //-------------------------------------------------------------------------  
   
-   
-//$USERID = createUserWP('Tests-Unitaires', 'tests-unitaires@laclasse.com', 'administrator', 'tests-unitaires'.'.' .BLOG_DOMAINE);//
-//echo "UserId = ".$USERID;
-//echo "<br>deleted ? " .wp_delete_user( $USERID );
+  $_SESSION['phpCAS']['attributes']['LaclasseProfil'] = "ADM_ETB";
+  $_SESSION['phpCAS']['attributes']['ENTEleveClasses'] = "";
+  $_SESSION['phpCAS']['attributes']['ENTEleveNivFormation'] = "";
+  $_SESSION['phpCAS']['attributes']['ENTPersonProfils'] = 'National_3';
+  setToken($_SESSION['phpCAS']['attributes']);
+  
+  // 1. BLOG EXISTANT et COMPTE A CREER
+  $droits = array(false, false, false, true, false);
+  $userId = teste('ADM_ETB, BLOG EXISTANT et COMPTE A CREER', $droits);
+  
+  // 2. BLOG A CREER et COMPTE EXISTANT
+  $_REQUEST['blogname'] = 'tests-unitaires-wp-ne-devrait-pas-exister';
 
+  $droits = array(false, false, false, false, true);
+  $userId = teste('ADM_ETB, BLOG A CREER et COMPTE EXISTANT', $droits);
 
-//
-// Profils adultes 
-//
-//setAttr('LaclasseEmailAca', "");
+  // 3. Restauration des variables de tests pour la suite
+  restaurer_contexte_tests();
+  trashUser($userId);
+  
+  //-------------------------------------------------------------------------
+  // Profils adulte : PRINCIPAL
+  //-------------------------------------------------------------------------  
+  
+  $_SESSION['phpCAS']['attributes']['LaclasseProfil'] = "PRINCIPAL";
+  $_SESSION['phpCAS']['attributes']['ENTPersonProfils'] = 'National_4';
+  setToken($_SESSION['phpCAS']['attributes']);
+  
+  // 1. BLOG EXISTANT et COMPTE A CREER
+  $droits = array(false, false, false, true, false);
+  $userId = teste('PRINCIPAL, BLOG EXISTANT et COMPTE A CREER', $droits);
+  
+  // 2. BLOG A CREER et COMPTE EXISTANT
+  $_REQUEST['blogname'] = 'tests-unitaires-wp-ne-devrait-pas-exister';
+
+  $droits = array(false, false, false, false, true);
+  $userId = teste('PRINCIPAL, BLOG A CREER et COMPTE EXISTANT', $droits);
+
+  // 3. Restauration des variables de tests pour la suite
+  restaurer_contexte_tests();
+  trashUser($userId);
+  
+  //-------------------------------------------------------------------------
+  // Profils adulte : CPE
+  //-------------------------------------------------------------------------  
+  
+  $_SESSION['phpCAS']['attributes']['LaclasseProfil'] = "CPE";
+  $_SESSION['phpCAS']['attributes']['ENTPersonProfils'] = 'National_5';
+  setToken($_SESSION['phpCAS']['attributes']);
+  
+  // 1. BLOG EXISTANT et COMPTE A CREER
+  $droits = array(false, false, false, true, false);
+  $userId = teste('CPE, BLOG EXISTANT et COMPTE A CREER', $droits);
+  
+  // 2. BLOG A CREER et COMPTE EXISTANT
+  $_REQUEST['blogname'] = 'tests-unitaires-wp-ne-devrait-pas-exister';
+
+  $droits = array(false, false, false, false, true);
+  $userId = teste('CPE, BLOG A CREER et COMPTE EXISTANT', $droits);
+
+  // 3. Restauration des variables de tests pour la suite
+  restaurer_contexte_tests();
+  trashUser($userId);
+  
+  //-------------------------------------------------------------------------
+  // Profils adulte : ADMINISTRATEUR
+  //-------------------------------------------------------------------------  
+  
+  $_SESSION['phpCAS']['attributes']['LaclasseProfil'] = "ADMIN";
+  $_SESSION['phpCAS']['attributes']['ENTPersonProfils'] = 'National_3';
+  setToken($_SESSION['phpCAS']['attributes']);
+  
+  // 1. BLOG EXISTANT et COMPTE A CREER
+  $droits = array(false, false, false, false, true);
+  $userId = teste('ADMIN, BLOG EXISTANT et COMPTE A CREER', $droits, true);
+  echo getLog();
+  // 2. BLOG A CREER et COMPTE EXISTANT
+  $_REQUEST['blogname'] = 'tests-unitaires-wp-ne-devrait-pas-exister';
+
+  $droits = array(false, false, false, false, true);
+  $userId = teste('ADMIN, BLOG A CREER et COMPTE EXISTANT', $droits, true);
+  echo getLog();
+  // 3. Restauration des variables de tests pour la suite
+  restaurer_contexte_tests();
+   trashUser($userId);
+  
+  
+  /*
+  @TODO : 
+    - BLOG A CREER et COMPTE EXISTANT
+    - BLOG A CREER et COMPTE A CREER
+  */
+  
 endTest();

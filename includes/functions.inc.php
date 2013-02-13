@@ -67,6 +67,14 @@ function getLog() {
 }
 
 // --------------------------------------------------------------------------------
+// fonction de reset du log.
+// --------------------------------------------------------------------------------
+function resetLog() {
+	global $logProvisioning;
+  $logProvisioning = "";
+}
+
+// --------------------------------------------------------------------------------
 //  Fonction d'affichage d'un message de retour d'une action de pilotage.
 // --------------------------------------------------------------------------------
 function endMessage($pmessage){
