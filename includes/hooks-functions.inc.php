@@ -93,7 +93,9 @@ function addEntName () {
 // --------------------------------------------------------------------------------
 function xiti_MEN_et_google(){
 	global $current_user;
-	if (strtoupper(MODE_SERVEUR) == 'PROD') {
+	$debug = isset($_REQUEST['debug']) ? $_REQUEST['debug'] : 'N';
+	
+	if ( (strtoupper(MODE_SERVEUR) == 'PROD') || ($debug =='O') ) {
 		if ($current_user->user_login == "")
 			echo '<!-- Page publique non marquŽe par xiti_men -->';
 		else {
