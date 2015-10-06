@@ -25,15 +25,15 @@ Author URI: http://www.laclasse.com/
 */
 // Fichier de configuration
 require_once('ENTconfig.inc.php');
-// fonctions génériques
+// fonctions gÈnÈriques
 require_once('includes/functions.inc.php');
-// Fonctions liées aux hooks WordPress
+// Fonctions liÈes aux hooks WordPress
 require_once('includes/hooks-functions.inc.php');
-// Fonctions liées au pilotage d'action sur WordPress depuis l'ENT.
+// Fonctions liÈes au pilotage d'action sur WordPress depuis l'ENT.
 require_once('includes/pilotage-functions.inc.php');
-// Fonctions liées à la CASification de WordPress.
+// Fonctions liÈes ‡ la CASification de WordPress.
 require_once('includes/cas-functions.inc.php');
-// Fonctions de paramétrage du back-office des options du plugin.
+// Fonctions de paramÈtrage du back-office des options du plugin.
 require_once('includes/ENTback-office.php'); 
 
 require_once(ABSPATH . WPINC . '/registration.php');
@@ -66,17 +66,17 @@ add_filter('logout_url',array('wpCAS', 'get_url_logout'));
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	
-	h o o k s   e t   f i l t r e s   g é n é r a u x 
+	h o o k s   e t   f i l t r e s   g È n È r a u x 
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
-// ajouter le role à côté du nom à la place de "Howdy"
+// ajouter le role ‡ cÙtÈ du nom ‡ la place de "Howdy"
 add_filter( 'admin_bar_menu', 'bienvenue');
 // Ajout d'un texte perso dans le footer.
 add_filter('admin_footer_text', 'addEntName', 10, 0);
-// Marquage Ministériel
+// Marquage MinistÈriel
 add_action('wp_footer', 'xiti_MEN_et_google', 10, 0);
 
-// Maîtriser les headers http qui sont envoyés
+// Maîtriser les headers http qui sont envoyÈs
 add_action( 'login_init', 'remove_frame_options_header',12, 0 );
 add_action( 'admin_init', 'remove_frame_options_header', 12, 0 );
 
@@ -102,7 +102,7 @@ add_filter('manage_sites_custom_column', 'getCustomSiteMeta', 10, 2);
 // liste des blogs de l'utilisateur
 add_filter('myblogs_options', 'getCustomExtraInfoBlog', 10, 2);
 add_filter('myblogs_blog_actions', 'getCustomActionBlog', 10, 2);
-// Hook pour la désinscription d'un blog.
+// Hook pour la dÈsinscription d'un blog.
 add_action( 'myblogs_allblogs_options', 'actionsBlog', 10, 0);
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -110,7 +110,7 @@ add_action( 'myblogs_allblogs_options', 'actionsBlog', 10, 0);
 	l i s t e   d e s   a r t i c l e s 
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
-// selectbox pour réduire la liste par auteur
+// selectbox pour rÈduire la liste par auteur
 add_action('restrict_manage_posts', 'restrict_manage_authors');
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -119,8 +119,8 @@ add_action('restrict_manage_posts', 'restrict_manage_authors');
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
-// Cette action est envoyée à chaque mise à jour d'une option. Il faut donc filtrer 
-// par rapport à la page du back-office en cours et aux noms des options.
+// Cette action est envoyÈe ‡ chaque mise ‡ jour d'une option. Il faut donc filtrer 
+// par rapport ‡ la page du back-office en cours et aux noms des options.
 add_action( 'update_option', 'synchroENT', 10, 3);
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -136,13 +136,13 @@ add_filter('wpmu_welcome_user_notification', 'disableThisFunc', 10, 2);
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	
-	s é c u r i s a t i o n   d e   l a   p l a t e f o r m e 
+	s È c u r i s a t i o n   d e   l a   p l a t e f o r m e 
 
 http://www.geekpress.fr/wordpress/guide/7-conseils-securite-wordpress-802/
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 // Supprimer la version de WP dans l'entête publique
 remove_action('wp_head', 'wp_generator');
-// Supprimer l'accès à la modification des thèmes : editeur de thème
+// Supprimer l'accès ‡ la modification des tËhèmes : editeur de thème
 add_action( 'admin_init', 'remove_editor_menu', 20);
 add_action( '_admin_menu', 'user_role_editor_settings', 25);
 
@@ -153,7 +153,7 @@ add_action( '_admin_menu', 'user_role_editor_settings', 25);
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
 // --------------------------------------------------------------------------------
-// Contrôleur d'actions
+// ContrÙleur d'actions
 // --------------------------------------------------------------------------------
 
 if (isset($_REQUEST['ENT_action'])) {
@@ -164,7 +164,7 @@ if (isset($_REQUEST['ENT_action'])) {
 	$blogname 			= $_REQUEST['blogname'];
 	$username 			= $_REQUEST['username'];
 	$blogdescription 	= $_REQUEST['blogdescription'];
-	$mustDieAfterAction = false;  // Utilisé pour les actions qui ne nécessitent pas d'affichage après s'être déroulées.
+	$mustDieAfterAction = false;  // UtilisÈ pour les actions qui ne nÈcessitent pas d'affichage aprËès s'êÍtre dÈroulÈes.
 	
 	switch ($ENT_action) {
 	//
@@ -172,7 +172,7 @@ if (isset($_REQUEST['ENT_action'])) {
 	//
 	case 'IFRAME' :
 		setIframeTemplate();
-		$mustDieAfterAction = false;	// Maintenant qu'on a ajouté des filtres, on veut afficher le site.
+		$mustDieAfterAction = false;	// Maintenant qu'on a ajoutÈ des filtres, on veut afficher le site.
 		break;
 	//
 	// Tester l'existence d'un blog
@@ -189,6 +189,20 @@ if (isset($_REQUEST['ENT_action'])) {
 		$mustDieAfterAction = true;
 		break;
 	//
+	// Liste des blogs de la plateforme
+	// ?ENT_action=BLOG_LIST
+	case 'BLOG_LIST' :
+		blogList();	
+		$mustDieAfterAction = true;
+		break;
+	//
+	// Liste des blogs de la plateforme
+	// ?ENT_action=USER_BLOG_LIST&username=[login]
+	case 'USER_BLOG_LIST' :
+		userBlogList($username);	
+		$mustDieAfterAction = true;
+		break;
+	//
 	// Logout de WP.
 	//
 	case 'LOGOUT' :	
@@ -201,7 +215,7 @@ if (isset($_REQUEST['ENT_action'])) {
 		$mustDieAfterAction = true;
 		break;
 	//
-	// Modifier les paramètres du blog dans Worpress et mettre à jour dans l'ENT
+	// Modifier les paramètres du blog dans Worpress et mettre ‡ jour dans l'ENT
 	//
 	case 'MODIFIER_PARAMS' :
 		modifierParams($domain);	
@@ -230,7 +244,7 @@ if (isset($_REQUEST['ENT_action'])) {
 		$mustDieAfterAction = true;
 		break;
 	//
-	// Migration des données de l'ancien blog.
+	// Migration des donnÈes de l'ancien blog.
 	//
 	case 'MIGRER_DATA' :
 		if (phpCAS::isAuthenticated()) {
@@ -249,10 +263,10 @@ if (isset($_REQUEST['ENT_action'])) {
 			else message("Vous n'&ecirc;tes pas administrateur du blog '$domain'.");
 		}
 		
-		$mustDieAfterAction = true; // on va être redirigé par le script de reprise, tranquillement.		
+		$mustDieAfterAction = true; // on va être redirigÈ par le script de reprise, tranquillement.		
 		break;
 	//
-	// Action par défaut.
+	// Action par dÈfaut.
 	//
 	default  :
 		echo "L'action $ENT_action n'est pas prise en charge.";
@@ -260,9 +274,9 @@ if (isset($_REQUEST['ENT_action'])) {
 		break;
 	}
 	
-// ici, pour certaines actions, on veut juste piloter Wordpress avec nos actions émanant de l'ENT
-// et ne rien afficher. La pluspart du temps il s'agit d'actions de mise à jours  ou de provisionning.
-//	Dans ces cas, on arrête tout traitement d'affichage si nécessaire. 
+// ici, pour certaines actions, on veut juste piloter Wordpress avec nos actions Èmanant de l'ENT
+// et ne rien afficher. La pluspart du temps il s'agit d'actions de mise ‡ jours  ou de provisionning.
+//	Dans ces cas, on arrête tout traitement d'affichage si nÈcessaire. 
 if ($mustDieAfterAction) die();
 }
 

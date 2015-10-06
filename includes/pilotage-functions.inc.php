@@ -35,6 +35,76 @@ function userExists($pusername) {
 
 }
 
+// --------------------------------------------------------------------------------
+// fonction de listage de tous les blogs de la plateforme, 
+// avec les données relatives à l'ENT
+/*
+    [0] => Array
+        (
+            [blog_id] => 1
+            [site_id] => 1
+            [domain] => blogs.dev.laclasse.com
+            [path] => /
+            [registered] => 2011-04-26 13:26:05
+            [last_updated] => 2014-02-24 14:47:30
+            [public] => 1
+            [archived] => 0
+            [mature] => 0
+            [spam] => 0
+            [deleted] => 0
+            [lang_id] => 0
+        )
+*/
+// --------------------------------------------------------------------------------
+function blogList() {
+    global $wpdb;
+    $blogs = wp_get_sites();
+    $list = [];
+    foreach ($blogs as $blog) {
+        // Pas de détail sur la liste des nblogs d'un utilisateur
+            $blog_details = $wpdb->get_results( "SELECT * ".  //option_name, option_value
+                                                "FROM wp_". $blog['blog_id'] ."_options ".
+                                               // "where option_name in ('admin_email', 'blogname', 'idBLogENT', 'type_blog', '') ".
+                                                "order by option_name");
+            foreach ($blog_details as $opt) {
+                switch ($opt->option_name) {
+                    case 'admin_email':
+                        $blog['admin_email'] = $opt->option_value;
+                        break;
+                    case 'blogname':
+                        $blog['blogname'] = $opt->option_value;
+                        break;
+                    case 'idBLogENT':
+                        $blog['idBLogENT'] = $opt->option_value;
+                        break;
+                    case 'type_de_blog':
+                        $blog['type_de_blog'] = $opt->option_value;
+                        break;
+                    case 'etablissement_ENT':
+                        $blog['etablissement_ENT'] = $opt->option_value;
+                        break;
+                    
+                    default:
+                        break;
+                }
+            }
+        $list[] = $blog;
+    }
+    echo json_encode($list);
+}
+
+// --------------------------------------------------------------------------------
+// fonction de listage de tous les blogs de l'utilisateur
+// --------------------------------------------------------------------------------
+function userBlogList($username) {
+    $user_id = username_exists($username);
+    $blogs = get_blogs_of_user( $user_id );
+    $list = [];
+    foreach ($blogs as $blog) {
+        $list[] = $blog;
+    }
+    echo json_encode($list);
+}
 
 // --------------------------------------------------------------------------------
 // fonction de controle de l'intégration dans une Iframe.
