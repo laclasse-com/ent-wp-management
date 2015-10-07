@@ -70,7 +70,7 @@ function blogList() {
                                                 "");
 
             $blog['nb_posts'] = count($post_details);
-            $blog['admin_comment'] = "";
+            $blog['admin_comment'] = " ";
             // S'il n'y a qu'un article, et que c'est l'article par défaut, si le blog est ancien, il n'est pas utilisé.
             if (count($post_details) == 1) {
                  if (substr($post_details[0]->post_title, 0, 35) == "Bienvenue dans votre nouveau weblog" && $post_details[0]->ID == 1) {
