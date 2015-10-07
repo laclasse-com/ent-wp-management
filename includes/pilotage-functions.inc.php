@@ -62,10 +62,22 @@ function blogList() {
     $list = array();
     foreach ($blogs as $blog) {
         // Pas de détail sur la liste des nblogs d'un utilisateur
-            $blog_details = $wpdb->get_results( "SELECT * ".  //option_name, option_value
+            $blog_details = $wpdb->get_results( "SELECT * ". 
                                                 "FROM wp_". $blog['blog_id'] ."_options ".
-                                               // "where option_name in ('admin_email', 'blogname', 'idBLogENT', 'type_blog', '') ".
                                                 "order by option_name");
+            $post_details = $wpdb->get_results( "SELECT * ". 
+                                                "FROM wp_". $blog['blog_id'] ."_posts ".
+                                                "");
+
+            $blog['nb_posts'] = count($post_details);
+            $blog['admin_comment'] = "";
+            // S'il n'y a qu'un article, et que c'est l'article par défaut, si le blog est ancien, il n'est pas utilisé.
+            if (count($post_details) == 1) {
+                 if (substr($post_details[0]->post_title, 0, 35) == "Bienvenue dans votre nouveau weblog" && $post_details[0]->ID == 1) {
+                    $blog['admin_comment'] = "Unused blog";
+                }
+            }
+
             foreach ($blog_details as $opt) {
                 switch ($opt->option_name) {
                     case 'admin_email':
@@ -97,10 +109,20 @@ function blogList() {
 // fonction de listage de tous les blogs de l'utilisateur
 // --------------------------------------------------------------------------------
 function userBlogList($username) {
+    global $wpdb;
     $user_id = username_exists($username);
     $blogs = get_blogs_of_user( $user_id );
     $list = array();
     foreach ($blogs as $blog) {
+        $post_details = $wpdb->get_results( "SELECT * FROM wp_". $blog->userblog_id ."_posts");
+        $blog->nb_posts = count($post_details);
+        // Les posts de l'utilisateur
+        $blog->my_posts = 0;
+        foreach ($post_details as $p) {
+            if ($p->post_author == $user_id){
+                $blog->my_posts++;
+            }
+        }
         $list[] = $blog;
     }
     echo json_encode($list);
