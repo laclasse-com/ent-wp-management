@@ -59,7 +59,7 @@ function userExists($pusername) {
 function blogList() {
     global $wpdb;
     $blogs = wp_get_sites();
-    $list = [];
+    $list = array();
     foreach ($blogs as $blog) {
         // Pas de détail sur la liste des nblogs d'un utilisateur
             $blog_details = $wpdb->get_results( "SELECT * ".  //option_name, option_value
@@ -99,7 +99,7 @@ function blogList() {
 function userBlogList($username) {
     $user_id = username_exists($username);
     $blogs = get_blogs_of_user( $user_id );
-    $list = [];
+    $list = array();
     foreach ($blogs as $blog) {
         $list[] = $blog;
     }
