@@ -9,17 +9,31 @@ $wpcas_options = array(
   'laclasse' => array(
   	'cas_version' => '2.0',
   	'include_path' => '/var/www/html/CAS-1.2.0/CAS.php',
-  	'server_hostname' => 'cas-erasme.erasme.lan', 
+  	'server_hostname' => 'dev.laclasse.com', 
   	'server_port' => '443',
-  	'server_path' => '/cas'
+  	'server_path' => '/sso'
 	 ),
+  'laclasseV3' => array(
+    'cas_version' => '2.0',
+    'include_path' => '/var/www/html/CAS-1.2.0/CAS.php',
+    'server_hostname' => 'v3.laclasse.com',.
+    'server_port' => '443',
+    'server_path' => '/sso'
+   ),
 	 'cybercollege42' => array(
   	'cas_version' => '2.0',
   	'include_path' => '/var/www/html/CAS-1.2.0/CAS.php',
   	'server_hostname' => 'cas.cybercolleges42.fr', 
   	'server_port' => '443',
   	'server_path' => ''
-	 ) 
+	 ),
+  'ent01' => array(
+    'cas_version' => '2.0',
+    'include_path' => '/var/www/html/CAS-1.2.0/CAS.php',
+    'server_hostname' => 'cas.colleges.ain.fr',
+    'server_port' => '443',
+    'server_path' => ''
+   )   
 	);
 
 // Nom du serveur ENT
