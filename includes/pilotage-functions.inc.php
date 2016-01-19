@@ -111,12 +111,28 @@ function blogList() {
 function userBlogList($username) {
     global $wpdb;
     $user_id = username_exists($username);
+
+/*
+    $uRec = get_userdata($user_id);
+    $uid_proprio = get_user_meta($uRec->ID, "uid_ENT", true);
+    $display_name_proprio = get_user_meta($uRec->ID, "display_name", true);
+*/
+
     $blogs = get_blogs_of_user( $user_id );
     $list = array();
     foreach ($blogs as $blog) {
+        // L'administrateur de chaque blog
+        $user_id_from_email = get_user_id_from_string( get_blog_option($blog->userblog_id, 'admin_email'));
+        $details = get_userdata($user_id_from_email);
+        $blog->owner_name = $details->display_name;
+        // UID
+        $u = get_userdata($details->ID);
+        $uid_proprio = get_user_meta($u->ID, "uid_ENT", true);
+        $blog->owner_uid = $uid_proprio;
+
+        // Les posts de l'utilisateur
         $post_details = $wpdb->get_results( "SELECT * FROM wp_". $blog->userblog_id ."_posts");
         $blog->nb_posts = count($post_details);
-        // Les posts de l'utilisateur
         $blog->my_posts = 0;
         foreach ($post_details as $p) {
             if ($p->post_author == $user_id){
