@@ -244,28 +244,6 @@ if (isset($_REQUEST['ENT_action'])) {
 		$mustDieAfterAction = true;
 		break;
 	//
-	// Migration des donnÈes de l'ancien blog.
-	//
-	case 'MIGRER_DATA' :
-		if (phpCAS::isAuthenticated()) {
-			$user = get_user_by('login',phpCAS::getUser());
-		} else phpCAS::forceAuthentication();
-
-		$blogId = getBlogIdByDomain($domain);
-		if (!$blogId) {
-			echo "L'identifiant de '$domain' n'a pas &eacute;t&eacute; trouv&eacute;. Ce blog existe-t-il ?";
-			exit;
-		}
-		else {
-			if(aLeRoleSurCeBlog($user, $blogId, "administrator") || is_super_admin())  {
-				include_once('scripts/migrer_data_ENT.php');
-			}
-			else message("Vous n'&ecirc;tes pas administrateur du blog '$domain'.");
-		}
-		
-		$mustDieAfterAction = true; // on va être redirigÈ par le script de reprise, tranquillement.		
-		break;
-	//
 	// Action par dÈfaut.
 	//
 	default  :

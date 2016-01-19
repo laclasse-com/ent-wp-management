@@ -5,7 +5,7 @@
 $casToken = array();
 
 // --------------------------------------------------------------------------------
-// Récupérer une données dan le jeton, à défaut en GET
+// Récupérer une données dans le jeton, à défaut en GET
 // --------------------------------------------------------------------------------
 function getAttr($TokenAttrName, $defaultValue= "") {
   global $casToken;
@@ -13,7 +13,7 @@ function getAttr($TokenAttrName, $defaultValue= "") {
 }
 
 // --------------------------------------------------------------------------------
-// setter une données dan la session $_SESSION
+// setter une données dans la session $_SESSION
 // --------------------------------------------------------------------------------
 function setAttr($TokenAttrName, $value= "") {
   global $casToken;

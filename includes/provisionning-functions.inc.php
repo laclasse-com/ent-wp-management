@@ -191,8 +191,8 @@ function creerPremierArticle($domain, $wpBlogId, $pUserId, $pTypeBlog) {
 	
 	logIt("Cr&eacute;ation de l'article...");
 	$texteArticle = "
-	<p>Votre nouveau weblog est h&eacute;berg&eacute; par le <a href='http://www.rhone.fr/'>D&eacute;partement du Rh&ocirc;ne</a>, 
-	en lien avec votre ENT <a href='http://www.laclasse.com/'>http://www.laclasse.com/</a></p>
+	<p>Votre nouveau blog est h&eacute;berg&eacute; par le <a href='http://www.grandlyon.com/'>La M&eacute;tropole de Lyon</a>, 
+	en lien avec votre ENT <a href='https://www.laclasse.com/'>https://www.laclasse.com/</a></p>
 	<p>Cette plateforme est int&eacute;gr&eacute;e &agrave; l'ENT et partage donc le m&ecirc;me service d'authentification. 
 	<u>Vous avez donc deux fa&ccedil;ons d'y acc&eacute;der</u> : <br/>
 	<ul>
@@ -200,20 +200,8 @@ function creerPremierArticle($domain, $wpBlogId, $pUserId, $pTypeBlog) {
 		<li>En utilisant directement l'adresse <a href='http://".$domain."/'>http://".$domain."/</a></li>
 	</ul><br/>";
 	
-	logIt("idAncienBlogENT=$idAncienBlogENT");
-	if ($idAncienBlogENT > 0 && isset($idAncienBlogENT)) {
-		logIt("Insertion des urls de reprise des données.");
-		$texteArticle .="
-			<ul>
-				<li>Si vous vous serviez d&eacute;j&agrave; d'un blog dans l'ENT avant l'installation de cette nouvelle plateforme, 
-	vous avez la possibilit&eacute; de <a href='http://".$domain."/?ENT_action=MIGRER_DATA&pblogid=$idAncienBlogENT'>r&eacute;-importer vos articles</a>.</li>
-				<li>Vous pouvez aussi d&eacute;cider de repartir &agrave; z&eacute;ro avec un blog vide. 
-		Dans ce cas vous devez <a href='http://".$domain."/?ENT_action=MIGRER_DATA&pblogid=$idAncienBlogENT'>supprimer</a> les donn&eacute;es de cet ancien blog.</li>	
-			</ul>";
-	}
-	// http://".SERVEUR_ENT."/pls/education/blogv2.supprimer_ancien_blog?pblogid=".$ancienBlogIENT
 	$texteArticle .="</p>
-	<p>Vous aurez tout le loisir de supprimer cet article en vous connectant sur 
+	<p>Vous avez tout le loisir de supprimer cet article en vous connectant sur 
 	<a href='http://".$domain."/wp-admin/'>l'interface d'administration</a>.</p>";
 	
 	
@@ -225,7 +213,7 @@ function creerPremierArticle($domain, $wpBlogId, $pUserId, $pTypeBlog) {
   		'post_author' 		=> $pUserId, 		//The user ID number of the author.
   		'post_content' 		=> $texteArticle,	//The full text of the post.
   		'post_status' 		=> 'publish', 		//Set the status of the new post. 
-  		'post_title' 		=> "Bienvenue dans votre nouveau weblog $libType", //The title of your post.
+  		'post_title' 		=> "Bienvenue dans votre nouveau blog $libType", //The title of your post.
   		'post_type' 		=> 'post' 			//Sometimes you want to post a page.
 	);  
 	// insertion du post.
