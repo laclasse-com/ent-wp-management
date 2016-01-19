@@ -189,6 +189,15 @@ if (isset($_REQUEST['ENT_action'])) {
 		$mustDieAfterAction = true;
 		break;
 	//
+	// Renvoie l'ID WP d'un blog identifié par son nom.
+	// ?ENT_action=BLOG_ID
+	case 'BLOG_ID' :
+		$t = Array();
+		$t['id'] = getBlogIdByDomain($blogname);	
+		echo json_encode($t);
+		$mustDieAfterAction = true;
+		break;
+	//
 	// Liste des blogs de la plateforme
 	// ?ENT_action=BLOG_LIST
 	case 'BLOG_LIST' :

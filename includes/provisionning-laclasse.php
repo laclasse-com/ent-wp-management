@@ -146,11 +146,10 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   */
   
   logIt("____________________Traitement du jeton et compl&eacute;ments d'information____________________");
-  
+  setToken('');
   setToken($_SESSION['phpCAS']['attributes']);
-  
   logIt("Jeton xml issue de CAS : <pre style='font-size:11px;'>".print_r(getToken(), true)."</pre>");
-  
+
   // Si certaines donnŽes sont vide, il faut les complter :
   // Si ce jeton n'a pas ce qu'on attend, il faut proposer un formulaire ˆ l'utilisateur 
   // Pour saisir les donnŽes manquantes :email acadŽmique ou pas, nom, prŽnom.
@@ -163,12 +162,15 @@ function provision_comptes_laclasse($User_Mode_Test="") {
     $uId = username_exists($username);
     if ($uId > 0) {
       logIt("L'utilisateur existe (#".$uId."), pas besoin de compl&eacute;ment d'information."); 
-      // On set ses email,nom et prŽnom correctement pour que la suite se passe bien.
+      // On set ses email,nom et prénom correctement pour que la suite se passe bien.
       $uRec = get_userdata($uId);
       setAttr('LaclasseEmail', $uRec->user_email);
       setAttr('laclasseNom', $uRec->last_name);
       setAttr('laclassePrenom', $uRec->first_name);
-      setAttr('LaclasseProfil', get_user_meta( $uRec->ID, "profil_ENT", true));
+      // On regarde si son profil a changé des fois qu'il ait pris du grade sur l'ENT !
+      // $profil_enregistre = get_user_meta( $uRec->ID, "profil_ENT", true);
+      setSessionlaclasseProfil();
+      setAttr('LaclasseProfil', adjust_profil_for_WP());
     }
     else {
       echo (getLog());
@@ -190,7 +192,6 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   $laclasseUserNom        = getAttr('laclasseNom', "");
   $laclasseUserPrenom     = getAttr('laclassePrenom', "");
   
-  
   // Gestion de l'email acadŽmique.
   if ($laclasseUserMail != "" ) $user_email = $laclasseUserMail; 
   else if ($laclasseUserMailAca != "" && in_array($laclasseUserProfil, array("PROF","ADM_ETB","ADMIN","CPE", "PRINCIPAL"))) 
@@ -198,8 +199,9 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   	 else $user_email = ""; 
   	 
   // Si le profil est nul, il faut qu'on y mette le profil par dŽfaut : INVITE
+  // Ici compat V3
   if ($laclasseUserProfil == "" ) {
-    $laclasseUserProfil = 'INVITE';
+    $laclasseUserProfil = adjust_profil_for_WP();
   }
   
   logIt("-> uid=".$laclasseUserUid);

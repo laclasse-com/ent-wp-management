@@ -634,4 +634,59 @@ function setSessionlaclasseProfil() {
   }
 }
 
+// --------------------------------------------------------------------------------
+// Une fonction de mise en session du profil, quel que soit le type de jeton CAS
+// --------------------------------------------------------------------------------
+// Si on n'a pas réussi à lire le profil, on regarde si on ne peut pas l'interpréter autrement dans le jeton
+// par exemple avec le jeton V3, la lecture de certains attributs se complique : valeurs multiple et/ou concaténées
+//
+// Profils de la v3
+// | ACA | Personnel de rectorat, DRAF, inspection             | National_ACA  | AVS_ETB  |
+// | COL | Personnel de collectivité territoriale              | National_COL  | CPE_ETB  |
+// | DIR | Personel de direction de l'etablissement            | National_DIR  | ADM_ETB  |
+// | DOC | Documentaliste                                      | National_DOC  | PROF_ETB |
+// | ELV | Elève                                               | National_ELV  | ELV_ETB  |
+// | ENS | Enseignant                                          | National_ENS  | PROF_ETB |
+// | ETA | Personnel administartif, technique ou d'encadrement | National_ETA  | PROF_ETB |
+// | EVS | Personnel de vie scolaire                           | National_EVS  | AVS_ETB  |
+// | TUT | Responsable d'un élève                              | National_TUT  | PAR_ETB  |
+//
+// --------------------------------------------------------------------------------
+function adjust_profil_for_WP(){
+	logIt("___/ Fonction : adjust_profil_for_WP");
+	$laclasseProfil = 'INVITE';
+	$uai = $_SESSION['phpCAS']['attributes']['ENTPersonStructRattachRNE'];
+	if ($uai != '') {
+		if (is_role_v3('ENS', $uai, 'ENTPersonProfils')) $laclasseProfil = 'PROF';
+		if (is_role_v3('DOC',  $uai, 'ENTPersonProfils')) $laclasseProfil = 'PROF';
+		if (is_role_v3('EVS',  $uai, 'ENTPersonProfils')) $laclasseProfil = 'CPE';
+		if (is_role_v3('ETA',  $uai, 'ENTPersonProfils')) $laclasseProfil = 'PRINCIPAL';
+		if (is_role_v3('DIR',  $uai, 'ENTPersonProfils')) $laclasseProfil = 'PRINCIPAL';
+		if (is_role_v3('ELV',  $uai, 'ENTPersonProfils')) $laclasseProfil = 'ELEVE';
+		if (is_role_v3('ETA',  $uai, 'ENTPersonProfils')) $laclasseProfil = 'PARENT';
+		if (is_role_v3('TUT',  $uai, 'ENTPersonProfils')) $laclasseProfil = 'PARENT';
+
+		// Modification de ce profil en fonction du role particulier sur l'ENT
+		// Du moins important au plus important
+		if (is_role_v3('ADM_ETB', $uai, 'ENTPersonRoles')) $laclasseProfil = 'ADM_ETB';
+	  	if (is_role_v3('TECH',    $uai, 'ENTPersonRoles')) $laclasseProfil = 'ADMIN';
+	}
+	logIt("___/ FIN Fonction : adjust_profil_for_WP");
+    return $laclasseProfil;
+}
+
+/* * ****************************************************************************
+ *  Vérifier qu'on trouve le profil qu'on veut dans le jeton CAS
+ *
+ * Le jeton n'est pas construit pareil en v2 et en v3. il faut donc assurer 
+ * la compatibilité descendante pour le moment.
+ * ***************************************************************************** */
+function is_role_v3($profil, $uai, $attrName) {
+  $droitV3 = (preg_match("#$profil:$uai#", getAttr($attrName)) > 0);
+  if ($droitV3) {
+  	  logIt("'$profil' trouvé dans l'attribut  '$attrName'.");
+  }
+  return $droitV3;
+}
+
 ?>
