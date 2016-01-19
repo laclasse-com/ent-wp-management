@@ -184,6 +184,44 @@ foreach ($pIn as $i => $p) {
   equal("Test du profil issu de setSessionlaclasseProfil (".$p.")", $pOut[$i], getAttr('LaclasseProfil'));
 }
 
+// Test avec l'ent LaclasseV3
+setAttr("LaclasseProfil", "");
+setAttr('ENTPersonStructRattachRNE', "0690078K");
+setAttr('ENTPersonProfils', "ENS:0690078K");
+// Doit être tech
+setAttr('ENTPersonRoles', "ADM_ETB:0690078K:4813:Administrateur détablissement:CLG-VAL D'ARGENT,PROF_ETB:0690078K:4813:Professeur:CLG-VAL D'ARGENT,TECH:0690078K:4813:Administrateur technique:CLG-VAL D'ARGENT");
+equal("Test de 'adjust_profil_for_WP' user TECH", "ADMIN", adjust_profil_for_WP());
+
+// Doit être Adm_etb
+setAttr('ENTPersonRoles', "ADM_ETB:0690078K:4813:Administrateur détablissement:CLG-VAL D'ARGENT,PROF_ETB:0690078K:4813:Professeur:CLG-VAL D'ARGENT");
+equal("Test de 'adjust_profil_for_WP' user ADM_ETB", "ADM_ETB", adjust_profil_for_WP());
+
+// Doit être prof
+setAttr('ENTPersonRoles', "PROF_ETB:0690078K:4813:Professeur:CLG-VAL D'ARGENT,PAR_ETB:0690078K:4813:Professeur:CLG-VAL D'ARGENT");
+equal("Test de 'adjust_profil_for_WP' user PROF_ETB", "PROF", adjust_profil_for_WP());
+
+// test profil 'ENS'
+setAttr('ENTPersonProfils','ENS:0690078K');
+equal("Test 'adjust_profil_for_WP' user 'ENS'", 'PROF', adjust_profil_for_WP());
+// test profil 'DOC'
+setAttr('ENTPersonProfils','DOC:0690078K');
+equal("Test 'adjust_profil_for_WP' user 'DOC'", 'PROF', adjust_profil_for_WP());
+// test profil 'EVS'
+setAttr('ENTPersonProfils','EVS:0690078K');
+equal("Test 'adjust_profil_for_WP' user 'EVS'", 'CPE', adjust_profil_for_WP());
+// test profil 'DIR'
+setAttr('ENTPersonProfils','DIR:0690078K');
+equal("Test 'adjust_profil_for_WP' user 'DIR'", 'PRINCIPAL', adjust_profil_for_WP());
+// test profil 'ELV'
+setAttr('ENTPersonProfils','ELV:0690078K');
+equal("Test 'adjust_profil_for_WP' user 'ELV'", 'ELEVE', adjust_profil_for_WP());
+// test profil 'ETA'
+setAttr('ENTPersonProfils','ETA:0690078K');
+equal("Test 'adjust_profil_for_WP' user 'ETA'", 'PARENT', adjust_profil_for_WP());
+// test profil 'TUT'
+setAttr('ENTPersonProfils','TUT:0690078K');
+equal("Test 'adjust_profil_for_WP' user 'TUT'", 'PARENT', adjust_profil_for_WP());
+
 /********************************************************************************
   Le test consiste à avoir un utilisateur de test et un site de test.
   On lui affecte tous les profils à tour de role et on regarde si le 
