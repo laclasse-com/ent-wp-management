@@ -130,6 +130,10 @@ function userBlogList($username) {
         $uid_proprio = get_user_meta($u->ID, "uid_ENT", true);
         $blog->owner_uid = $uid_proprio;
 
+        // Details du parametrage du blog
+        $blog->blogpublic = get_blog_option($blog->userblog_id, 'blog_public');
+        $blog->blogtype = get_blog_option($blog->userblog_id, 'type_de_blog');
+
         // Les posts de l'utilisateur
         $post_details = $wpdb->get_results( "SELECT * FROM wp_". $blog->userblog_id ."_posts");
         $blog->nb_posts = count($post_details);
