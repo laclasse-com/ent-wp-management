@@ -193,7 +193,8 @@ if (isset($_REQUEST['ENT_action'])) {
 	// ?ENT_action=BLOG_ID
 	case 'BLOG_ID' :
 		$t = Array();
-		$t['id'] = getBlogIdByDomain($blogname);	
+		$t['id'] = getBlogIdByDomain($blogname);
+		header('Content-Type: application/json');	
 		echo json_encode($t);
 		$mustDieAfterAction = true;
 		break;
@@ -201,14 +202,16 @@ if (isset($_REQUEST['ENT_action'])) {
 	// Liste des blogs de la plateforme
 	// ?ENT_action=BLOG_LIST
 	case 'BLOG_LIST' :
-		blogList();	
+		header('Content-Type: application/json');
+		echo json_encode(blogList());	
 		$mustDieAfterAction = true;
 		break;
 	//
 	// Liste des blogs de la plateforme
 	// ?ENT_action=USER_BLOG_LIST&username=[login]
 	case 'USER_BLOG_LIST' :
-		userBlogList($username);	
+		header('Content-Type: application/json');
+		echo json_encode(userBlogList($username));	
 		$mustDieAfterAction = true;
 		break;
 	//

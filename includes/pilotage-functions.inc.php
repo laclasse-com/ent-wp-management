@@ -102,7 +102,7 @@ function blogList() {
             }
         $list[] = $blog;
     }
-    echo json_encode($list);
+    return $list;
 }
 
 // --------------------------------------------------------------------------------
@@ -145,7 +145,7 @@ function userBlogList($username) {
         }
         $list[] = $blog;
     }
-    echo json_encode($list);
+    return $list;
 }
 
 // --------------------------------------------------------------------------------
