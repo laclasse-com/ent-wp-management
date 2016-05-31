@@ -78,28 +78,36 @@ function blogList() {
                 }
             }
 
-            foreach ($blog_details as $opt) {
+            foreach ($blog_details as $k => $opt) {
+                                        print_r("$k : $opt->option_name\n");
                 switch ($opt->option_name) {
                     case 'admin_email':
                         $blog['admin_email'] = $opt->option_value;
                         break;
+                    case 'siteurl':
+                        $blog['siteurl'] = $opt->option_value;
+                        break;
                     case 'blogname':
-                        $blog['blogname'] = $opt->option_value;
+                        $blog['name'] = $opt->option_value;
                         break;
                     case 'idBLogENT':
                         $blog['idBLogENT'] = $opt->option_value;
                         break;
                     case 'type_de_blog':
-                        $blog['type_de_blog'] = $opt->option_value;
+                        $blog['blogtype'] = $opt->option_value;
                         break;
                     case 'etablissement_ENT':
                         $blog['etablissement_ENT'] = $opt->option_value;
                         break;
-                    
+                    case 'display_name':
+                        $blog['owner_name'] = $opt->option_value;
+                        break;
                     default:
                         break;
                 }
             }
+        unset($blog['registered']);
+        unset($blog['last_updated']);
         $list[] = $blog;
     }
     return $list;
@@ -121,8 +129,40 @@ function userBlogList($username) {
     $blogs = get_blogs_of_user( $user_id );
     $list = array();
     foreach ($blogs as $blog) {
+
+        // Virer ce champ tout batard 
+        $blog->blog_id = "$blog->userblog_id";
+        unset($blog->userblog_id);
+        // Normaliser celui-là
+        $blog->name = $blog->blogname;
+        unset($blog->blogname);
+
+        $blog_details = $wpdb->get_results( "SELECT * ". 
+                                            "FROM wp_". $blog->blog_id ."_options ".
+                                            "order by option_name");
+
+        foreach ($blog_details as $opt) {
+            switch ($opt->option_name) {
+                case 'admin_email':
+                    $blog->admin_email = $opt->option_value;
+                    break;
+                case 'idBLogENT':
+                    $blog->idBLogENT = $opt->option_value;
+                    break;
+                case 'etablissement_ENT':
+                    $blog->etablissement_ENT = $opt->option_value;
+                    break;
+                case 'post_count':
+                    $blog->nb_posts = $opt->option_value;
+                    break;
+                default:
+                    break;
+            }
+        }
+    
+
         // L'administrateur de chaque blog
-        $user_id_from_email = get_user_id_from_string( get_blog_option($blog->userblog_id, 'admin_email'));
+        $user_id_from_email = get_user_id_from_string( get_blog_option($blog->blog_id, 'admin_email'));
         $details = get_userdata($user_id_from_email);
         $blog->owner_name = $details->display_name;
         // UID
@@ -131,13 +171,23 @@ function userBlogList($username) {
         $blog->owner_uid = $uid_proprio;
 
         // Details du parametrage du blog
-        $blog->blogpublic = get_blog_option($blog->userblog_id, 'blog_public');
-        $blog->blogtype = get_blog_option($blog->userblog_id, 'type_de_blog');
+        $blog->public = get_blog_option($blog->blog_id, 'blog_public');
+        $blog->blogtype = get_blog_option($blog->blog_id, 'type_de_blog');
+       $blog->lang_id = "0";
 
         // Les posts de l'utilisateur
-        $post_details = $wpdb->get_results( "SELECT * FROM wp_". $blog->userblog_id ."_posts");
-        $blog->nb_posts = count($post_details);
+        $post_details = $wpdb->get_results( "SELECT * FROM wp_". $blog->blog_id ."_posts");
+        //$blog->nb_posts = count($post_details);
         $blog->my_posts = 0;
+
+        // S'il n'y a qu'un article, et que c'est l'article par défaut, si le blog est ancien, il n'est pas utilisé.
+        $blog->admin_comment = " ";
+        if (count($post_details) == 1) {
+             if (substr($post_details[0]->post_title, 0, 35) == "Bienvenue dans votre nouveau weblog" && $post_details[0]->ID == 1) {
+                $blog->admin_comment = "Unused blog";
+            }
+        }
+
         foreach ($post_details as $p) {
             if ($p->post_author == $user_id){
                 $blog->my_posts++;

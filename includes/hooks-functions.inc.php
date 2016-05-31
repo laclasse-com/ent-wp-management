@@ -262,7 +262,7 @@ function actionsBlog() {
 	if ($action == 'DESINSCRIRE') {
 		if (aUnRoleSurCeBlog($current_user->ID, $blogid)) {
 			$cu = (array) $current_user;
-      remove_user_from_blog($current_user->ID, $blogid);
+			remove_user_from_blog($current_user->ID, $blogid);
 		}
 	}
 }
@@ -299,6 +299,16 @@ function synchroENT ($optionName, $old, $new) {
 			}
 		}
 	}
+}
+
+/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	
+	f o n c t i o n s   i n s c r i p t i o n  /  d e s i n s c r i p t i o n 
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
+function blog_subscribe($data) {
+	// global $current_user;
+	print_r($data);
 }
 
 

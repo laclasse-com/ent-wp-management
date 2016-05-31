@@ -146,6 +146,20 @@ remove_action('wp_head', 'wp_generator');
 add_action( 'admin_init', 'remove_editor_menu', 20);
 add_action( '_admin_menu', 'user_role_editor_settings', 25);
 
+
+/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	
+	h o o k s   p o u r   a j o u t e r   d e s   a p i   ‡  R E S T _ A P I .
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
+add_action( 'rest_api_init', function () {
+    // register_rest_route( 'ent-wp-management/v1', '/blog/([A-z0-9])/subscribe/(?P<id>\d+)', array(
+    register_rest_route( 'ent-wp-management/v1', '/blog/(?P<id>\d+)', array(
+        'methods' => 'GET',
+        'callback' => 'blog_subscribe',
+    ) );
+} );
+
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	
 	a c t i o n s   d i v e r s e s   d e   p i l o t a g e  
@@ -174,6 +188,7 @@ if (isset($_REQUEST['ENT_action'])) {
 		setIframeTemplate();
 		$mustDieAfterAction = false;	// Maintenant qu'on a ajoutÈ des filtres, on veut afficher le site.
 		break;
+
 	//
 	// Tester l'existence d'un blog
 	//
@@ -181,6 +196,7 @@ if (isset($_REQUEST['ENT_action'])) {
 		blogExists($blogname);	
 		$mustDieAfterAction = true;
 		break;
+
 	//
 	// Tester l'existence d'un utilisateur sur la plateforme WP.
 	//
@@ -188,6 +204,7 @@ if (isset($_REQUEST['ENT_action'])) {
 		userExists($username);	
 		$mustDieAfterAction = true;
 		break;
+
 	//
 	// Renvoie l'ID WP d'un blog identifiÈ par son nom.
 	// ?ENT_action=BLOG_ID
@@ -206,6 +223,7 @@ if (isset($_REQUEST['ENT_action'])) {
 		echo json_encode(blogList());	
 		$mustDieAfterAction = true;
 		break;
+
 	//
 	// Liste des blogs de la plateforme
 	// ?ENT_action=USER_BLOG_LIST&username=[login]
@@ -214,6 +232,7 @@ if (isset($_REQUEST['ENT_action'])) {
 		echo json_encode(userBlogList($username));	
 		$mustDieAfterAction = true;
 		break;
+
 	//
 	// Logout de WP.
 	//
@@ -226,6 +245,7 @@ if (isset($_REQUEST['ENT_action'])) {
 		}
 		$mustDieAfterAction = true;
 		break;
+
 	//
 	// Modifier les paramètres du blog dans Worpress et mettre ‡ jour dans l'ENT
 	//
@@ -233,6 +253,30 @@ if (isset($_REQUEST['ENT_action'])) {
 		modifierParams($domain);	
 		$mustDieAfterAction = true;
 		break;
+
+	//
+	// inscription d'un blog.
+	// Cette action est normalement gÈrÈe en HOOK pour le Back-office, mais
+	// peut aussi s'appeler ‡ distance, d'o˘ sa prÈsence dans ce controleur.
+	//
+	case 'INSCRIRE' :
+	//
+	// Desinscription d'un blog.
+	// Cette action est normalement gÈrÈe en HOOK pour le Back-office, mais
+	// peut aussi s'appeler ‡ distance, d'o˘ sa prÈsence dans ce controleur.
+	//
+	case 'DESINSCRIRE' :
+		global $current_user;
+
+		if (phpCAS::isAuthenticated()) {
+			$current_user = get_user_by('login',phpCAS::getUser());
+		} else phpCAS::forceAuthentication();
+		$_REQUEST["action"] = $ENT_action;
+		$_REQUEST['blogid'] = getBlogIdByDomain($blogname);
+		actionsBlog();
+		$mustDieAfterAction = true;
+		break;
+
 	//
 	// Supprimer un blog
 	//
