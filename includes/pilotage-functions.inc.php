@@ -79,7 +79,6 @@ function blogList() {
             }
 
             foreach ($blog_details as $k => $opt) {
-                                        print_r("$k : $opt->option_name\n");
                 switch ($opt->option_name) {
                     case 'admin_email':
                         $blog['admin_email'] = $opt->option_value;
