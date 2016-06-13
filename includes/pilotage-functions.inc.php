@@ -312,6 +312,19 @@ function setIframeTemplate() {
 	add_filter('template', 'modeIntegreIframeENT');
 }
 
+// --------------------------------------------------------------------------------
+// Création d'une fonction de gestionnaire d'assertion
+// --------------------------------------------------------------------------------
+function message_erreur_assertion($file, $line, $code, $desc = null)
+{
+    $s = "Echec de l'assertion : $code";
+    if ($desc) {
+        $s .= ": $desc";
+    }
 
+    header('Content-Type: application/json');
+    echo '{ "error" :  "'.str_replace('"', "'", $s).'" }';
+    die();
+} 
 
 ?>

@@ -48,6 +48,17 @@ require_once(ABSPATH.'/wp-admin/includes/ms.php');
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	
+	Paramétrage des assertion : rendre l'assertion silencieuxse 
+	pour gérer une erreur perso.
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
+assert_options(ASSERT_ACTIVE, 1);
+assert_options(ASSERT_WARNING, 0);
+assert_options(ASSERT_QUIET_EVAL, 1);
+assert_options(ASSERT_CALLBACK, 'message_erreur_assertion');
+
+/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	
 	h o o k s   p o u r   l a   C A S i f i c a t i o n   d e   W o r p r e s s .
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
@@ -176,7 +187,11 @@ if (isset($_REQUEST['ENT_action'])) {
 	//$ENTblogid 			= $_REQUEST['ENTblogid'];
 	$ENTblogid 			= $_REQUEST['pblogid'];
 	$blogname 			= $_REQUEST['blogname'];
-	$username 			= $_REQUEST['username'];
+	$blogtype 			= $_REQUEST['blogtype'];
+	$uid 				= $_REQUEST['uid'];
+	$uid_admin			= $_REQUEST['uid_admin'];
+	$uid_admin			= $_REQUEST['uid_admin'];
+	$signature 			= $_REQUEST['signature'];
 	$blogdescription 	= $_REQUEST['blogdescription'];
 	$mustDieAfterAction = false;  // Utilisé pour les actions qui ne nécessitent pas d'affichage après s'être déroulées.
 	
@@ -254,17 +269,32 @@ if (isset($_REQUEST['ENT_action'])) {
 		$mustDieAfterAction = true;
 		break;
 
-	//
-	// inscription d'un blog.
-	// Cette action est normalement gérée en HOOK pour le Back-office, mais
-	// peut aussi s'appeler à distance, d'où sa présence dans ce controleur.
-	//
+		//
+		// inscription d'un blog.
+		// Cette action est normalement gérée en HOOK pour le Back-office, mais
+		// peut aussi s'appeler à distance, d'où sa présence dans ce controleur.
+		//
 	case 'INSCRIRE' :
-	//
-	// Desinscription d'un blog.
-	// Cette action est normalement gérée en HOOK pour le Back-office, mais
-	// peut aussi s'appeler à distance, d'où sa présence dans ce controleur.
-	//
+		// assert($blogname);
+
+		assert('$blogname != ""', "Le paramètre \$blogname doit être renseigné.");
+		assert('$blogtype != ""', "Le paramètre \$blogtype doit être renseigné.");
+		assert('$uid != ""', "Le paramètre \$uid doit être renseigné.");
+		assert('$uid_admin != ""', "Le paramètre \$uid_admin doit être renseigné.");
+		assert('$signature != ""', "Le paramètre \$signature doit être renseigné.");
+		$mustDieAfterAction = true;
+
+		echo "<pre>
+			- Appel à l'annuaire pour vérifier les droits de s'inscrire 
+			- renvoie ok ou ko en json
+
+		</pre>";
+		break;
+		//
+		// Desinscription d'un blog.
+		// Cette action est normalement gérée en HOOK pour le Back-office, mais
+		// peut aussi s'appeler à distance, d'où sa présence dans ce controleur.
+		//
 	case 'DESINSCRIRE' :
 		global $current_user;
 
