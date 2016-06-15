@@ -225,7 +225,7 @@ function creerPremierArticle($domain, $wpBlogId, $pUserId, $pTypeBlog) {
 // --------------------------------------------------------------------------------
 // fonction création d'un nouveau blog
 // --------------------------------------------------------------------------------
-function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $site_id, $wpUsrId, $TypeDeBlog, $EtbUAI) {
+function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $site_id, $wpUsrId, $TypeDeBlog, $EtbUAI, $ClsID ="", $GrpID="") {
 	logIt("___Fonction : creerNouveauBlog");
 	logIt("Cr&eacute;ation du blog pour le domaine '".$domain."'.");
 	$wpBlogId = create_empty_blog( $domain, $path, $sitename, $site_id);
@@ -244,6 +244,18 @@ function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $si
 	if ($TypeDeBlog == 'ETB') {
 	   add_blog_option( $wpBlogId, 'etablissement_ENT', $EtbUAI );
 	   logIt(" -> Ajout de l'option 'etablissement_ENT'='".$EtbUAI."'.");
+	}
+	
+	// Si ce type de blog est un blog de classe, on enregistre l'id de cette classe
+	if ($TypeDeBlog == 'CLS') {
+	   add_blog_option( $wpBlogId, 'classe_ENT', $ClsID );
+	   logIt(" -> Ajout de l'option 'classe_ENT'='".$ClsID."'.");
+	}
+	
+	// Si ce type de blog est un blog d'établissement, on enregistre l'id de ce groupe
+	if ($TypeDeBlog == 'GRP') {
+	   add_blog_option( $wpBlogId, 'groupe_ENT', $GrpID );
+	   logIt(" -> Ajout de l'option 'groupe_ENT'='".$GrpID."'.");
 	}
 	
 	// add_blog_option( $wpBlogId, 'idBLogENT', $_REQUEST['idAncienBlogEnt'] );
@@ -275,7 +287,7 @@ function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $si
 	logIt(" -> Param&eacute;trage langue FR pour l'interface d'aministration et le blog.");
 
 	update_blog_option($wpBlogId, 'blog_upload_space', 300);
-	logIt(" -> Param&eacute;trage Quota du blog : 100M.");
+	logIt(" -> Param&eacute;trage Quota du blog : 300M.");
 
 	update_blog_option($wpBlogId, 'comment_registration', 1 );
 	logIt(" -> Param&eacute;trage du mode de commentaire par d&eacute;faut : Il faut &ecirc;tre enregistrer pour pouvoir commenter.");
