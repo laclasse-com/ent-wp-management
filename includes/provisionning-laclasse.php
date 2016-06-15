@@ -71,15 +71,6 @@ function provision_comptes_laclasse($User_Mode_Test="") {
     logIt('L\'utilisateur de test "<b>'.$User_Mode_Test.'</b>" va &ecirc;tre employ&eacute; pour la suite du script.');
   }
   
-/*
-  // we don't want crawlers to index this page, if they ever get here.
-  function signuppageheaders() {
-  	echo "<meta name='robots' content='noindex,nofollow' />\n";
-  }
-  add_action( 'wp_head', 'signuppageheaders' ) ;
-  add_filter("redirect_to", get_site_url()."?ENT_action=IFRAME"); 
-*/  
-  
   // activer l'affichage des erreurs
   error_reporting("E_ALL");
   
@@ -129,7 +120,7 @@ function provision_comptes_laclasse($User_Mode_Test="") {
     redirection(BLOG_DOMAINE);
     // FIN.
   }
-  
+
   logIt("sitename = ".$sitename);
   logIt("domaine = ".$domain);
   logIt("TypeDeBlog = ".$TypeDeBlog);
@@ -198,7 +189,10 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   $laclasseUserMailAca    = getAttr('LaclasseEmailAca', "");
   $laclasseUserNom        = getAttr('LaclasseNom', "");
   $laclasseUserPrenom     = getAttr('LaclassePrenom', "");
-  
+  // Pour enregistrer les ids de la v3 des classes et groupes dans les options de blogs de ces types.
+  $laclasseClsId          = $_REQUEST['clsid'];
+  $laclasseGrpId          = $_REQUEST['grpid'];
+
   // Gestion de l'email académique.
   if ($laclasseUserMail != "" ) $user_email = $laclasseUserMail; 
   else if ($laclasseUserMailAca != "" && in_array($laclasseUserProfil, array("PROF","ADM_ETB","ADMIN","CPE", "PRINCIPAL"))) 
@@ -223,6 +217,8 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   logIt("-> username=".$username);
   logIt("-> nom=".$laclasseUserNom);
   logIt("-> prenom=".$laclasseUserPrenom);
+  logIt("-> clsid=".$laclasseClsId);
+  logIt("-> grpid=".$laclasseGrpId);
   
   
   //
@@ -249,7 +245,7 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   			// le premier qui arrive est administrateur du nouveau blog !
   			logIt("le domaine '".$domain."' n'existe pas.");
   			// Maintenant il faut créer un blog.
-  			creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $site_id, $wpUsrId, $TypeDeBlog, $laclasseUserCodeRne);
+  			creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $site_id, $wpUsrId, $TypeDeBlog, $laclasseUserCodeRne, $laclasseClsId, $laclasseGrpId);
   		}
   	}
   
@@ -288,7 +284,7 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   			logIt("le domaine '".$domain."' n'existe pas.");
   			$wpUsrId = createUserWP($username, $user_email, "administrator", $domain);
   			// Maintenant il faut créer un blog.
-  			creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $site_id, $wpUsrId, $TypeDeBlog, $laclasseUserCodeRne);
+  			creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $site_id, $wpUsrId, $TypeDeBlog, $laclasseUserCodeRne, $laclasseClsId, $laclasseGrpId);
      		}
   	}
   
