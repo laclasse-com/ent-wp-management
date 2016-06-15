@@ -209,6 +209,7 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   // Ici compat V3
   if ($laclasseUserProfil == "" ) {
     $laclasseUserProfil = adjust_profil_for_WP();
+    setAttr('LaclasseProfil', $laclasseUserProfil);
   }
   
   logIt("-> uid=".$laclasseUserUid);
