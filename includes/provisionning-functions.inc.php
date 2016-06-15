@@ -246,8 +246,8 @@ function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $si
 	   logIt(" -> Ajout de l'option 'etablissement_ENT'='".$EtbUAI."'.");
 	}
 	
-	add_blog_option( $wpBlogId, 'idBLogENT', $_REQUEST['idAncienBlogEnt'] );
-	logIt(" -> Ce blog est identifi&eacute; comme #".$_REQUEST['idAncienBlogEnt']." dans l'ENT.");
+	// add_blog_option( $wpBlogId, 'idBLogENT', $_REQUEST['idAncienBlogEnt'] );
+	// logIt(" -> Ce blog est identifi&eacute; comme #".$_REQUEST['idAncienBlogEnt']." dans l'ENT.");
 	
 	add_blog_option( $wpBlogId, 'wordpress_api_key', AKISMET_KEY);
 	logIt(" -> Ajout de la cle ASKIMET pour l'anti-spams sur les commentaires.");
@@ -319,6 +319,8 @@ function majWPUserMetData($p_userId) {
 	if (getAttr('LaclasseProfil') == "ELEVE") {
 		logIt("classe de l'utilisateur");
 		update_user_meta($p_userId, 'classe_ENT', getAttr('ENTEleveClasses'));
+		logIt("La classe de l'élève est enregistrée (".getAttr('ENTEleveClasses').")");
+
 	}
 }
 
