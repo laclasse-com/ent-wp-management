@@ -293,7 +293,6 @@ if (isset($_REQUEST['ENT_action'])) {
 		// assert('$blogtype != ""', "Le paramètre \$blogtype doit être renseigné.");
 		// assert('$uid != ""', "Le paramètre \$uid doit être renseigné.");
 		// $url = generate_url(ANNUAIRE_URL."api/app/users/$uid", Array("expand" => "true"));
-		// $user =json_decode(get_http($url));
 
 		$current_user = wp_get_current_user();
 		// Vérifier si l'utilisateur est bien connecté
@@ -318,18 +317,31 @@ if (isset($_REQUEST['ENT_action'])) {
 		$type_de_blog = get_blog_option($blogid, "type_de_blog");
 		assert('$type_de_blog != ""', "Le paramètre \$blogtype doit être renseigné.");
 
+		// Interrogation de l'annuaireV3 de l'ENT
+		$userENT =json_decode(get_http(generate_url(ANNUAIRE_URL."api/app/users/$uid_ent", Array("expand" => "true"))));
+
+
 		// Inscription en fonction du type de blog
 		switch ($type_de_blog) {
 			case "ETB":
 				if($uai_blog == $uai_user) {
 					$inscrire = true;
 					$message_retour = "Inscription de l'utilisateur $current_user->display_name ($profil_ent / $uid_ent) ".
-				 					  "au blog de son établissement $blogname.".BLOG_DOMAINE.", role '$role_wp'.";
+				 					  "au blog de son établissement $blogname.".BLOG_DOMAINE;
 				}
 				break;
 			
 			case "CLS":
-				// if ($classe_ent == $classe_user)
+				foreach($userENT->classes as $c) {
+					if ($c->classe_id == $classe_ent) {
+						$inscrire = true;
+						$message_retour = "Inscription de l'utilisateur $current_user->display_name ($profil_ent / $uid_ent) ".
+				 					  "au blog de sa classe $blogname.".BLOG_DOMAINE;
+					break;
+					} else {
+						$message_retour = "Vous ne pouvez pas vous inscrire sur ce blog de classe.";
+					}
+				}
 				break;
 			
 			case "GRP":
@@ -353,6 +365,7 @@ if (isset($_REQUEST['ENT_action'])) {
 			$role_wp = get_WP_role_from_ent_profil($profil_ent, false);
 			add_user_to_blog($blogid, $current_user->ID, $role_wp);
 			$status = "success";
+			$message_retour .= ", role '$role_wp'";
 		}
 
 		header('Content-Type: application/json');
