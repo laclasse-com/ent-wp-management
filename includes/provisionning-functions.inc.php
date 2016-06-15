@@ -274,7 +274,7 @@ function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $si
 	update_blog_option($wpBlogId, 'WPLANG', 'fr_FR');
 	logIt(" -> Param&eacute;trage langue FR pour l'interface d'aministration et le blog.");
 
-	update_blog_option($wpBlogId, 'blog_upload_space', 100);
+	update_blog_option($wpBlogId, 'blog_upload_space', 300);
 	logIt(" -> Param&eacute;trage Quota du blog : 100M.");
 
 	update_blog_option($wpBlogId, 'comment_registration', 1 );
