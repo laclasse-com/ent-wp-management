@@ -313,7 +313,7 @@ function setIframeTemplate() {
 }
 
 // --------------------------------------------------------------------------------
-// Création d'une fonction de gestionnaire d'assertion
+// Fonction de gestionnaire d'assertion
 // --------------------------------------------------------------------------------
 function message_erreur_assertion($file, $line, $code, $desc = null)
 {
@@ -327,4 +327,13 @@ function message_erreur_assertion($file, $line, $code, $desc = null)
     die();
 } 
 
+
+// --------------------------------------------------------------------------------
+// renvoie l'id WP de l'utilisateur en fonction de son login
+// --------------------------------------------------------------------------------
+function get_user_id_by_login($login) {
+    global $wpdb;
+    $r = $wpdb->get_results( "SELECT ID FROM wp_users where user_login = '".strtolower($login)."'");    
+    return $r[0]->ID;
+}
 ?>

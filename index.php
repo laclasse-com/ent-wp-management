@@ -35,6 +35,8 @@ require_once('includes/pilotage-functions.inc.php');
 require_once('includes/cas-functions.inc.php');
 // Fonctions de paramétrage du back-office des options du plugin.
 require_once('includes/ENTback-office.php'); 
+// Fonctions de signature des requetes
+require_once('includes/signature-functions.php'); 
 
 require_once(ABSPATH . WPINC . '/registration.php');
 require_once(ABSPATH . WPINC . '/formatting.php');
@@ -188,8 +190,8 @@ if (isset($_REQUEST['ENT_action'])) {
 	$ENTblogid 			= $_REQUEST['pblogid'];
 	$blogname 			= $_REQUEST['blogname'];
 	$blogtype 			= $_REQUEST['blogtype'];
-	$uid 				= $_REQUEST['uid'];
-	$uid_admin			= $_REQUEST['uid_admin'];
+	$username			= $_REQUEST['username'];
+	$uid				= $_REQUEST['uid'];
 	$uid_admin			= $_REQUEST['uid_admin'];
 	$signature 			= $_REQUEST['signature'];
 	$blogdescription 	= $_REQUEST['blogdescription'];
@@ -274,22 +276,82 @@ if (isset($_REQUEST['ENT_action'])) {
 		// Cette action est normalement gérée en HOOK pour le Back-office, mais
 		// peut aussi s'appeler à distance, d'où sa présence dans ce controleur.
 		//
-	case 'INSCRIRE' :
-		// assert($blogname);
 
+	case 'INSCRIRE' :
+	// --------------------------------------------------------------------------------
+	// On suppose que le compte a déjà été provisionné.
+	// --------------------------------------------------------------------------------
 		assert('$blogname != ""', "Le paramètre \$blogname doit être renseigné.");
 		assert('$blogtype != ""', "Le paramètre \$blogtype doit être renseigné.");
 		assert('$uid != ""', "Le paramètre \$uid doit être renseigné.");
-		assert('$uid_admin != ""', "Le paramètre \$uid_admin doit être renseigné.");
-		assert('$signature != ""', "Le paramètre \$signature doit être renseigné.");
+		$url = generate_url(ANNUAIRE_URL."api/app/users/$uid", Array("expand" => "true"));
+		$user =json_decode(get_http($url));
+
+		$current_user = wp_get_current_user();
+		print_r($current_user);
+		die();
+
+		$userid = get_user_id_by_login($user->login);
+		assert ('$userid != ""', "L'utilisateur '$username' n'existe pas sur la plateforme WordPress de laclasse.com.");
+
+		$blogid = getBlogIdByDomain($blogname.".".BLOG_DOMAINE);
+		assert ('$blogid != ""', "Le blog '$blogname.".BLOG_DOMAINE."' n'existe pas.");
+
+		$blog_details = $wpdb->get_results( "SELECT * ". 
+                                                "FROM wp_". $blogid ."_options ".
+                                                "order by option_name");
+
+		// echo "<pre>
+		// 	- Vérifier que l'uid_admin à bien un role superadmin ou  admin sur le blog.
+		// 	- Appel à l'annuaire pour vérifier les droits de s'inscrire 
+		// 	- renvoie ok ou ko en json";
+		// foreach($blog_details as $k => $opt) {
+		// 	echo $opt->option_name . " = " . $opt->option_value."\n";
+		// }
+
+		// echo "</pre>";
+
+		foreach($user->roles as $k => $role) {
+			var_dump($role);
+		}
+
+		// $blog_details->etablissement_ENT
+		die();
+
+
+		// Ici on est ok pour les paramètres
+		
+		// Si l'utilisateur a un role sur ce blog, on ne fait plus rien
+		// if ( !aUnRoleSurCeBlog($blogid, $userid) ) {
+		//   	if ($laclasseUserProfil == "ADMIN") {
+		//   			rattachUserToHisBlog($domain, "/", $blogid, $userid, "administrator");
+		//   	}
+		//   	if (in_array($laclasseUserProfil, array("PROF", "ADM_ETB", "CPE", "PRINCIPAL"))) {
+		// 		$profilBlog = "editor";
+  // 				if ( $laclasseUserProfil == "PRINCIPAL" && $blog_details->etablissement_ENT == $laclasseUserCodeRne ) {
+  // 					$profilBlog = "administrator";
+  // 					}
+  // 				rattachUserToHisBlog($domain, "/", $blogid, $userid, $profilBlog);
+		//   	}
+		//   	if ($laclasseUserProfil == "ELEVE") {
+		//   		rattachUserToHisBlog($domain, "/", $blogid, $userid, "contributor");
+		//   	}
+		//   	if (in_array($laclasseUserProfil, array("PARENT","INVITE"))){
+		//   		rattachUserToHisBlog($domain, "/", $blogid, $userid, "subscriber");
+		//   	}
+		// }
+
+
+
+
+
+
+
 		$mustDieAfterAction = true;
-
-		echo "<pre>
-			- Appel à l'annuaire pour vérifier les droits de s'inscrire 
-			- renvoie ok ou ko en json
-
-		</pre>";
 		break;
+	// --------------------------------------------------------------------------------
+	// --------------------------------------------------------------------------------
+
 		//
 		// Desinscription d'un blog.
 		// Cette action est normalement gérée en HOOK pour le Back-office, mais
