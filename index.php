@@ -304,9 +304,8 @@ if (isset($_REQUEST['ENT_action'])) {
 
 		$uid_ent =  $userMeta['uid_ENT'][0];
 		$profil_ent = $userMeta['profil_ENT'][0];
-		// echo $userMeta['nom_ENT'][0]."<br>";
 		$uai_user = $userMeta['etablissement_ENT'][0];
-		$classe_user = $userMeta['classe_ENT'][0];
+		// $classe_user = $userMeta['classe_ENT'][0];
 
 		// Récupération des détails sur le blog
 		$blogid = getBlogIdByDomain($blogname.".".BLOG_DOMAINE);
@@ -314,6 +313,7 @@ if (isset($_REQUEST['ENT_action'])) {
 
 		$uai_blog =  get_blog_option($blogid, "etablissement_ENT");
 		$classe_ent = get_blog_option($blogid, "classe_ENT");
+		$groupe_ent = get_blog_option($blogid, "groupe_ENT");
 		$type_de_blog = get_blog_option($blogid, "type_de_blog");
 		assert('$type_de_blog != ""', "Le paramètre \$blogtype doit être renseigné.");
 
@@ -345,7 +345,16 @@ if (isset($_REQUEST['ENT_action'])) {
 				break;
 			
 			case "GRP":
-				# code...
+				foreach($userENT->groupes_eleves as $g) {
+					if ($g->groupe_id == $groupe_ent) {
+						$inscrire = true;
+						$message_retour = "Inscription de l'utilisateur $current_user->display_name ($profil_ent / $uid_ent) ".
+				 					  "au blog de sa groupe $blogname.".BLOG_DOMAINE;
+					break;
+					} else {
+						$message_retour = "Vous ne pouvez pas vous inscrire sur ce blog de groupe.";
+					}
+				}
 				break;
 			
 			case "ENV":
