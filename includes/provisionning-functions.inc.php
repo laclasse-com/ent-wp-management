@@ -699,5 +699,3 @@ function is_role_v3($profil, $uai, $attrName) {
   }
   return $droitV3;
 }
-
-?>

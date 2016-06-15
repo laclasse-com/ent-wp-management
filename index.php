@@ -278,75 +278,85 @@ if (isset($_REQUEST['ENT_action'])) {
 		//
 
 	case 'INSCRIRE' :
+	$inscrire = false;
+	$status = "error";
+	$message_retour = "";
 	// --------------------------------------------------------------------------------
-	// On suppose que le compte a déjà été provisionné.
+	// On suppose que le compte a déjà été provisionné, ET l'utilisateur est connecté
+	// wp_get_current_user() est donc renseigné
+	// - Il faut vérifier que l'utilisateur a le droit de s'inscrire
+	// Si blog ETB => UAI utilisateur == UAI 
+	// Si Blog de classe Classe utilisateur == classe_ENT pour les ELEVE
+	// Si BLog de groupe Groupe utilisateur == Groupe_ENT pour les ELEVE
 	// --------------------------------------------------------------------------------
 		assert('$blogname != ""', "Le paramètre \$blogname doit être renseigné.");
-		assert('$blogtype != ""', "Le paramètre \$blogtype doit être renseigné.");
-		assert('$uid != ""', "Le paramètre \$uid doit être renseigné.");
-		$url = generate_url(ANNUAIRE_URL."api/app/users/$uid", Array("expand" => "true"));
-		$user =json_decode(get_http($url));
+		// assert('$blogtype != ""', "Le paramètre \$blogtype doit être renseigné.");
+		// assert('$uid != ""', "Le paramètre \$uid doit être renseigné.");
+		// $url = generate_url(ANNUAIRE_URL."api/app/users/$uid", Array("expand" => "true"));
+		// $user =json_decode(get_http($url));
 
 		$current_user = wp_get_current_user();
-		print_r($current_user);
-		die();
+		// Vérifier si l'utilisateur est bien connecté
+		assert ('$current_user->ID  != ""', "L'utilisateur n'existe pas sur la plateforme WordPress de laclasse.com.");
 
-		$userid = get_user_id_by_login($user->login);
-		assert ('$userid != ""', "L'utilisateur '$username' n'existe pas sur la plateforme WordPress de laclasse.com.");
+		// Récupération des champs meta de l'utilisateur 
+		$userMeta = get_user_meta($current_user->ID);
+		assert ('$userMeta[\'profil_ENT\'][0] != ""', "Cet utilisateur n'a pas de profil sur la plateforme WordPress de laclasse.com.");
 
+		$uid_ent =  $userMeta['uid_ENT'][0];
+		$profil_ent = $userMeta['profil_ENT'][0];
+		// echo $userMeta['nom_ENT'][0]."<br>";
+		$uai_user = $userMeta['etablissement_ENT'][0];
+		$classe_user = $userMeta['classe_ENT'][0];
+
+		// Récupération des détails sur le blog
 		$blogid = getBlogIdByDomain($blogname.".".BLOG_DOMAINE);
 		assert ('$blogid != ""', "Le blog '$blogname.".BLOG_DOMAINE."' n'existe pas.");
 
-		$blog_details = $wpdb->get_results( "SELECT * ". 
-                                                "FROM wp_". $blogid ."_options ".
-                                                "order by option_name");
+		$uai_blog =  get_blog_option($blogid, "etablissement_ENT");
+		$classe_ent = get_blog_option($blogid, "classe_ENT");
+		$type_de_blog = get_blog_option($blogid, "type_de_blog");
+		assert('$type_de_blog != ""', "Le paramètre \$blogtype doit être renseigné.");
 
-		// echo "<pre>
-		// 	- Vérifier que l'uid_admin à bien un role superadmin ou  admin sur le blog.
-		// 	- Appel à l'annuaire pour vérifier les droits de s'inscrire 
-		// 	- renvoie ok ou ko en json";
-		// foreach($blog_details as $k => $opt) {
-		// 	echo $opt->option_name . " = " . $opt->option_value."\n";
-		// }
-
-		// echo "</pre>";
-
-		foreach($user->roles as $k => $role) {
-			var_dump($role);
+		// Inscription en fonction du type de blog
+		switch ($type_de_blog) {
+			case "ETB":
+				if($uai_blog == $uai_user) {
+					$inscrire = true;
+					$message_retour = "Inscription de l'utilisateur $current_user->display_name ($profil_ent / $uid_ent) ".
+				 					  "au blog de son établissement $blogname.".BLOG_DOMAINE.", role '$role_wp'.";
+				}
+				break;
+			
+			case "CLS":
+				// if ($classe_ent == $classe_user)
+				break;
+			
+			case "GRP":
+				# code...
+				break;
+			
+			case "ENV":
+				// Tout le monde peut s'inscrire !
+				$inscrire = true;
+				break;
+			
+			default:
+				// Pas d'inscription
+				$message_retour = "Pas d'inscription, type de blog inconnu";
+				$status = "error";
+				break;
 		}
 
-		// $blog_details->etablissement_ENT
-		die();
 
+		if ($inscrire) {
+			$role_wp = get_WP_role_from_ent_profil($profil_ent, false);
+			add_user_to_blog($blogid, $current_user->ID, $role_wp);
+			$status = "success";
+		}
 
-		// Ici on est ok pour les paramètres
-		
-		// Si l'utilisateur a un role sur ce blog, on ne fait plus rien
-		// if ( !aUnRoleSurCeBlog($blogid, $userid) ) {
-		//   	if ($laclasseUserProfil == "ADMIN") {
-		//   			rattachUserToHisBlog($domain, "/", $blogid, $userid, "administrator");
-		//   	}
-		//   	if (in_array($laclasseUserProfil, array("PROF", "ADM_ETB", "CPE", "PRINCIPAL"))) {
-		// 		$profilBlog = "editor";
-  // 				if ( $laclasseUserProfil == "PRINCIPAL" && $blog_details->etablissement_ENT == $laclasseUserCodeRne ) {
-  // 					$profilBlog = "administrator";
-  // 					}
-  // 				rattachUserToHisBlog($domain, "/", $blogid, $userid, $profilBlog);
-		//   	}
-		//   	if ($laclasseUserProfil == "ELEVE") {
-		//   		rattachUserToHisBlog($domain, "/", $blogid, $userid, "contributor");
-		//   	}
-		//   	if (in_array($laclasseUserProfil, array("PARENT","INVITE"))){
-		//   		rattachUserToHisBlog($domain, "/", $blogid, $userid, "subscriber");
-		//   	}
-		// }
-
-
-
-
-
-
-
+		header('Content-Type: application/json');
+    	echo '{ "'.$status.'" :  "'.str_replace('"', "'", $message_retour).'" }';
 		$mustDieAfterAction = true;
 		break;
 	// --------------------------------------------------------------------------------
