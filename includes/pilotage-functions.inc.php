@@ -312,6 +312,28 @@ function setIframeTemplate() {
 	add_filter('template', 'modeIntegreIframeENT');
 }
 
+// --------------------------------------------------------------------------------
+// Fonction de gestionnaire d'assertion
+// --------------------------------------------------------------------------------
+function message_erreur_assertion($file, $line, $code, $desc = null)
+{
+    $s = "Echec de l'assertion : $code";
+    if ($desc) {
+        $s .= ": $desc";
+    }
+
+    header('Content-Type: application/json');
+    echo '{ "error" :  "'.str_replace('"', "'", $s).'" }';
+    die();
+} 
 
 
+// --------------------------------------------------------------------------------
+// renvoie l'id WP de l'utilisateur en fonction de son login
+// --------------------------------------------------------------------------------
+function get_user_id_by_login($login) {
+    global $wpdb;
+    $r = $wpdb->get_results( "SELECT ID FROM wp_users where user_login = '".strtolower($login)."'");    
+    return $r[0]->ID;
+}
 ?>

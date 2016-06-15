@@ -255,17 +255,17 @@ function getCustomActionBlog($ActionExistantes, $user_blog) {
 fonction actionsBlog : Traitement de l'action de dŽsinscription
 action : myblogs_allblogs_options
 *************************************************************************************/
-function actionsBlog() {
-	global $current_user;
-	$action = $_REQUEST["action"];
-	$blogid = $_REQUEST["blogid"];
-	if ($action == 'DESINSCRIRE') {
-		if (aUnRoleSurCeBlog($current_user->ID, $blogid)) {
-			$cu = (array) $current_user;
-			remove_user_from_blog($current_user->ID, $blogid);
-		}
-	}
-}
+// function actionsBlog() {
+// 	global $current_user;
+// 	$action = $_REQUEST["action"];
+// 	$blogid = $_REQUEST["blogid"];
+// 	if ($action == 'DESINSCRIRE') {
+// 		if (aUnRoleSurCeBlog($current_user->ID, $blogid)) {
+// 			$cu = (array) $current_user;
+// 			remove_user_from_blog($current_user->ID, $blogid);
+// 		}
+// 	}
+// }
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	

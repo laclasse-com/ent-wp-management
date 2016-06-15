@@ -35,6 +35,8 @@ require_once('includes/pilotage-functions.inc.php');
 require_once('includes/cas-functions.inc.php');
 // Fonctions de paramétrage du back-office des options du plugin.
 require_once('includes/ENTback-office.php'); 
+// Fonctions de signature des requetes
+require_once('includes/signature-functions.php'); 
 
 require_once(ABSPATH . WPINC . '/registration.php');
 require_once(ABSPATH . WPINC . '/formatting.php');
@@ -45,6 +47,17 @@ require_once(ABSPATH . WPINC . '/capabilities.php');
 // fonctions MU
 require_once(ABSPATH.'/wp-admin/includes/ms.php');
 
+
+/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	
+	Paramétrage des assertion : rendre l'assertion silencieuxse 
+	pour gérer une erreur perso.
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
+assert_options(ASSERT_ACTIVE, 1);
+assert_options(ASSERT_WARNING, 0);
+assert_options(ASSERT_QUIET_EVAL, 1);
+assert_options(ASSERT_CALLBACK, 'message_erreur_assertion');
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	
@@ -103,7 +116,7 @@ add_filter('manage_sites_custom_column', 'getCustomSiteMeta', 10, 2);
 add_filter('myblogs_options', 'getCustomExtraInfoBlog', 10, 2);
 add_filter('myblogs_blog_actions', 'getCustomActionBlog', 10, 2);
 // Hook pour la désinscription d'un blog.
-add_action( 'myblogs_allblogs_options', 'actionsBlog', 10, 0);
+// add_action( 'myblogs_allblogs_options', 'actionsBlog', 10, 0);
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	
@@ -176,38 +189,49 @@ if (isset($_REQUEST['ENT_action'])) {
 	//$ENTblogid 			= $_REQUEST['ENTblogid'];
 	$ENTblogid 			= $_REQUEST['pblogid'];
 	$blogname 			= $_REQUEST['blogname'];
-	$username 			= $_REQUEST['username'];
+	$blogtype 			= $_REQUEST['blogtype'];
+	$username			= $_REQUEST['username'];
+	$uid				= $_REQUEST['uid'];
+	$uid_admin			= $_REQUEST['uid_admin'];
+	$signature 			= $_REQUEST['signature'];
 	$blogdescription 	= $_REQUEST['blogdescription'];
 	$mustDieAfterAction = false;  // Utilisé pour les actions qui ne nécessitent pas d'affichage après s'être déroulées.
 	
 	switch ($ENT_action) {
+	// --------------------------------------------------------------------------------
 	//
 	// Se mettre en mode INTEGRE dans une IFRAME
 	//
+	// --------------------------------------------------------------------------------
 	case 'IFRAME' :
 		setIframeTemplate();
 		$mustDieAfterAction = false;	// Maintenant qu'on a ajouté des filtres, on veut afficher le site.
 		break;
 
+	// --------------------------------------------------------------------------------
 	//
 	// Tester l'existence d'un blog
 	//
+	// --------------------------------------------------------------------------------
 	case 'BLOG_EXISTS' :
 		blogExists($blogname);	
 		$mustDieAfterAction = true;
 		break;
 
+	// --------------------------------------------------------------------------------
 	//
 	// Tester l'existence d'un utilisateur sur la plateforme WP.
 	//
+	// --------------------------------------------------------------------------------
 	case 'USER_EXISTS' :
 		userExists($username);	
 		$mustDieAfterAction = true;
 		break;
 
-	//
+	// --------------------------------------------------------------------------------
 	// Renvoie l'ID WP d'un blog identifié par son nom.
 	// ?ENT_action=BLOG_ID
+	// --------------------------------------------------------------------------------
 	case 'BLOG_ID' :
 		$t = Array();
 		$t['id'] = getBlogIdByDomain($blogname);
@@ -215,27 +239,31 @@ if (isset($_REQUEST['ENT_action'])) {
 		echo json_encode($t);
 		$mustDieAfterAction = true;
 		break;
-	//
+	// --------------------------------------------------------------------------------
 	// Liste des blogs de la plateforme
 	// ?ENT_action=BLOG_LIST
+	// --------------------------------------------------------------------------------
 	case 'BLOG_LIST' :
 		header('Content-Type: application/json');
 		echo json_encode(blogList());	
 		$mustDieAfterAction = true;
 		break;
 
-	//
+	// --------------------------------------------------------------------------------
 	// Liste des blogs de la plateforme
 	// ?ENT_action=USER_BLOG_LIST&username=[login]
+	// --------------------------------------------------------------------------------
 	case 'USER_BLOG_LIST' :
 		header('Content-Type: application/json');
 		echo json_encode(userBlogList($username));	
 		$mustDieAfterAction = true;
 		break;
 
+	// --------------------------------------------------------------------------------
 	//
 	// Logout de WP.
 	//
+	// --------------------------------------------------------------------------------
 	case 'LOGOUT' :	
 		global $current_user;
 		if (phpCAS::isAuthenticated()) {
@@ -246,40 +274,153 @@ if (isset($_REQUEST['ENT_action'])) {
 		$mustDieAfterAction = true;
 		break;
 
+	// --------------------------------------------------------------------------------
 	//
 	// Modifier les paramtres du blog dans Worpress et mettre à jour dans l'ENT
 	//
+	// --------------------------------------------------------------------------------
 	case 'MODIFIER_PARAMS' :
 		modifierParams($domain);	
 		$mustDieAfterAction = true;
 		break;
 
-	//
-	// inscription d'un blog.
-	// Cette action est normalement gérée en HOOK pour le Back-office, mais
-	// peut aussi s'appeler à distance, d'où sa présence dans ce controleur.
-	//
+	// --------------------------------------------------------------------------------
+	// On suppose que le compte a déjà été provisionné, ET l'utilisateur est connecté
+	// wp_get_current_user() est donc renseigné
+	// - Il faut vérifier que l'utilisateur a le droit de s'inscrire
+	// Si blog ETB => UAI utilisateur == UAI 
+	// Si Blog de classe Classe utilisateur == classe_ENT pour les ELEVE
+	// Si BLog de groupe Groupe utilisateur == Groupe_ENT pour les ELEVE
+	// --------------------------------------------------------------------------------
 	case 'INSCRIRE' :
+		$inscrire = false;
+		$status = "error";
+		$message_retour = "";
+
+		assert('$blogname != ""', "Le paramètre \$blogname doit être renseigné.");
+
+		$current_user = wp_get_current_user();
+		// Vérifier si l'utilisateur est bien connecté
+		assert ('$current_user->ID  != ""', "L'utilisateur n'existe pas sur la plateforme WordPress de laclasse.com.");
+
+		// Récupération des champs meta de l'utilisateur 
+		$userMeta = get_user_meta($current_user->ID);
+		assert ('$userMeta[\'profil_ENT\'][0] != ""', "Cet utilisateur n'a pas de profil sur la plateforme WordPress de laclasse.com.");
+
+		$uid_ent =  $userMeta['uid_ENT'][0];
+		$profil_ent = $userMeta['profil_ENT'][0];
+		$uai_user = $userMeta['etablissement_ENT'][0];
+		// $classe_user = $userMeta['classe_ENT'][0];
+
+		// Récupération des détails sur le blog
+		$blogid = getBlogIdByDomain($blogname.".".BLOG_DOMAINE);
+		assert ('$blogid != ""', "Le blog '$blogname.".BLOG_DOMAINE."' n'existe pas.");
+
+		$uai_blog =  get_blog_option($blogid, "etablissement_ENT");
+		$classe_ent = get_blog_option($blogid, "classe_ENT");
+		$groupe_ent = get_blog_option($blogid, "groupe_ENT");
+		$type_de_blog = get_blog_option($blogid, "type_de_blog");
+		assert('$type_de_blog != ""', "Le paramètre \$blogtype doit être renseigné.");
+
+		// Interrogation de l'annuaireV3 de l'ENT
+		$userENT =json_decode(get_http(generate_url(ANNUAIRE_URL."api/app/users/$uid_ent", Array("expand" => "true"))));
+
+		// Déterminer le role WordPress de l'utilisateur en fonction de son role ENT.
+		$role_wp = get_WP_role_from_ent_profil($profil_ent, false);
+
+		// Traiter tous les cas d'inscription en fonction du type de blog
+		switch ($type_de_blog) {
+			case "ETB":
+				if($uai_blog == $uai_user) {
+					$inscrire = true;
+					$message_retour = "Inscription de l'utilisateur $current_user->display_name ($profil_ent / $uid_ent) ".
+				 					  "au blog de son établissement $blogname.".BLOG_DOMAINE;
+				}
+				break;
+			
+			case "CLS":
+				foreach($userENT->classes as $c) {
+					if ($c->classe_id == $classe_ent) {
+						$inscrire = true;
+						$message_retour = "Inscription de l'utilisateur $current_user->display_name ($profil_ent / $uid_ent) ".
+				 					  "au blog de sa classe $blogname.".BLOG_DOMAINE;
+					break;
+					} else {
+						$message_retour = "Vous ne pouvez pas vous inscrire sur ce blog de classe.";
+					}
+				}
+				break;
+			
+			case "GRP":
+				foreach($userENT->groupes_eleves as $g) {
+					if ($g->groupe_id == $groupe_ent) {
+						$inscrire = true;
+						$message_retour = "Inscription de l'utilisateur $current_user->display_name ($profil_ent / $uid_ent) ".
+				 					  "au blog de sa groupe $blogname.".BLOG_DOMAINE;
+					break;
+					} else {
+						$message_retour = "Vous ne pouvez pas vous inscrire sur ce blog de groupe.";
+					}
+				}
+				break;
+			
+			case "ENV":
+				// Tout le monde peut s'inscrire, avec un profil contributeur, 
+				// car les droits doivent être délégués par le propiétaire du blog (Plus de structure établissement ici)
+				$role_wp = "contributor";
+				$message_retour = "Inscription de l'utilisateur $current_user->display_name ($profil_ent / $uid_ent) ".
+								  "au blog partagé $blogname.".BLOG_DOMAINE;
+				$inscrire = true;
+				break;
+			
+			default:
+				// Pas d'inscription
+				$message_retour = "Pas d'inscription, type de blog inconnu";
+				$status = "error";
+				break;
+		}
+
+
+		if ($inscrire) {
+			add_user_to_blog($blogid, $current_user->ID, $role_wp);
+			$status = "success";
+			$message_retour .= ", role '$role_wp'";
+		}
+
+		header('Content-Type: application/json');
+    	echo '{ "'.$status.'" :  "'.str_replace('"', "'", $message_retour).'" }';
+		$mustDieAfterAction = true;
+		break;
+	// --------------------------------------------------------------------------------
 	//
 	// Desinscription d'un blog.
-	// Cette action est normalement gérée en HOOK pour le Back-office, mais
-	// peut aussi s'appeler à distance, d'où sa présence dans ce controleur.
+	// On suppose que l'utilisateur est logué et provisionné.
 	//
+	// --------------------------------------------------------------------------------
 	case 'DESINSCRIRE' :
-		global $current_user;
+		assert('$blogname != ""', "Le paramètre \$blogname doit être renseigné.");
 
-		if (phpCAS::isAuthenticated()) {
-			$current_user = get_user_by('login',phpCAS::getUser());
-		} else phpCAS::forceAuthentication();
-		$_REQUEST["action"] = $ENT_action;
-		$_REQUEST['blogid'] = getBlogIdByDomain($blogname);
-		actionsBlog();
+		$current_user = wp_get_current_user();
+		// Vérifier si l'utilisateur est bien connecté
+		assert ('$current_user->ID  != ""', "L'utilisateur n'existe pas sur la plateforme WordPress de laclasse.com.");
+
+		// Récupération des détails sur le blog
+		$blogid = getBlogIdByDomain($blogname.".".BLOG_DOMAINE);
+		assert ('$blogid != ""', "Le blog '$blogname.".BLOG_DOMAINE."' n'existe pas.");
+
+		// Désinscrire l'utilisateur
+		remove_user_from_blog($current_user->ID, $blogid);
+
+		header('Content-Type: application/json');
+    	echo '{ "success" :  "'.str_replace('"', "'", "L'utilisateur $current_user->display_name est désabonné du blog $blogname.".BLOG_DOMAINE).'" }';
 		$mustDieAfterAction = true;
 		break;
 
+	// --------------------------------------------------------------------------------
 	//
 	// Supprimer un blog
 	//
+	// --------------------------------------------------------------------------------
 	case 'SUPPRIMER_BLOG' :
 		if (phpCAS::isAuthenticated()) {
 			$user = get_user_by('login',phpCAS::getUser());
@@ -299,9 +440,11 @@ if (isset($_REQUEST['ENT_action'])) {
 		}
 		$mustDieAfterAction = true;
 		break;
+	// --------------------------------------------------------------------------------
 	//
 	// Action par défaut.
 	//
+	// --------------------------------------------------------------------------------
 	default  :
 		echo "L'action $ENT_action n'est pas prise en charge.";
 		$mustDieAfterAction = true;
