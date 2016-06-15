@@ -54,5 +54,13 @@ define(MD5_SALT, "xxxxxxxx");
 // Cle Akismet pour la gestion des spams dans les commentaires.	
 define(AKISMET_KEY, "169f1a275c36");
 
+// Clé d'application pour l'annuaire
+define(ANNUAIRE_URL, "https://v3dev.laclasse.com/");
+
+// Clé d'application pour l'annuaire
+define(ANNUAIRE_APP_ID, "BLOGS");
+
+// Clé de signature pour l'annuaire
+define(ANNUAIRE_API_KEY, "La clé de signature des requetes à l'annuaire");
 
 ?>
