@@ -278,21 +278,19 @@ if (isset($_REQUEST['ENT_action'])) {
 		//
 
 	case 'INSCRIRE' :
-	$inscrire = false;
-	$status = "error";
-	$message_retour = "";
-	// --------------------------------------------------------------------------------
-	// On suppose que le compte a déjà été provisionné, ET l'utilisateur est connecté
-	// wp_get_current_user() est donc renseigné
-	// - Il faut vérifier que l'utilisateur a le droit de s'inscrire
-	// Si blog ETB => UAI utilisateur == UAI 
-	// Si Blog de classe Classe utilisateur == classe_ENT pour les ELEVE
-	// Si BLog de groupe Groupe utilisateur == Groupe_ENT pour les ELEVE
-	// --------------------------------------------------------------------------------
+		// --------------------------------------------------------------------------------
+		// On suppose que le compte a déjà été provisionné, ET l'utilisateur est connecté
+		// wp_get_current_user() est donc renseigné
+		// - Il faut vérifier que l'utilisateur a le droit de s'inscrire
+		// Si blog ETB => UAI utilisateur == UAI 
+		// Si Blog de classe Classe utilisateur == classe_ENT pour les ELEVE
+		// Si BLog de groupe Groupe utilisateur == Groupe_ENT pour les ELEVE
+		// --------------------------------------------------------------------------------
+		$inscrire = false;
+		$status = "error";
+		$message_retour = "";
+
 		assert('$blogname != ""', "Le paramètre \$blogname doit être renseigné.");
-		// assert('$blogtype != ""', "Le paramètre \$blogtype doit être renseigné.");
-		// assert('$uid != ""', "Le paramètre \$uid doit être renseigné.");
-		// $url = generate_url(ANNUAIRE_URL."api/app/users/$uid", Array("expand" => "true"));
 
 		$current_user = wp_get_current_user();
 		// Vérifier si l'utilisateur est bien connecté
@@ -320,8 +318,10 @@ if (isset($_REQUEST['ENT_action'])) {
 		// Interrogation de l'annuaireV3 de l'ENT
 		$userENT =json_decode(get_http(generate_url(ANNUAIRE_URL."api/app/users/$uid_ent", Array("expand" => "true"))));
 
+		// Déterminer le role WordPress de l'utilisateur en fonction de son role ENT.
+		$role_wp = get_WP_role_from_ent_profil($profil_ent, false);
 
-		// Inscription en fonction du type de blog
+		// Traiter tous les cas d'inscription en fonction du type de blog
 		switch ($type_de_blog) {
 			case "ETB":
 				if($uai_blog == $uai_user) {
@@ -358,7 +358,11 @@ if (isset($_REQUEST['ENT_action'])) {
 				break;
 			
 			case "ENV":
-				// Tout le monde peut s'inscrire !
+				// Tout le monde peut s'inscrire, avec un profil contributeur, 
+				// car les droits doivent être délégués par le propiétaire du blog (Plus de structure établissement ici)
+				$role_wp = "contributor";
+				$message_retour = "Inscription de l'utilisateur $current_user->display_name ($profil_ent / $uid_ent) ".
+								  "au blog partagé $blogname.".BLOG_DOMAINE;
 				$inscrire = true;
 				break;
 			
@@ -371,7 +375,6 @@ if (isset($_REQUEST['ENT_action'])) {
 
 
 		if ($inscrire) {
-			$role_wp = get_WP_role_from_ent_profil($profil_ent, false);
 			add_user_to_blog($blogid, $current_user->ID, $role_wp);
 			$status = "success";
 			$message_retour .= ", role '$role_wp'";
