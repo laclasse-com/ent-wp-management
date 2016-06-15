@@ -128,7 +128,7 @@ function createUserWP($p_username, $p_useremail, $p_role, $p_domain) {
 		
 		if (is_wp_error($wpError) ) {
    			errMsg($wpError->get_error_message());
-   	}
+   		}
    	
  		// récupérer la clé d'activation du username créé
  		$validKey = get_activation_key($p_username);
@@ -140,7 +140,7 @@ function createUserWP($p_username, $p_useremail, $p_role, $p_domain) {
 
 		if (is_wp_error($activated) ) {
    			errMsg($activated->get_error_message());
-   	}
+   		}
    	
 		// récupération des information de l'utilisateur 
 		$userRec = get_user_by('login',$p_username);
@@ -303,14 +303,15 @@ function majWPUserMetData($p_userId) {
 	update_user_meta($p_userId, 'profil_ENT', 		   getAttr('LaclasseProfil'));
 	update_user_meta($p_userId, 'nom_ENT', 		       $ent);
 
-  // FIXME : Comprends pas pourquoi $_SESSION ne comporte pas tojours les valeurs que je lui mets.
+  // FIXME : Comprends pas pourquoi $_SESSION ne comporte pas toujours les valeurs que je lui mets.
   if (!emptyAttr('LaclassePrenom') && !emptyAttr('LaclasseNom')) {
      wp_update_user( 
             array (
               'ID' => $p_userId, 
               'first_name' => getAttr('LaclassePrenom'), 
               'last_name' => getAttr('LaclasseNom'),
-              'display_name' => getAttr('LaclasseNom').' '.getAttr('LaclassePrenom')
+              'display_name' => getAttr('LaclasseNom').' '.getAttr('LaclassePrenom'),
+              'user_email' => getAttr('MailAdressePrincipal', getAttr('LaclasseEmail', ""))
                    )
      );
   }
@@ -336,7 +337,7 @@ function setWPCookie($p_usrId) {
 // --------------------------------------------------------------------------------
 function rattachUserToHisBlog($p_domain, $p_path, $p_site_id, $p_wpUsrId, $p_role) {
 	global $NewUser;
-  logIt("___/ Fonction : rattachUserToHisBlog");	
+  		logIt("___/ Fonction : rattachUserToHisBlog");	
   // Suppression du droit même minimum sur le blog des blogs.
   remove_user_from_blog($p_wpUsrId, 1, 1);
     
@@ -345,31 +346,39 @@ function rattachUserToHisBlog($p_domain, $p_path, $p_site_id, $p_wpUsrId, $p_rol
 	   dontBeChief($p_wpUsrId);
 	 }
 
-	// Si le domaine existe
-	if (domain_exists($p_domain, $p_path, $p_site_id)) {
-		logIt("Le domaine '".$p_domain."' existe.");
-		
-		// récupération du blog_id 
-		$wpBlogId = get_blog_id_by_domain($p_domain);
-		logIt("get_blog_id_by_domain a renvoy&eacute; #".$wpBlogId.".");
-				
-		// Ajout des droits sur le blog. Si le user est nouveau OU qu'il n'a pas de droits sur le blog, 
-		// on lui affecte un role, 
-		// sinon on n'y touche pas, ce role peut avoir été changé manuellement dans 
-		// le back-office de WordPress.
-		$aUnRole = aUnRoleSurCeBlog($p_wpUsrId, $wpBlogId);
-		logIt("aUnRoleSurCeBlog a renvoy&eacute; '".(($aUnRole)? "true" : "false")."'.");
-		if (!$aUnRole || $NewUser) {
-			 logIt("Ajout du role '".$p_role."' sur le blog #".$wpBlogId.".");
-			 add_user_to_blog($wpBlogId, $p_wpUsrId, $p_role);
+	// Si le domaine est identique au blog principal, 
+	// ce qui est le cas lorsqu'on provisionne sur l'adresse https://blogs.laclasse.com/wp-login.php,
+	// On n'ajoute aucun droit sur le blog principal pour l'utilisateur.
+	if ($p_domain == BLOG_DOMAINE) {
+		logIt("Pas d'ajout de role sur le blog principal.");
+	} else {
+
+		// Si le domaine existe
+		if (domain_exists($p_domain, $p_path, $p_site_id)) {
+			logIt("Le domaine '".$p_domain."' existe.");
+			
+			// récupération du blog_id 
+			$wpBlogId = get_blog_id_by_domain($p_domain);
+			logIt("get_blog_id_by_domain a renvoy&eacute; #".$wpBlogId.".");
+					
+			// Ajout des droits sur le blog. Si le user est nouveau OU qu'il n'a pas de droits sur le blog, 
+			// on lui affecte un role, 
+			// sinon on n'y touche pas, ce role peut avoir été changé manuellement dans 
+			// le back-office de WordPress.
+			$aUnRole = aUnRoleSurCeBlog($p_wpUsrId, $wpBlogId);
+			logIt("aUnRoleSurCeBlog a renvoy&eacute; '".(($aUnRole)? "true" : "false")."'.");
+			if (!$aUnRole || $NewUser) {
+				 logIt("Ajout du role '".$p_role."' sur le blog #".$wpBlogId.".");
+				 add_user_to_blog($wpBlogId, $p_wpUsrId, $p_role);
+			}
+			else {
+			  logIt("L'utilisateur #".$p_wpUsrId." a d&eacute;j&agrave; un role sur le blog #".$wpBlogId." : on ne modifie pas son role.");
+			}
 		}
 		else {
-		  logIt("L'utilisateur #".$p_wpUsrId." a d&eacute;j&agrave; un role sur le blog #".$wpBlogId." : on ne modifie pas son role.");
+			// le domaine n'existe pas : cette connexion ne vient sans doute pas de laclasse.com => message d'erreur 
+			errMsg("Vous n'avez pas le profil requis pour cr&eacute;er un blog");
 		}
-	}
-	else {
-		// le domaine n'existe pas : cette connexion ne vient sans doute pas de laclasse.com => message d'erreur 
-		errMsg("Vous n'avez pas le profil requis pour cr&eacute;er un blog");
 	}
     logIt("___/ Fin Fonction : rattachUserToHisBlog");	
 }

@@ -43,17 +43,17 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   global $domain, $base;
   // $url est l'url vers laquelle on va rediriger
   $url = "";
-  // Complément de query http
+  // ComplÈment de query http
   $qry = "";
-  // nom du site, s'il faut le créer
+  // nom du site, s'il faut le crÈer
   $sitename = "";
   // Le domaine est le sitename+ le domai,e de bog
   $domain = "";
-  // Le path sert à créer les blogs.
+  // Le path sert à crÈer les blogs.
   $path = '/'; 
-  // Le username est donné par l'authentification CAS.
+  // Le username est donnÈ par l'authentification CAS.
   $username = "";
-  // Setting des variables couramment utilisées dans les api WP
+  // Setting des variables couramment utilisÈes dans les api WP
   $site_id = 1;
   
   if (has_action( 'wp_authenticate', array('wpCAS', 'authenticate') )) {
@@ -84,31 +84,36 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   error_reporting("E_ALL");
   
   //
-  // Définition du routage
+  // DÈfinition du routage
   //
   
   logIt("____________________D&eacute;finition Routage____________________");
-  // si blogname n'est pas renseigné, on le calcule.
+  // si blogname n'est pas renseignÈ, on le calcule.
+
   if (isset($_REQUEST['blogname']) && $_REQUEST['blogname'] != "") {
     logIt("Blogname est renseign&eacute;.");
     $url = str_replace("http://", "", $_REQUEST['blogname'].".".BLOG_DOMAINE);
     $sitename = $_REQUEST['blogname'];
+    $domain = $sitename . '.' .BLOG_DOMAINE; 
   }
   else {
     logIt("Blogname n'est pas renseign&eacute;.");
     $url = str_replace("http://", "", home_url());
     $sitename = str_replace(".".BLOG_DOMAINE, "", $url);
+    // FIX : si le domaine doit Ítre identique au blog des blogs 
+    // pour Èviter blogs.laclasse.com.blogs.laclasse;com !
+    $domain = $sitename; 
   }
   
   logIt("url : '".$url."'.");
-  // On regarde si le blog existe car s'il faut le créer, il nous faut le blogtype.
+  // On regarde si le blog existe car s'il faut le crÈer, il nous faut le blogtype.
   $wpBlgId = get_blog_id_by_domain($url);
   if ($wpBlgId > 0) {
     logIt("le blog existe, #".$wpBlgId.".");
   } 
   else {
     logIt("le blog n'existe pas.");
-    // on doit vérifier que'on a bien blogtype sinon, pas de création possible... c'est comme ça.
+    // on doit vÈrifier que'on a bien blogtype sinon, pas de crÈation possible... c'est comme ça.
     if (isset($_REQUEST['blogtype']) && $_REQUEST['blogtype'] != "") {
       $TypeDeBlog = $_REQUEST['blogtype'];
     }
@@ -118,21 +123,19 @@ function provision_comptes_laclasse($User_Mode_Test="") {
       // FIN.
     }
   }
-  
+
   // Si on ne peut pas le calculer le blogname, on redirige vers le blog des blogs #1.
   if ($url == "") {
     redirection(BLOG_DOMAINE);
     // FIN.
   }
   
-  $domain = $sitename . '.' .BLOG_DOMAINE; 
-  
   logIt("sitename = ".$sitename);
-  logIt("domain = ".$domain);
+  logIt("domaine = ".$domain);
   logIt("TypeDeBlog = ".$TypeDeBlog);
   
   /*
-    Le jeton par défaut est celui de laclasse.com défini par laclasse.com pour laclasse.com
+    Le jeton par dÈfaut est celui de laclasse.com dÈfini par laclasse.com pour laclasse.com
     Rien à voir donc avec le jeton type 3 du SDET.
   
     Le jeton du SDET à, quant à lui les attributs suivants.
@@ -150,32 +153,36 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   setToken($_SESSION['phpCAS']['attributes']);
   logIt("Jeton xml issue de CAS : <pre style='font-size:11px;'>".print_r(getToken(), true)."</pre>");
 
-  // Si certaines données sont vide, il faut les complèter :
+  // Si certaines donnÈes sont vide, il faut les complèter :
   // Si ce jeton n'a pas ce qu'on attend, il faut proposer un formulaire à l'utilisateur 
-  // Pour saisir les données manquantes :email académique ou pas, nom, prénom.
+  // Pour saisir les donnÈes manquantes :email acadÈmique ou pas, nom, prÈnom.
   // Tout ça c'est valable que si l'ent n'est pas *laclasse*.
   if (
-  //    (isset($_REQUEST['ent']) &&  $_REQUEST['ent'] != 'laclasse' ) && 
-      (!existsAttr('LaclasseNom') || emptyAttr('LaclasseNom') || !existsAttr('LaclasseEmail') || emptyAttr('LaclasseEmail'))
+      ( !existsAttr('LaclasseNom') || emptyAttr('LaclasseNom') || 
+        (
+          (!existsAttr('LaclasseEmail') || emptyAttr('LaclasseEmail'))
+          &&
+          (!existsAttr('MailAdressePrincipal') || emptyAttr('MailAdressePrincipal'))
+        )
+      )
      ) {
-    // Si l'utilisateur n'existe pas on lui présente le formulaire, sinon, on va chercher ses données dans la base.
+    // Si l'utilisateur n'existe pas on lui prÈsente le formulaire, sinon, on va chercher ses donnÈes dans la base.
     $uId = username_exists($username);
     if ($uId > 0) {
       logIt("L'utilisateur existe (#".$uId."), pas besoin de compl&eacute;ment d'information."); 
       // On set ses email,nom et prÈnom correctement pour que la suite se passe bien.
       $uRec = get_userdata($uId);
       setAttr('LaclasseEmail', $uRec->user_email);
-      setAttr('laclasseNom', $uRec->last_name);
-      setAttr('laclassePrenom', $uRec->first_name);
-      // On regarde si son profil a changÈ des fois qu'il ait pris du grade sur l'ENT !
-      // $profil_enregistre = get_user_meta( $uRec->ID, "profil_ENT", true);
+      setAttr('MailAdressePrincipal', $uRec->user_email);
+      setAttr('LaclasseNom', $uRec->last_name);
+      setAttr('LaclassePrenom', $uRec->first_name);
       setSessionlaclasseProfil();
       setAttr('LaclasseProfil', adjust_profil_for_WP());
     }
     else {
       echo (getLog());
       //
-      // Demande d'informations complémentaires
+      // Demande d'informations complÈmentaires
       //
       formulaire_sso($sitename);
       }
@@ -187,18 +194,18 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   $laclasseUserProfil     = getAttr('LaclasseProfil', "");
   $laclasseUserClasse     = getAttr('ENTEleveClasses', "");
   $laclasseUserNivClasse  = getAttr('ENTEleveNivFormation', "");
-  $laclasseUserMail       = getAttr('LaclasseEmail', "");
+  $laclasseUserMail       = getAttr('MailAdressePrincipal', getAttr('LaclasseEmail', ""));
   $laclasseUserMailAca    = getAttr('LaclasseEmailAca', "");
-  $laclasseUserNom        = getAttr('laclasseNom', "");
-  $laclasseUserPrenom     = getAttr('laclassePrenom', "");
+  $laclasseUserNom        = getAttr('LaclasseNom', "");
+  $laclasseUserPrenom     = getAttr('LaclassePrenom', "");
   
-  // Gestion de l'email académique.
+  // Gestion de l'email acadÈmique.
   if ($laclasseUserMail != "" ) $user_email = $laclasseUserMail; 
   else if ($laclasseUserMailAca != "" && in_array($laclasseUserProfil, array("PROF","ADM_ETB","ADMIN","CPE", "PRINCIPAL"))) 
   		$user_email = $laclasseUserMailAca; 
   	 else $user_email = ""; 
   	 
-  // Si le profil est nul, il faut qu'on y mette le profil par défaut : INVITE
+  // Si le profil est nul, il faut qu'on y mette le profil par dÈfaut : INVITE
   // Ici compat V3
   if ($laclasseUserProfil == "" ) {
     $laclasseUserProfil = adjust_profil_for_WP();
@@ -223,7 +230,7 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   logIt("____________________Provisionning Blog et User____________________");
   
   	// --------------------------------------------------------------------------------
-  	// Si l'utilisateur est SUPER ADMIN de laclasse.com, il a des droits sur le bakoffice général de WP.
+  	// Si l'utilisateur est SUPER ADMIN de laclasse.com, il a des droits sur le bakoffice gÈnÈral de WP.
   	// donc admin sur tout les blogs.
   	// --------------------------------------------------------------------------------
   	if ($laclasseUserProfil == "ADMIN") {
@@ -232,7 +239,7 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   
   		if (domain_exists($domain, $path, $site_id)) {	
   			// L'utilisateur n'est pas le premier à venir pour ce domaine, 
-  			// il est par défaut "administrateur de la plateforme" car il est super admin dans l'ENT
+  			// il est par dÈfaut "administrateur de la plateforme" car il est super admin dans l'ENT
   			rattachUserToHisBlog($domain, $path, $site_id, $wpUsrId, "administrator");
   			rattachSuperUserToTheBLog($wpUsrId, "administrator");
   		}
@@ -240,26 +247,26 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   			// ici le domaine n'existe pas : 
   			// le premier qui arrive est administrateur du nouveau blog !
   			logIt("le domaine '".$domain."' n'existe pas.");
-  			// Maintenant il faut créer un blog.
+  			// Maintenant il faut crÈer un blog.
   			creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $site_id, $wpUsrId, $TypeDeBlog, $laclasseUserCodeRne);
   		}
   	}
   
   	// --------------------------------------------------------------------------------
-  	// Profil des personnels de l'éducation nationale PROF, ADM_ETB, CPE, PRINCIPAL
-  	//	Ces profils peuvent créer des blogs et sont donc administrateur du blog créé.
-  	// Si le blog existe déjà, alors l'utilisateur est rattaché au blog avec des droits
-  	// d'éditeur ("Editor") -> peut ecrire, valider des posts et valider les posts des autres.
+  	// Profil des personnels de l'Èducation nationale PROF, ADM_ETB, CPE, PRINCIPAL
+  	//	Ces profils peuvent crÈer des blogs et sont donc administrateur du blog crÈÈ.
+  	// Si le blog existe dÈjà, alors l'utilisateur est rattachÈ au blog avec des droits
+  	// d'Èditeur ("Editor") -> peut ecrire, valider des posts et valider les posts des autres.
   	// --------------------------------------------------------------------------------
   	if (in_array($laclasseUserProfil, array("PROF", "ADM_ETB", "CPE", "PRINCIPAL"))) {
   
   		// Si le domaine existe
   		if (domain_exists($domain, $path, $site_id)) {	
   			// L'utilisateur n'est pas le premier à venir pour ce domaine, 
-  			// il est par défaut "éditeur" car c'est un un adulte de l'Ed.Nat.
+  			// il est par dÈfaut "Èditeur" car c'est un un adulte de l'Ed.Nat.
   			$profilBlog = "editor";
   			
-  			// Si c'est un principal et qu'il vient sur le blog de son établissement, il est admin
+  			// Si c'est un principal et qu'il vient sur le blog de son Ètablissement, il est admin
   			$codeUAIBlog = get_blog_option($site_id, 'etablissement_ENT');
   			logIt(
   			       (
@@ -279,14 +286,14 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   			// le premier qui arrive est administrateur du nouveau blog !
   			logIt("le domaine '".$domain."' n'existe pas.");
   			$wpUsrId = createUserWP($username, $user_email, "administrator", $domain);
-  			// Maintenant il faut créer un blog.
+  			// Maintenant il faut crÈer un blog.
   			creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $site_id, $wpUsrId, $TypeDeBlog, $laclasseUserCodeRne);
      		}
   	}
   
   	// --------------------------------------------------------------------------------
   	// Profil ELEVE : Il est contributeur sur le blog mais ne doit pas pouvoir publier.
-  	// Ses publication doivent être validées.
+  	// Ses publication doivent être validÈes.
   	// --------------------------------------------------------------------------------
   	if ($laclasseUserProfil == "ELEVE") {
   		$wpUsrId = createUserWP($username, $user_email, "contributor", $domain);
@@ -294,7 +301,7 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   	}
   
   	// --------------------------------------------------------------------------------
-  	// Profil PARENT ou INVITE: Il est uniquement lecteur du blog et peut gérer son profil.	
+  	// Profil PARENT ou INVITE: Il est uniquement lecteur du blog et peut gÈrer son profil.	
   	// le profil WP s'appelle "Subscriber"
   	// --------------------------------------------------------------------------------
   	if (in_array($laclasseUserProfil, array("PARENT","INVITE"))){
@@ -307,7 +314,7 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   	// --------------------------------------------------------------------------------
     // calcule de la Redirection
   	logIt("Redirection");
-  	// rediretion si le script n'est pas en mode débug.
+  	// rediretion si le script n'est pas en mode dÈbug.
   	redirection($domain);
 }
 ?>
