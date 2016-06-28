@@ -1134,10 +1134,12 @@ if (isset($_REQUEST['ENT_action'])) {
 			  .gris-sale {background-color:#aaa;}
 			  .lilipute {font-size:0.6em;}
 		</style>\n</head><body><div style='margin:40px;'><h1>Liste des sites &agrave; archiver</h1>\n<table>\n";
+		$html .= "<p>Voici la liste des blogs à archiver. Si vous avez un doute, vous pouvez toujours aller visiter le blog pour être sûr. Lorsque vous êtes sûrs cliquez sur 'archiver. Ce processus est réversible, pas de panique, donc...</p>";
 		foreach($liste as $k => $blog) {
 			if (!in_array($blog['siteurl'], $liste_a_conserver) && $blog['siteurl'] != "") {
 				$gris_sale = ( $blog['archived'] == 0 ) ? '' : 'gris-sale';
 				$html .= "<tr class='$gris_sale'>";
+				$html .= "<td>$k</td>";
 				$html .= "<td><a href='".$blog['siteurl']."' target='_blank'>".$blog['siteurl']."</a></td>";
 				if ($blog['archived'] == 0) {
 					$html .= "<td><a href='?ENT_action=$ENT_action&action2=archiveblog&id=".$blog['blog_id']."'>Archiver</a></td>";				
