@@ -58,7 +58,7 @@ function userExists($pusername) {
 // --------------------------------------------------------------------------------
 function blogList() {
     global $wpdb;
-    $blogs = wp_get_sites();
+    $blogs = wp_get_sites(array("limit" => "9999"));
     $list = array();
     foreach ($blogs as $blog) {
         // Pas de détail sur la liste des nblogs d'un utilisateur
