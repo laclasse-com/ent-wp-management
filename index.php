@@ -301,7 +301,7 @@ if (isset($_REQUEST['ENT_action'])) {
 
 		$current_user = wp_get_current_user();
 		// Vérifier si l'utilisateur est bien connecté
-		assert ('$current_user->ID  != ""', "L'utilisateur n'existe pas sur la plateforme WordPress de laclasse.com.");
+		assert ('$current_user->ID  != ""', "L'utilisateur n'est pas connecté sur la plateforme WordPress de laclasse.com.");
 
 		// Récupération des champs meta de l'utilisateur 
 		$userMeta = get_user_meta($current_user->ID);
@@ -320,7 +320,7 @@ if (isset($_REQUEST['ENT_action'])) {
 		$classe_ent = get_blog_option($blogid, "classe_ENT");
 		$groupe_ent = get_blog_option($blogid, "groupe_ENT");
 		$type_de_blog = get_blog_option($blogid, "type_de_blog");
-		assert('$type_de_blog != ""', "Le paramètre \$blogtype doit être renseigné.");
+		assert('$type_de_blog != ""', "Le paramètre \$blogtype n'est pas renseigné pour ce blog.");
 
 		// Interrogation de l'annuaireV3 de l'ENT
 		$userENT =json_decode(get_http(generate_url(ANNUAIRE_URL."api/app/users/$uid_ent", Array("expand" => "true"))));
@@ -388,7 +388,7 @@ if (isset($_REQUEST['ENT_action'])) {
 		}
 
 		header('Content-Type: application/json');
-    	echo '{ "'.$status.'" :  "'.str_replace('"', "'", $message_retour).'" }';
+		echo json_encode(Array($status => utf8_encode($message_retour)));
 		$mustDieAfterAction = true;
 		break;
 	// --------------------------------------------------------------------------------
