@@ -794,12 +794,12 @@ if (isset($_REQUEST['ENT_action'])) {
 			if (!in_array("http://".$blog['domain']."/", $liste_a_conserver) && $blog['domain'] != "") {
 				$gris_sale = ( $blog['archived'] == 0 ) ? '' : 'gris-sale';
 				$html .= "<tr class='$gris_sale'>";
-				$html .= "<td>".($k+1)."</td>";
+				$html .= "<td><a name='".($k+1)."'></a>".($k+1)."</td>";
 				$html .= "<td><a href='http://".$blog['domain']."/' target='_blank'>".$blog['domain']."</a></td>";
 				if ($blog['archived'] == 0) {
-					$html .= "<td><a href='?ENT_action=$ENT_action&action2=archiveblog&id=".$blog['blog_id']."'>Archiver</a></td>";				
+					$html .= "<td><a href='?ENT_action=$ENT_action&action2=archiveblog&id=".$blog['blog_id']."#".($k+1)."'>Archiver</a></td>";				
 				} else {
-					$html .= "<td>Archivé !&nbsp;&nbsp;&nbsp;<a href='?ENT_action=$ENT_action&action2=unarchiveblog&id=".$blog['blog_id']."'><span class='lilipute'>Désarchiver</span></a></td>";				
+					$html .= "<td>Archivé !&nbsp;&nbsp;&nbsp;<a href='?ENT_action=$ENT_action&action2=unarchiveblog&id=".$blog['blog_id']."#".($k+1)."'><span class='lilipute'>Désarchiver</span></a></td>";				
 				}
 				$html .= "</tr>\n";
 			}
