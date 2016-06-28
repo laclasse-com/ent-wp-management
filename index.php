@@ -791,7 +791,7 @@ if (isset($_REQUEST['ENT_action'])) {
 		</style>\n</head><body><div style='margin:40px;'><h1>Liste des sites &agrave; archiver</h1>\n<table>\n";
 		$html .= "<p>Voici la liste des blogs à archiver. Si vous avez un doute, vous pouvez toujours aller visiter le blog pour être sûr. Lorsque vous êtes sûrs cliquez sur 'archiver. Ce processus est réversible, pas de panique, donc...</p>";
 		foreach($liste as $k => $blog) {
-			if (!in_array($blog['domain'], $liste_a_conserver) && $blog['domain'] != "") {
+			if (!in_array("http://".$blog['domain']."/", $liste_a_conserver) && $blog['domain'] != "") {
 				$gris_sale = ( $blog['archived'] == 0 ) ? '' : 'gris-sale';
 				$html .= "<tr class='$gris_sale'>";
 				$html .= "<td>".($k+1)."</td>";
