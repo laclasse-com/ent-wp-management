@@ -777,8 +777,11 @@ if (isset($_REQUEST['ENT_action'])) {
 			$id = $_REQUEST['id'];
 			update_blog_status( $id, 'archived', ( 'archiveblog' === $action2 ) ? '1' : '0' );
 		}
+		// Extraction bdd
+		global $wpdb;
+		$query = "";
+		$liste = $wpdb->get_results( "SELECT blog_id, domain, archived FROM $wpdb->blogs WHERE domain != '".BLOG_DOMAINE."' order by domain", ARRAY_A );
 
-		$liste = blogList();
 		$html = "<html><head><title>Liste des sites à archiver</title>
 		<style>
 			  table td {padding:3px 20px 3px 20px;}
@@ -788,15 +791,15 @@ if (isset($_REQUEST['ENT_action'])) {
 		</style>\n</head><body><div style='margin:40px;'><h1>Liste des sites &agrave; archiver</h1>\n<table>\n";
 		$html .= "<p>Voici la liste des blogs à archiver. Si vous avez un doute, vous pouvez toujours aller visiter le blog pour être sûr. Lorsque vous êtes sûrs cliquez sur 'archiver. Ce processus est réversible, pas de panique, donc...</p>";
 		foreach($liste as $k => $blog) {
-			if (!in_array($blog['siteurl'], $liste_a_conserver) && $blog['siteurl'] != "") {
+			if (!in_array($blog['domain'], $liste_a_conserver) && $blog['domain'] != "") {
 				$gris_sale = ( $blog['archived'] == 0 ) ? '' : 'gris-sale';
 				$html .= "<tr class='$gris_sale'>";
-				$html .= "<td>$k</td>";
-				$html .= "<td><a href='".$blog['siteurl']."' target='_blank'>".$blog['siteurl']."</a></td>";
+				$html .= "<td>".($k+1)."</td>";
+				$html .= "<td><a href='http://".$blog['domain']."/' target='_blank'>".$blog['domain']."</a></td>";
 				if ($blog['archived'] == 0) {
-					$html .= "<td><a href='?ENT_action=$ENT_action&action2=archiveblog&id=".$blog['blog_id']."&key=$clé_de_merde'>Archiver</a></td>";				
+					$html .= "<td><a href='?ENT_action=$ENT_action&action2=archiveblog&id=".$blog['blog_id']."'>Archiver</a></td>";				
 				} else {
-					$html .= "<td>Archivé !&nbsp;&nbsp;&nbsp;<a href='?ENT_action=$ENT_action&action2=unarchiveblog&id=".$blog['blog_id']."&key=$clé_de_merde'><span class='lilipute'>Désarchiver</span></a></td>";				
+					$html .= "<td>Archivé !&nbsp;&nbsp;&nbsp;<a href='?ENT_action=$ENT_action&action2=unarchiveblog&id=".$blog['blog_id']."'><span class='lilipute'>Désarchiver</span></a></td>";				
 				}
 				$html .= "</tr>\n";
 			}
