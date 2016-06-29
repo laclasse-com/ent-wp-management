@@ -18,8 +18,10 @@ function getBlogIdByDomain( $domain ) {
 // fonction de controle de l'existence d'un blog. Service web appelé depuis l'ENT
 // --------------------------------------------------------------------------------
 function blogExists($pblogname) {
-	if (domain_exists($pblogname, '/', 1)) echo "OK";
-	else echo "NOK";
+	if (domain_exists($pblogname, '/', 1)) {
+        return 1;
+    }
+	return 0;
 }
 
 // --------------------------------------------------------------------------------

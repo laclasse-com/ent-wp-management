@@ -214,7 +214,9 @@ if (isset($_REQUEST['ENT_action'])) {
 	//
 	// --------------------------------------------------------------------------------
 	case 'BLOG_EXISTS' :
-		blogExists($blogname);	
+		header('Content-Type: application/json');	
+		$existance = blogExists($blogname);	
+		echo json_encode( array("result" => $existance ) );
 		$mustDieAfterAction = true;
 		break;
 
