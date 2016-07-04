@@ -264,9 +264,14 @@ function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $si
 	add_blog_option( $wpBlogId, 'wordpress_api_key', AKISMET_KEY);
 	logIt(" -> Ajout de la cle ASKIMET pour l'anti-spams sur les commentaires.");
 	
-	update_blog_option($wpBlogId, 'blogname', $sitename);
-	logIt(" -> Nom du blog : '".$sitename."'.");
-	
+	$name = (isset($_REQUEST['blogtitle']) && $_REQUEST['blogtitle'] != "" ) ? $_REQUEST['blogtitle'] : $sitename;
+	update_blog_option($wpBlogId, 'blogname', $name);
+	logIt(" -> Nom du blog : '".$name."'.");
+
+	if (isset($_REQUEST['blogdescription']) && $_REQUEST['blogdescription'] != "" ) {
+		update_blog_option($wpBlogId, 'blogdescription', $_REQUEST['blogdescription']);
+		logIt(" -> Description du blog : '".$_REQUEST['blogdescription']."'.");
+	}
 	update_blog_option($wpBlogId, 'admin_email', $user_email);
 	logIt(" -> mail de l'administrateur : '".$user_email."'.");
 
