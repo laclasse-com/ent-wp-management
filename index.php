@@ -358,7 +358,7 @@ if (isset($_REQUEST['ENT_action'])) {
 					if ($g->groupe_id == $groupe_ent) {
 						$inscrire = true;
 						$message_retour = "Inscription de l'utilisateur $current_user->display_name ($profil_ent / $uid_ent) ".
-				 					  "au blog de sa groupe $blogname.".BLOG_DOMAINE;
+				 					  "au blog de son groupe $blogname.".BLOG_DOMAINE;
 					break;
 					} else {
 						$message_retour = "Vous ne pouvez pas vous inscrire sur ce blog de groupe.";
@@ -389,7 +389,7 @@ if (isset($_REQUEST['ENT_action'])) {
 			$message_retour .= ", role '$role_wp'";
 		}
 
-		header('Content-Type: application/json');
+		header('Content-Type: application/json; charset=utf-8;');
 		echo json_encode(Array($status => utf8_encode($message_retour)));
 		$mustDieAfterAction = true;
 		break;
@@ -413,8 +413,8 @@ if (isset($_REQUEST['ENT_action'])) {
 		// Désinscrire l'utilisateur
 		remove_user_from_blog($current_user->ID, $blogid);
 
-		header('Content-Type: application/json');
-    	echo '{ "success" :  "'.str_replace('"', "'", "L'utilisateur $current_user->display_name est désabonné du blog $blogname.".BLOG_DOMAINE).'" }';
+		header('Content-Type: application/json; charset=utf-8;');
+    	echo '{ "success" :  "'.str_replace('"', "'", "L'utilisateur $current_user->display_name est desinscrit du blog $blogname.".BLOG_DOMAINE).'" }';
 		$mustDieAfterAction = true;
 		break;
 

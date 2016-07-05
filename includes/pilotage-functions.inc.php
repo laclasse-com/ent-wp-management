@@ -91,6 +91,9 @@ function blogList() {
                     case 'blogname':
                         $blog['name'] = $opt->option_value;
                         break;
+                    case 'blogdescription':
+                        $blog['blogdescription'] = $opt->option_value;
+                        break;
                     case 'idBLogENT':
                         $blog['idBLogENT'] = $opt->option_value;
                         break;
@@ -155,6 +158,12 @@ function userBlogList($username) {
                     break;
                 case 'post_count':
                     $blog->nb_posts = $opt->option_value;
+                    break;
+                case 'blogname':
+                    $blog->blogname = $opt->option_value;
+                    break;
+                case 'blogdescription':
+                    $blog->blogdescription = $opt->option_value;
                     break;
                 default:
                     break;
