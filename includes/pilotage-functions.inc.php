@@ -57,10 +57,63 @@ function userExists($pusername) {
             [lang_id] => 0
         )
 */
+function fais_voir($o) {
+    //echo "<pre>";
+    echo  print_r($o, true);
+    echo "\n";
+    //echo "</pre>";
+
+}
 // --------------------------------------------------------------------------------
 function blogList() {
     global $wpdb;
-    $blogs = wp_get_sites(array("limit" => "9999"));
+
+
+
+
+
+
+/*
+
+
+
+        $current_user = wp_get_current_user();
+        // Vérifier si l'utilisateur est bien connecté
+        assert ('$current_user->ID  != ""', "L'utilisateur n'est pas connecté sur la plateforme WordPress de laclasse.com.");
+
+        // Récupération des champs meta de l'utilisateur 
+        $userMeta = get_user_meta($current_user->ID);
+        assert ('$userMeta[\'profil_ENT\'][0] != ""', "Cet utilisateur n'a pas de profil sur la plateforme WordPress de laclasse.com.");
+
+        $uid_ent =  $userMeta['uid_ENT'][0];
+        $profil_ent = $userMeta['profil_ENT'][0];
+        $uai_user = $userMeta['etablissement_ENT'][0];
+        $classe_user = $userMeta['classe_ENT'][0];
+
+        // Interrogation de l'annuaireV3 de l'ENT
+        $userENT =json_decode(get_http(generate_url(ANNUAIRE_URL."api/app/users/$uid_ent", Array("expand" => "true"))));
+
+        $liste = $wpdb->get_results( "SELECT * FROM $wpdb->blogs 
+                                      WHERE domain != '".BLOG_DOMAINE."' 
+                                        and archived = 0 
+                                        and deleted = 0 
+                                        and spam = 0 
+                                        and public = 1 
+                                     order by domain", ARRAY_A );
+
+        fais_voir($liste);
+
+
+    die();
+
+        
+
+*/
+
+
+
+
+    $blogs = wp_get_sites(array("limit" => "9999", "archived" => "0"));
     $list = array();
     foreach ($blogs as $blog) {
         // Pas de détail sur la liste des nblogs d'un utilisateur

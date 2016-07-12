@@ -773,7 +773,7 @@ if (isset($_REQUEST['ENT_action'])) {
 		'http://6e1multimedia20132014clgfeyzin.blogs.laclasse.com/',		'http://6e2-2015-2016.blogs.laclasse.com/',
 		'http://6e4-2015-2016.blogs.laclasse.com/',		'http://6f-clg-evaristegalois.blogs.laclasse.com/');
 
-		// Gestion des action d'archivage.
+		// Gestion des actions d'archivage.
 		$action2 = $_REQUEST['action2'];		
 		if (isset($action2) && $action2 != "") {
 			$id = $_REQUEST['id'];
