@@ -40,23 +40,6 @@ function userExists($pusername) {
 // --------------------------------------------------------------------------------
 // fonction de listage de tous les blogs de la plateforme, 
 // avec les données relatives à l'ENT
-/*
-    [0] => Array
-        (
-            [blog_id] => 1
-            [site_id] => 1
-            [domain] => blogs.dev.laclasse.com
-            [path] => /
-            [registered] => 2011-04-26 13:26:05
-            [last_updated] => 2014-02-24 14:47:30
-            [public] => 1
-            [archived] => 0
-            [mature] => 0
-            [spam] => 0
-            [deleted] => 0
-            [lang_id] => 0
-        )
-*/
 function fais_voir($o) {
     //echo "<pre>";
     echo  print_r($o, true);
@@ -64,15 +47,41 @@ function fais_voir($o) {
     //echo "</pre>";
 
 }
+function flatten($a) {
+    $res = array();
+    foreach($a as $k => $v) {
+        $res[$v['option_name']] = $v['option_value'];
+    }
+    return $res;
+}
 // --------------------------------------------------------------------------------
 function blogList() {
     global $wpdb;
+    $opts = Array('admin_email','siteurl','name','blogdescription','idBLogENT','blogtype','etablissement_ENT','display_name');
+    $opts_str = implode("','", $opts);
+    $liste = array();
+    $query = "";
+    $blogs = $wpdb->get_results( 
+        "SELECT * FROM $wpdb->blogs WHERE domain != '".BLOG_DOMAINE."'  
+        and archived = 0 order by domain", 
+        ARRAY_A );
 
+    foreach ($blogs as $blog) {
+        $blog_details = $wpdb->get_results( "SELECT option_name, option_value ". 
+                                            "FROM wp_". $blog['blog_id'] ."_options ".
+                                            "where option_name in ('".$opts_str."') order by option_name", ARRAY_A);
+        $blog_opts = flatten($blog_details);
 
+        foreach ($blog_opts as $n => $v) {
+            $blog[$n] = $v;
+        }
 
+        unset($blog['registered']);
+        unset($blog['last_updated']);
+        $liste[] = $blog;
+    }
 
-
-
+    return $liste;
 /*
 
 
@@ -108,7 +117,7 @@ function blogList() {
 
         
 
-*/
+
 
 
 
@@ -168,6 +177,7 @@ function blogList() {
         $list[] = $blog;
     }
     return $list;
+    */
 }
 
 // --------------------------------------------------------------------------------
