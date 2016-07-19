@@ -473,7 +473,7 @@ function reprise_data_blogs(){
 
         $class_warn = "";
         $champ_data = "";
-        if ($blog_opts['type_de_blog'] == "ENV" && $blog_opts['groupe_ENT'] == "") {
+        if ($blog_opts['type_de_blog'] == "GRP" && $blog_opts['groupe_ENT'] == "") {
             $class_warn = "warn";
             $champ_data = "$form<input type='text' name='grpid'/>$closeForm";
         }
