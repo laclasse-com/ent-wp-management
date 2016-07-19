@@ -46,7 +46,7 @@ define (NOM_ENT, "Laclasse.com");
 define (MODE_SERVEUR, "DEV"); // PROD
 
 // Nom de domaine de la plateforme de blog.
-define(BLOG_DOMAINE, "blogs.dev.laclasse.com");
+define(BLOG_DOMAINE, "blogs-dev.laclasse.com");
 
 // chaine statique MD5 pour les encodages de clé de sécurité sur divers services web avec l'ENT.
 define(MD5_SALT, "xxxxxxxx");
