@@ -246,6 +246,7 @@ if (isset($_REQUEST['ENT_action'])) {
 	// ?ENT_action=BLOG_LIST
 	// --------------------------------------------------------------------------------
 	case 'BLOG_LIST' :
+		phpCAS::forceAuthentication();
 		header('Content-Type: application/json');
 		echo json_encode(blogList());	
 		$mustDieAfterAction = true;
@@ -809,6 +810,17 @@ if (isset($_REQUEST['ENT_action'])) {
 		}
 		$html .= "</table>\n</div></body></html>";
 		echo $html;
+		$mustDieAfterAction = true;
+		break;
+
+
+	//  --------------------------------------------------------------------------------
+	//
+	// Reprise de données pour les blogs, 
+	//
+	// ---------------------------------------------------------------------------------
+	case 'REPRISE_DATA' :
+		reprise_data_blogs();
 		$mustDieAfterAction = true;
 		break;
 
