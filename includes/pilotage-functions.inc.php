@@ -470,24 +470,30 @@ function reprise_data_blogs(){
 
         $class_warn = "";
         $champ_data = "";
-        if ($blog_opts['type_de_blog'] == "ETB" && $blog_opts['etablissement_ENT'] == "") {
-            $class_warn = "warn";
+        if ($blog_opts['type_de_blog'] == "ETB") {
+            if ($blog_opts['etablissement_ENT'] == "") {
+                $class_warn = "warn";
+            }            
             $champ_data = "$form" . selectbox_etabs() . "$closeForm";
         }
         $html .= "<td class='$class_warn'>". $blog_opts['etablissement_ENT']. "$champ_data</td>";
 
         $class_warn = "";
         $champ_data = "";
-        if ($blog_opts['type_de_blog'] == "CLS" && $blog_opts['classe_ENT'] == "") {
-            $class_warn = "warn";
+        if ($blog_opts['type_de_blog'] == "CLS") {
+            if ($blog_opts['classe_ENT'] == "") {
+                $class_warn = "warn";
+            }            
             $champ_data = "$form<input type='text' name='clsid'/>$closeForm";
         }
         $html .= "<td class='$class_warn'>". $blog_opts['classe_ENT']. "$champ_data</td>";
 
         $class_warn = "";
         $champ_data = "";
-        if ($blog_opts['type_de_blog'] == "GRP" && $blog_opts['groupe_ENT'] == "") {
-            $class_warn = "warn";
+        if ($blog_opts['type_de_blog'] == "GRP") {
+            if ($blog_opts['groupe_ENT'] == "") {
+                $class_warn = "warn";
+            }            
             $champ_data = "$form<input type='text' name='grpid'/>$closeForm";
         }
 
