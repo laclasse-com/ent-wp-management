@@ -112,7 +112,7 @@ function has_groupe($groupes, $wanted_groupe) {
 // --------------------------------------------------------------------------------
 function blogList() {
     global $wpdb;
-    $opts = Array('admin_email','siteurl','name','blogdescription','blogtype','etablissement_ENT','display_name', 'type_de_blog', 'classe_ENT', 'groupe_ENT');
+    $opts = Array('admin_email','siteurl','name','blogdescription','blogtype','etablissement_ENT','display_name', 'type_de_blog', 'classe_ENT', 'groupe_ENT', 'groupelibre_ENT');
     $opts_str = implode("','", $opts);
     $liste = array();
     $query = "";
@@ -235,6 +235,9 @@ function userBlogList($username) {
                     break;
                 case 'groupe_ENT':
                     $blog->groupe_ENT = $opt->option_value;
+                    break;
+                case 'groupelibre_ENT':
+                    $blog->groupelibre_ENT = $opt->option_value;
                     break;
                 case 'post_count':
                     $blog->nb_posts = $opt->option_value;
@@ -375,7 +378,7 @@ function get_user_id_by_login($login) {
 }
 
 function reprise_data_blogs(){
-    $opts = Array('admin_email','siteurl','name','blogdescription','blogtype','etablissement_ENT','display_name', 'type_de_blog', 'classe_ENT', 'groupe_ENT');
+    $opts = Array('admin_email','siteurl','name','blogdescription','blogtype','etablissement_ENT','display_name', 'type_de_blog', 'classe_ENT', 'groupe_ENT', 'groupelibre_ENT');
     $opts_str = implode("','", $opts);
     $closeForm = "&nbsp;<button type='submit'>Ok</button></form>";
     $message = "";
@@ -425,6 +428,10 @@ function reprise_data_blogs(){
             $message = "<div class='msg'>Blog #$id : Id de groupe mis &agrave; jour. grpid=".$_REQUEST['grpid']."</div>";
             update_blog_option( $id, 'groupe_ENT', $_REQUEST['grpid'] );
         }
+        if(isset($_REQUEST['gplid'])){
+            $message = "<div class='msg'>Blog #$id : Id de groupe mis &agrave; jour. gplid=".$_REQUEST['gplid']."</div>";
+            update_blog_option( $id, 'groupelibre_ENT', $_REQUEST['gplid'] );
+        }
     }
 
     // Extraction bdd
@@ -442,7 +449,7 @@ function reprise_data_blogs(){
           .msg {border:green solid 1px; float:right; margin-right:20%;background-color:lightgreen;padding:4px;}
     </style>\n</head><body><div style='margin:40px;'><h1>Liste des sites &agrave; reprendre</h1>\n
     $message
-    <table><tr><th>nom</th><th>url</th><th>type_de_blog</th><th>UAI</th><th>classe_ENT</th><th>groupe_ENT</th></tr>\n";
+    <table><tr><th>nom</th><th>url</th><th>type_de_blog</th><th>UAI</th><th>classe_ENT</th><th>groupe_ENT</th><th>groupelibre_ENT</th></tr>\n";
     $html .= "<p>Affectation d'un id de classe, de groupe ou d'établissement</p>";
     foreach($liste as $k => $blog) {
         // Récupérer des options du blog
@@ -497,7 +504,16 @@ function reprise_data_blogs(){
             $champ_data = "$form<input type='text' name='grpid'/>$closeForm";
         }
 
-        $html .= "<td class='$class_warn'>". $blog_opts['groupe_ENT']. "$champ_data</td>";
+        $class_warn = "";
+        $champ_data = "";
+        if ($blog_opts['type_de_blog'] == "ENV") {
+            if ($blog_opts['groupelibre_ENT'] == "") {
+                $class_warn = "warn";
+            }            
+            $champ_data = "$form<input type='text' name='gplid'/>$closeForm";
+        }
+
+        $html .= "<td class='$class_warn'>". $blog_opts['groupelibre_ENT']. "$champ_data</td>";
 
         $html .= "</tr>\n";
     }

@@ -192,6 +192,7 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   // Pour enregistrer les ids de la v3 des classes et groupes dans les options de blogs de ces types.
   $laclasseClsId          = $_REQUEST['clsid'];
   $laclasseGrpId          = $_REQUEST['grpid'];
+  $laclasseGplId          = $_REQUEST['gplid'];
 
   // Gestion de l'email académique.
   if ($laclasseUserMail != "" ) $user_email = $laclasseUserMail; 
@@ -219,6 +220,7 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   logIt("-> prenom=".$laclasseUserPrenom);
   logIt("-> clsid=".$laclasseClsId);
   logIt("-> grpid=".$laclasseGrpId);
+  logIt("-> gplid=".$laclasseGplId);
   
   
   //
@@ -245,7 +247,7 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   			// le premier qui arrive est administrateur du nouveau blog !
   			logIt("le domaine '".$domain."' n'existe pas.");
   			// Maintenant il faut créer un blog.
-  			creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $site_id, $wpUsrId, $TypeDeBlog, $laclasseUserCodeRne, $laclasseClsId, $laclasseGrpId);
+  			creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $site_id, $wpUsrId, $TypeDeBlog, $laclasseUserCodeRne, $laclasseClsId, $laclasseGrpId, $laclasseGplId);
   		}
   	}
   
@@ -284,7 +286,7 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   			logIt("le domaine '".$domain."' n'existe pas.");
   			$wpUsrId = createUserWP($username, $user_email, "administrator", $domain);
   			// Maintenant il faut créer un blog.
-  			creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $site_id, $wpUsrId, $TypeDeBlog, $laclasseUserCodeRne, $laclasseClsId, $laclasseGrpId);
+  			creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $site_id, $wpUsrId, $TypeDeBlog, $laclasseUserCodeRne, $laclasseClsId, $laclasseGrpId, $laclasseGplId);
      		}
   	}
   

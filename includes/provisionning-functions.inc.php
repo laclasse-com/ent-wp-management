@@ -225,7 +225,7 @@ function creerPremierArticle($domain, $wpBlogId, $pUserId, $pTypeBlog) {
 // --------------------------------------------------------------------------------
 // fonction création d'un nouveau blog
 // --------------------------------------------------------------------------------
-function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $site_id, $wpUsrId, $TypeDeBlog, $EtbUAI, $ClsID ="", $GrpID="") {
+function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $site_id, $wpUsrId, $TypeDeBlog, $EtbUAI, $ClsID ="", $GrpID="", $GplID="") {
 	logIt("___Fonction : creerNouveauBlog");
 	logIt("Cr&eacute;ation du blog pour le domaine '".$domain."'.");
 	$wpBlogId = create_empty_blog( $domain, $path, $sitename, $site_id);
@@ -256,6 +256,12 @@ function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $si
 	if ($TypeDeBlog == 'GRP') {
 	   add_blog_option( $wpBlogId, 'groupe_ENT', $GrpID );
 	   logIt(" -> Ajout de l'option 'groupe_ENT'='".$GrpID."'.");
+	}
+	
+	// Si ce type de blog est un blog d'établissement, on enregistre l'id de ce groupe
+	if ($TypeDeBlog == 'GPL') {
+	   add_blog_option( $wpBlogId, 'groupelibre_ENT', $GplID );
+	   logIt(" -> Ajout de l'option 'groupelibre_ENT'='".$GplID."'.");
 	}
 	
 	// add_blog_option( $wpBlogId, 'idBLogENT', $_REQUEST['idAncienBlogEnt'] );
