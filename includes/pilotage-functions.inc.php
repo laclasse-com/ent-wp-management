@@ -195,67 +195,7 @@ function blogList() {
             $liste[] = $blog;
         }
     }
-
-
     return $liste;
-/*
-
-    $blogs = wp_get_sites(array("limit" => "9999", "archived" => "0"));
-    $list = array();
-    foreach ($blogs as $blog) {
-        // Pas de détail sur la liste des nblogs d'un utilisateur
-            $blog_details = $wpdb->get_results( "SELECT * ". 
-                                                "FROM wp_". $blog['blog_id'] ."_options ".
-                                                "order by option_name");
-            $post_details = $wpdb->get_results( "SELECT * ". 
-                                                "FROM wp_". $blog['blog_id'] ."_posts ".
-                                                "");
-
-            $blog['nb_posts'] = count($post_details);
-            $blog['admin_comment'] = " ";
-            // S'il n'y a qu'un article, et que c'est l'article par défaut, si le blog est ancien, il n'est pas utilisé.
-            if (count($post_details) == 1) {
-                 if (substr($post_details[0]->post_title, 0, 35) == "Bienvenue dans votre nouveau weblog" && $post_details[0]->ID == 1) {
-                    $blog['admin_comment'] = "Unused blog";
-                }
-            }
-
-            foreach ($blog_details as $k => $opt) {
-                switch ($opt->option_name) {
-                    case 'admin_email':
-                        $blog['admin_email'] = $opt->option_value;
-                        break;
-                    case 'siteurl':
-                        $blog['siteurl'] = $opt->option_value;
-                        break;
-                    case 'blogname':
-                        $blog['name'] = $opt->option_value;
-                        break;
-                    case 'blogdescription':
-                        $blog['blogdescription'] = $opt->option_value;
-                        break;
-                    case 'idBLogENT':
-                        $blog['idBLogENT'] = $opt->option_value;
-                        break;
-                    case 'type_de_blog':
-                        $blog['blogtype'] = $opt->option_value;
-                        break;
-                    case 'etablissement_ENT':
-                        $blog['etablissement_ENT'] = $opt->option_value;
-                        break;
-                    case 'display_name':
-                        $blog['owner_name'] = $opt->option_value;
-                        break;
-                    default:
-                        break;
-                }
-            }
-        unset($blog['registered']);
-        unset($blog['last_updated']);
-        $list[] = $blog;
-    }
-    return $list;
-    */
 }
 
 // --------------------------------------------------------------------------------
@@ -264,13 +204,6 @@ function blogList() {
 function userBlogList($username) {
     global $wpdb;
     $user_id = username_exists($username);
-
-/*
-    $uRec = get_userdata($user_id);
-    $uid_proprio = get_user_meta($uRec->ID, "uid_ENT", true);
-    $display_name_proprio = get_user_meta($uRec->ID, "display_name", true);
-*/
-
     $blogs = get_blogs_of_user( $user_id );
     $list = array();
     foreach ($blogs as $blog) {
@@ -291,11 +224,17 @@ function userBlogList($username) {
                 case 'admin_email':
                     $blog->admin_email = $opt->option_value;
                     break;
-                case 'idBLogENT':
-                    $blog->idBLogENT = $opt->option_value;
+                // case 'idBLogENT':
+                //     $blog->idBLogENT = $opt->option_value;
                     break;
                 case 'etablissement_ENT':
                     $blog->etablissement_ENT = $opt->option_value;
+                    break;
+                case 'classe_ENT':
+                    $blog->classe_ENT = $opt->option_value;
+                    break;
+                case 'groupe_ENT':
+                    $blog->groupe_ENT = $opt->option_value;
                     break;
                 case 'post_count':
                     $blog->nb_posts = $opt->option_value;
@@ -375,60 +314,6 @@ function aUnRoleSurCeBlog($pUserId, $pBlogId){
 }
 
 // --------------------------------------------------------------------------------
-// fonction qui renvoie true si l'utilisateur est administrateur de son domaine.
-/*
-
-Structure de l'objet WP_User une fois qu'on a switché sur le bon blog.
-
-WP_User Object
-(
-    [data] => stdClass Object
-        (
-            [ID] => 99
-            [user_login] => tests-unitaires-wp
-            [user_pass] => $P$BUx4pmexHS38a2AJ.IuoXOvtetM2a7.
-            [user_nicename] => tests-unitaires-wp
-            [user_email] => tests-unitaires-wp@laclasse.com
-            [user_url] => 
-            [user_registered] => 2013-01-30 14:53:48
-            [user_activation_key] => 
-            [user_status] => 0
-            [display_name] => tests-unitaires-wp
-            [spam] => 0
-            [deleted] => 0
-        )
-
-    [ID] => 99
-    [caps] => Array
-        (
-            [author] => 1
-        )
-
-    [cap_key] => wp_125_capabilities
-    [roles] => Array
-        (
-            [0] => author
-        )
-
-    [allcaps] => Array
-        (
-            [upload_files] => 1
-            [edit_posts] => 1
-            [edit_published_posts] => 1
-            [publish_posts] => 1
-            [read] => 1
-            [level_2] => 1
-            [level_1] => 1
-            [level_0] => 1
-            [delete_posts] => 1
-            [delete_published_posts] => 1
-            [author] => 1
-        )
-
-    [filter] => 
-)
-*/
-// --------------------------------------------------------------------------------
 function aLeRoleSurCeBlog($userId, $pBlogId, $role){
   $can = false;
   if ( is_multisite() ) {
@@ -495,21 +380,44 @@ function reprise_data_blogs(){
     $closeForm = "&nbsp;<button type='submit'>Ok</button></form>";
     $message = "";
 
+    // Quelques vérifications d'usage pour controler les résultats de l'extraction
+    $current_user = get_user_by('login',phpCAS::getUser());
+    // Vérifier si l'utilisateur est bien connecté
+    assert ('$current_user->ID  != ""', "L'utilisateur n'est pas connecté sur la plateforme WordPress de laclasse.com.");
+    // Récupération des champs meta de l'utilisateur 
+    $userMeta = get_user_meta($current_user->ID);
+    assert ('$userMeta[\'profil_ENT\'][0] != ""', "Cet utilisateur n'a pas de profil sur la plateforme WordPress de laclasse.com.");
+    // Caractéristiques du blog.
+    $uid_ent_WP =  $userMeta['uid_ENT'][0];
+    $userENT =json_decode(get_http(generate_url(ANNUAIRE_URL."api/app/users/$uid_ent_WP", Array("expand" => "true"))));
+    // Caractéristiques du user connecté.
+    $roles_user_annuaire   = $userENT->roles;
+    $superadmin   = has_role($roles_user_annuaire, 'TECH');
+    // 
+    // Vérification de droits
+    //
+    if (!$superadmin) {
+        die("Cette page n'est pas pour vous !");
+    }
+
     // Gestion des actions 
     $action2 = $_REQUEST['action2'];        
     if (isset($action2) && $action2 != "") {
         $id = $_REQUEST['id'];
         if(isset($_REQUEST['uai'])){
-            $message = "<div class='msg'>Etablissement mis &agrave; jour.</div>";
-            add_blog_option( $id, 'etablissement_ENT', $_REQUEST['uai'] );
+            $message = "<div class='msg'>Blog #$id : Etablissement mis &agrave; jour. uai=".$_REQUEST['uai']."</div>";
+            // switch_to_blog( $id );
+            // $wpdb->replace( "wp_".$id."_options", array('option_name' => 'etablissement_ENT', 'option_value' => $_REQUEST['uai']));
+            update_blog_option( $id, 'etablissement_ENT', $_REQUEST['uai'] );
+            // restore_current_blog();
         }
         if(isset($_REQUEST['clsid'])){
-            $message = "<div class='msg'>Id de classe mis &agrave; jour.</div>";
-            add_blog_option( $id, 'classe_ENT', $_REQUEST['clsid'] );
+            $message = "<div class='msg'>Blog #$id : Id de classe mis &agrave; jour. clsid=".$_REQUEST['clsid']."</div>";
+            update_blog_option( $id, 'classe_ENT', $_REQUEST['clsid'] );
         }
         if(isset($_REQUEST['grpid'])){
-            $message = "<div class='msg'>Id de groupe mis &agrave; jour.</div>";
-            add_blog_option( $id, 'groupe_ENT', $_REQUEST['grpid'] );
+            $message = "<div class='msg'>Blog #$id : Id de groupe mis &agrave; jour. grpid=".$_REQUEST['grpid']."</div>";
+            update_blog_option( $id, 'groupe_ENT', $_REQUEST['grpid'] );
         }
         //header("Location: http://".BLOG_DOMAINE."/?ENT_action=$ENT_action");
     }
@@ -565,7 +473,7 @@ function reprise_data_blogs(){
 
         $class_warn = "";
         $champ_data = "";
-        if ($blog_opts['type_de_blog'] == "GRP" && $blog_opts['groupe_ENT'] == "") {
+        if ($blog_opts['type_de_blog'] == "ENV" && $blog_opts['groupe_ENT'] == "") {
             $class_warn = "warn";
             $champ_data = "$form<input type='text' name='grpid'/>$closeForm";
         }
@@ -583,177 +491,177 @@ function selectbox_etabs(){
 return "
 <select name='uai'>
 <option value=''>...</option>
-<option value='0691830P'>C.E.M. HENRY GORMAND</option>
-<option value='0692933N'>CLG PR-CHARLES DE FOUCAULD</option>
-<option value='0692937T'>CLG PR-LA FAVORITE SAINTE THERESE </option>
-<option value='0690614T'>CLG PR-SAINT LAURENT</option>
-<option value='0691666L'>CLG-AIME CESAIRE</option>
-<option value='0692342W'>CLG-ALAIN </option>
-<option value='0692693C'>CLG-AMPERE</option>
-<option value='0691728D'>CLG-ANDRE LASSAGNE</option>
-<option value='0691663H'>CLG-BELLECOMBE</option>
-<option value='0694151M'>CLG-CHRISTIANE BERNARDIN</option>
-<option value='0693479G'>CLG-CITE SCOLAIRE INTERNATIONALE</option>
-<option value='0691497C'>CLG-COLETTE </option>
-<option value='0691824H'>CLG-DAISY GEORGES MARTIN</option>
-<option value='0690022Z'>CLG-DE LA HAUTE AZERGUES</option>
-<option value='0692155T'>CLG-DES GRATTE-CIEL MORICE LEROUX </option>
-<option value='0693093M'>CLG-DU TONKIN </option>
-<option value='0692343X'>CLG-ELSA TRIOLET</option>
-<option value='0692419E'>CLG-EMILE MALFROY </option>
-<option value='0692335N'>CLG-EVARISTE GALOIS </option>
-<option value='0691645N'>CLG-FAUBERT </option>
-<option value='0692520P'>CLG-FREDERIC MISTRAL</option>
-<option value='0692578C'>CLG-GABRIEL ROSSET</option>
-<option value='0693890D'>CLG-GEORGES CHARPAK </option>
-<option value='0692339T'>CLG-GEORGES CLEMENCEAU</option>
-<option value='0692160Y'>CLG-GERARD PHILIPE</option>
-<option value='0694007F'>CLG-GILBERT DRU </option>
-<option value='0692340U'>CLG-HENRI LONGCHAMBON </option>
-<option value='0691670R'>CLG-JEAN CHARCOT</option>
-<option value='0692703N'>CLG-JEAN DE VERRAZANE </option>
-<option value='0692521R'>CLG-JEAN GIONO</option>
-<option value='0691664J'>CLG-JEAN JAURES </option>
-<option value='0691478G'>CLG-JEAN MACE </option>
-<option value='0690060R'>CLG-JEAN MERMOZ </option>
-<option value='0692334M'>CLG-JEAN MONNET </option>
-<option value='0692696F'>CLG-JEAN MOULIN </option>
-<option value='0692698H'>CLG-JEAN PERRIN </option>
-<option value='0692422H'>CLG-JEAN ROSTAND</option>
-<option value='0692163B'>CLG-JEAN-JACQUES ROUSSEAU </option>
-<option value='0691479H'>CLG-JOLIOT CURIE</option>
-<option value='0690094C'>CLG-JULES MICHELET</option>
-<option value='0691673U'>CLG-LA CLAVELIERE </option>
-<option value='0694191F'>CLG-LA TOURETTE </option>
-<option value='0692337R'>CLG-LAMARTINE </option>
-<option value='0691481K'>CLG-LAURENT MOURGUET</option>
-<option value='0691484N'>CLG-LE PLAN DU LOUP </option>
-<option value='0690280E'>CLG-LES IRIS</option>
-<option value='0691668N'>CLG-LES SERVIZIERES </option>
-<option value='0691675W'>CLG-LOUIS JOUVET</option>
-<option value='0693331W'>CLG-LOUIS LEPRINCE RINGUET</option>
-<option value='0691483M'>CLG-LUCIE AUBRAC</option>
-<option value='0690076H'>CLG-MARCEL PAGNOL </option>
-<option value='0691498D'>CLG-MARIA CASARES </option>
-<option value='0692704P'>CLG-OLIVIER DE SERRES </option>
-<option value='0693287Y'>CLG-PAUL D'AUBAREDE </option>
-<option value='0690075G'>CLG-PIERRE BROSSOLETTE</option>
-<option value='0692346A'>CLG-PIERRE DE RONSARD </option>
-<option value='0690053H'>CLG-PROFESSEUR DARGENT</option>
-<option value='0690131T'>CLG-RAOUL DUFY</option>
-<option value='0692898A'>CLG-RENE CASSIN </option>
-<option value='0693975W'>CLG-SIMONE VEIL </option>
-<option value='0693834T'>CLG-THEODORE MONOD</option>
-<option value='0690078K'>CLG-VAL D'ARGENT</option>
-<option value='0692338S'>CLG-VENDOME </option>
-<option value='0691669P'>CLG-VICTOR GRIGNARD </option>
-<option value='0690036P'>CLG-VICTOR SCHOELCHER </option>
-<option value='0692165D'>CLGH-ELIE VIGNAL</option>
-<option value='0692583H'>COLLEGE BANS</option>
-<option value='0692417C'>COLLEGE BORIS VIAN</option>
-<option value='0692410V'>COLLEGE CHARLES SENARD</option>
-<option value='0691662G'>COLLEGE CLEMENT MAROT </option>
-<option value='0692157V'>Collège Georges Brassens</option>
-<option value='0692336P'>COLLEGE HENRI BARBUSSE</option>
-<option value='0691480J'>COLLEGE HONORE DE BALZAC</option>
-<option value='0691736M'>COLLEGE JEAN DE TOURNES </option>
-<option value='0692423J'>COLLEGE JEAN RENOIR </option>
-<option value='0692414Z'>COLLEGE JEAN-PHILIPPE RAMEAU</option>
-<option value='0692695E'>COLLEGE LACASSAGNE</option>
-<option value='0691614E'>COLLEGE LEONARD VINCI </option>
-<option value='0691798E'>COLLEGE LES BATTIERES </option>
-<option value='0691799F'>COLLEGE LOUIS ARAGON</option>
-<option value='0692579D'>COLLEGE MARTIN LUTHER KING</option>
-<option value='0691495A'>COLLEGE MARYSE BASTIE </option>
-<option value='0692411W'>COLLEGE MOLIERE </option>
-<option value='0692576A'>COLLEGE PABLO PICASSO </option>
-<option value='0692159X'>COLLEGE PAUL EMILE VICTOR </option>
-<option value='0690249W'>COLLEGE PIERRE VALDO</option>
-<option value='0692920Z'>COLLEGE PRIVE AUX LAZARISTES</option>
-<option value='0693491V'>COLLEGE PRIVE BETH MENAHEM</option>
-<option value='0692932M'>COLLEGE PRIVE CHEVREUL</option>
-<option value='0692928H'>COLLEGE PRIVE DES CHARTREUX </option>
-<option value='0692945B'>COLLEGE PRIVE IMMACULEE CONCEPTION</option>
-<option value='0690551Z'>COLLEGE PRIVE LA XAVIERE</option>
-<option value='0690626F'>COLLEGE PRIVE MERE TERESA </option>
-<option value='0690604G'>COLLEGE PRIVE NOTRE-DAME DE BELLECOMBE</option>
-<option value='0692941X'>COLLEGE PRIVE NOTRE-DAME DE BELLEGARDE</option>
-<option value='0692940W'>COLLEGE PRIVE PIERRE TERMIER</option>
-<option value='0692943Z'>COLLEGE PRIVE SAINT JOSEPH</option>
-<option value='0692921A'>COLLEGE PRIVE SAINTE MARIE</option>
-<option value='0690245S'>CRDP de Lyon</option>
-<option value='069DANEZ'>DANE</option>
-<option value='0691831R'>E.S.E.M. ECOLE SPECIALISEE DES ENFANTS MALADES</option>
-<option value='0691629W'>ECOLE ELEMENTAIRE </option>
-<option value='0693562X'>ECOLE ELEMENTAIRE ALBERT MOUTON </option>
-<option value='0692285J'>ECOLE ELEMENTAIRE ALPHONSE DAUDET </option>
-<option value='0693724Y'>ECOLE ELEMENTAIRE ANATOLE FRANCE</option>
-<option value='0690409V'>ECOLE ELEMENTAIRE AUDREY HEPBURN</option>
-<option value='0690431U'>ECOLE ELEMENTAIRE CAVENNE </option>
-<option value='0692900C'>ECOLE ELEMENTAIRE DU GOLF </option>
-<option value='0693042G'>ECOLE ELEMENTAIRE LOUIS PASTEUR </option>
-<option value='0690852B'>ECOLE ELEMENTAIRE LUCIE GUIMET</option>
-<option value='0690855E'>ECOLE ELEMENTAIRE MARIUS GROS </option>
-<option value='0693254M'>ECOLE MATERNELLE</option>
-<option value='0691067K'>ECOLE MATERNELLE ALIX </option>
-<option value='0691620L'>ECOLE MATERNELLE CITE CASTELLANE</option>
-<option value='0692848W'>ECOLE MATERNELLE DU PLATEAU </option>
-<option value='0691213U'>ECOLE MATERNELLE EDOUARD HERRIOT</option>
-<option value='0692300A'>ECOLE MATERNELLE ET ELEMENTAIRE VANCIA</option>
-<option value='0693097S'>ECOLE MATERNELLE FREDERIC MISTRAL </option>
-<option value='0691038D'>ECOLE MATERNELLE JEAN GERSON</option>
-<option value='0692603E'>ECOLE MATERNELLE JEAN LURCAT</option>
-<option value='0693755G'>ECOLE MATERNELLE LES ALLAGNIERS </option>
-<option value='0693754F'>ECOLE MATERNELLE LES CHARMILLES </option>
-<option value='0692849X'>ECOLE MATERNELLE LES ECUREUILS</option>
-<option value='0691707F'>ECOLE MATERNELLE PABLO PICASSO</option>
-<option value='0690478V'>ECOLE MATERNELLE PARMENTIER </option>
-<option value='0690455V'>ECOLE MATERNELLE SAINT EXUPERY</option>
-<option value='0690839M'>ECOLE PRIMAIRE</option>
-<option value='0690860K'>ECOLE PRIMAIRE</option>
-<option value='0690853C'>ECOLE PRIMAIRE A.M. AMPERE</option>
-<option value='0692263K'>ECOLE PRIMAIRE ANATOLE FRANCE </option>
-<option value='0693126Y'>ECOLE PRIMAIRE ANTOINE REMOND </option>
-<option value='0692303D'>ECOLE PRIMAIRE B LOUIS PERGAUD</option>
-<option value='0693896K'>ECOLE PRIMAIRE BONY AVENTURIERE </option>
-<option value='0691622N'>ECOLE PRIMAIRE CASTELLANE </option>
-<option value='0693513U'>ECOLE PRIMAIRE CENTRE </option>
-<option value='0693852M'>ECOLE PRIMAIRE CHARLES PERRAULT </option>
-<option value='0691571H'>ECOLE PRIMAIRE CONDORCET</option>
-<option value='0690834G'>ECOLE PRIMAIRE D'APPLICATION JOSEPH CORNIER </option>
-<option value='0691300N'>ECOLE PRIMAIRE D'APPLICATION VICTOR HUGO</option>
-<option value='0691643L'>ECOLE PRIMAIRE DANIS - LES GRAINS DE BLE</option>
-<option value='0693532P'>ECOLE PRIMAIRE DE REVAISON</option>
-<option value='0693827K'>ECOLE PRIMAIRE DES TABLES CLAUDIENNES </option>
-<option value='0693894H'>ECOLE PRIMAIRE DU CENTRE</option>
-<option value='0693514V'>ECOLE PRIMAIRE DU CENTRE</option>
-<option value='0691588B'>ECOLE PRIMAIRE DU PLATEAU </option>
-<option value='0691311A'>ECOLE PRIMAIRE FULCHIRON</option>
-<option value='0690468J'>ECOLE PRIMAIRE JEAN JAURES</option>
-<option value='0693212S'>ECOLE PRIMAIRE JEAN MOULIN</option>
-<option value='0690856F'>ECOLE PRIMAIRE JEAN RAINE </option>
-<option value='0693423W'>ECOLE PRIMAIRE JOSEPH THEVENOT</option>
-<option value='0693712K'>ECOLE PRIMAIRE JULES FERRY</option>
-<option value='0693629V'>ECOLE PRIMAIRE JULES VALLES </option>
-<option value='0694189D'>ECOLE PRIMAIRE JULIE-VICTOIRE DAUBIE</option>
-<option value='0693117N'>ECOLE PRIMAIRE LE CHATER</option>
-<option value='0693326R'>ECOLE PRIMAIRE LEO LAGRANGE </option>
-<option value='0691563Z'>ECOLE PRIMAIRE LES CALABRES </option>
-<option value='0691074T'>ECOLE PRIMAIRE LES MARRONNIERS</option>
-<option value='0692860J'>ECOLE PRIMAIRE LES TILLEULS </option>
-<option value='0693017E'>ECOLE PRIMAIRE P. ET M. CURIE </option>
-<option value='0693707E'>ECOLE PRIMAIRE PAUL BERT</option>
-<option value='0691977Z'>ECOLE PRIMAIRE PRIVEE SAINT CHARLES SAINT FRANCOIS D'ASSISE </option>
-<option value='0691959E'>ECOLE PRIMAIRE PRIVEE SAINT-JUST / SAINT-IRENEE </option>
-<option value='0693836V'>ECOLE PRIMAIRE PUBLIQUE LA FONTAINE </option>
-<option value='0693907X'>ECOLE PRIMAIRE PUBLIQUE LOUIS PASTEUR </option>
-<option value='0691225G'>ECOLE PRIMAIRE SAINT EXUPERY</option>
-<option value='0694190E'>ECOLE PRIMAIRE SALVADOR ALLENDE </option>
-<option value='0696962G'>ECOLE PRIMAIRE SIMONE DE BEAUVOIR </option>
-<option value='0699990Z'>ERASME</option>
-<option value='0692390Y'>EREA-CITE SCOLAIRE RENE PELLET</option>
-<option value='0692309K'>FONDATION RICHARD </option>
-<option value='0691780K'>SEGPA CLG JEAN RENOIR </option>
+<option value='0692157V'> - Collège Georges Brassens</option>
+<option value='0693890D'>BRINDAS  - CLG-GEORGES CHARPAK </option>
+<option value='0693834T'>BRON - CLG-THEODORE MONOD</option>
+<option value='0692576A'>BRON - COLLEGE PABLO PICASSO </option>
+<option value='0691831R'>BRON - E.S.E.M. ECOLE SPECIALISEE DES ENFANTS MALADES</option>
+<option value='0690455V'>BRON - ECOLE MATERNELLE SAINT EXUPERY</option>
+<option value='0693212S'>BRON - ECOLE PRIMAIRE JEAN MOULIN</option>
+<option value='0691225G'>BRON - ECOLE PRIMAIRE SAINT EXUPERY</option>
+<option value='0691479H'>BRON CEDEX - CLG-JOLIOT CURIE</option>
+<option value='0690839M'>CAILLOUX SUR FONTAINES - ECOLE PRIMAIRE</option>
+<option value='0691728D'>CALUIRE ET CUIRE - CLG-ANDRE LASSAGNE</option>
+<option value='0692165D'>CALUIRE ET CUIRE - CLGH-ELIE VIGNAL</option>
+<option value='0692410V'>CALUIRE ET CUIRE - COLLEGE CHARLES SENARD</option>
+<option value='0690468J'>CALUIRE ET CUIRE - ECOLE PRIMAIRE JEAN JAURES</option>
+<option value='0693017E'>CALUIRE ET CUIRE - ECOLE PRIMAIRE P. ET M. CURIE </option>
+<option value='0692414Z'>CHAMPAGNE AU MONT D OR - COLLEGE JEAN-PHILIPPE RAMEAU</option>
+<option value='0692849X'>CHARLY - ECOLE MATERNELLE LES ECUREUILS</option>
+<option value='0692860J'>CHARLY - ECOLE PRIMAIRE LES TILLEULS </option>
+<option value='0691614E'>CHASSIEU - COLLEGE LEONARD VINCI </option>
+<option value='0693975W'>CHATILLON  - CLG-SIMONE VEIL </option>
+<option value='0692898A'>CORBAS - CLG-RENE CASSIN </option>
+<option value='0692422H'>CRAPONNE - CLG-JEAN ROSTAND</option>
+<option value='0691495A'>DECINES CHARPIEU - COLLEGE MARYSE BASTIE </option>
+<option value='0691830P'>ECULLY - C.E.M. HENRY GORMAND</option>
+<option value='0691481K'>ECULLY - CLG-LAURENT MOURGUET</option>
+<option value='0692520P'>FEYZIN - CLG-FREDERIC MISTRAL</option>
+<option value='0692848W'>FEYZIN - ECOLE MATERNELLE DU PLATEAU </option>
+<option value='0691588B'>FEYZIN - ECOLE PRIMAIRE DU PLATEAU </option>
+<option value='0691736M'>FONTAINES SUR SAONE  - COLLEGE JEAN DE TOURNES </option>
+<option value='0693513U'>FONTAINES SUR SAONE  - ECOLE PRIMAIRE CENTRE </option>
+<option value='0691074T'>FONTAINES SUR SAONE  - ECOLE PRIMAIRE LES MARRONNIERS</option>
+<option value='0694151M'>FRANCHEVILLE - CLG-CHRISTIANE BERNARDIN</option>
+<option value='0693117N'>FRANCHEVILLE - ECOLE PRIMAIRE LE CHATER</option>
+<option value='0693331W'>GENAS  - CLG-LOUIS LEPRINCE RINGUET</option>
+<option value='0691483M'>GIVORS - CLG-LUCIE AUBRAC</option>
+<option value='0692583H'>GIVORS - COLLEGE BANS</option>
+<option value='0692419E'>GRIGNY - CLG-EMILE MALFROY </option>
+<option value='0691824H'>IRIGNY - CLG-DAISY GEORGES MARTIN</option>
+<option value='0690022Z'>LAMURE SUR AZERGUES  - CLG-DE LA HAUTE AZERGUES</option>
+<option value='069BACAS'>Lyon - Bac à Sable </option>
+<option value='0692933N'>LYON - CLG PR-CHARLES DE FOUCAULD</option>
+<option value='0691663H'>LYON - CLG-BELLECOMBE</option>
+<option value='0692339T'>LYON - CLG-GEORGES CLEMENCEAU</option>
+<option value='0694007F'>LYON - CLG-GILBERT DRU </option>
+<option value='0692340U'>LYON - CLG-HENRI LONGCHAMBON </option>
+<option value='0691670R'>LYON - CLG-JEAN CHARCOT</option>
+<option value='0692703N'>LYON - CLG-JEAN DE VERRAZANE </option>
+<option value='0690060R'>LYON - CLG-JEAN MERMOZ </option>
+<option value='0692334M'>LYON - CLG-JEAN MONNET </option>
+<option value='0692698H'>LYON - CLG-JEAN PERRIN </option>
+<option value='0694191F'>LYON - CLG-LA TOURETTE </option>
+<option value='0690053H'>LYON - CLG-PROFESSEUR DARGENT</option>
+<option value='0692338S'>LYON - CLG-VENDOME </option>
+<option value='0691669P'>LYON - CLG-VICTOR GRIGNARD </option>
+<option value='0690036P'>LYON - CLG-VICTOR SCHOELCHER </option>
+<option value='069DANEZ'>Lyon - DANE</option>
+<option value='0692928H'>LYON 1ER ARRONDISSEMENT  - COLLEGE PRIVE DES CHARTREUX </option>
+<option value='0691300N'>LYON 1ER ARRONDISSEMENT  - ECOLE PRIMAIRE D'APPLICATION VICTOR HUGO</option>
+<option value='0693827K'>LYON 1ER ARRONDISSEMENT  - ECOLE PRIMAIRE DES TABLES CLAUDIENNES </option>
+<option value='0692932M'>LYON 2EME ARRONDISSEMENT - COLLEGE PRIVE CHEVREUL</option>
+<option value='0691067K'>LYON 2EME ARRONDISSEMENT - ECOLE MATERNELLE ALIX </option>
+<option value='0692695E'>LYON 3EME ARRONDISSEMENT - COLLEGE LACASSAGNE</option>
+<option value='0692411W'>LYON 3EME ARRONDISSEMENT - COLLEGE MOLIERE </option>
+<option value='0692263K'>LYON 3EME ARRONDISSEMENT - ECOLE PRIMAIRE ANATOLE FRANCE </option>
+<option value='0693707E'>LYON 3EME ARRONDISSEMENT - ECOLE PRIMAIRE PAUL BERT</option>
+<option value='0691662G'>LYON 4EME ARRONDISSEMENT - COLLEGE CLEMENT MAROT </option>
+<option value='0690245S'>LYON 4EME ARRONDISSEMENT - CRDP de Lyon</option>
+<option value='0690834G'>LYON 4EME ARRONDISSEMENT - ECOLE PRIMAIRE D'APPLICATION JOSEPH CORNIER </option>
+<option value='0693836V'>LYON 4EME ARRONDISSEMENT - ECOLE PRIMAIRE PUBLIQUE LA FONTAINE </option>
+<option value='0691798E'>LYON 5EME ARRONDISSEMENT - COLLEGE LES BATTIERES </option>
+<option value='0692920Z'>LYON 5EME ARRONDISSEMENT - COLLEGE PRIVE AUX LAZARISTES</option>
+<option value='0692921A'>LYON 5EME ARRONDISSEMENT - COLLEGE PRIVE SAINTE MARIE</option>
+<option value='0691038D'>LYON 5EME ARRONDISSEMENT - ECOLE MATERNELLE JEAN GERSON</option>
+<option value='0691311A'>LYON 5EME ARRONDISSEMENT - ECOLE PRIMAIRE FULCHIRON</option>
+<option value='0691959E'>LYON 5EME ARRONDISSEMENT - ECOLE PRIMAIRE PRIVEE SAINT-JUST / SAINT-IRENEE </option>
+<option value='0690604G'>LYON 6EME ARRONDISSEMENT - COLLEGE PRIVE NOTRE-DAME DE BELLECOMBE</option>
+<option value='0693126Y'>LYON 6EME ARRONDISSEMENT - ECOLE PRIMAIRE ANTOINE REMOND </option>
+<option value='0690431U'>LYON 7EME ARRONDISSEMENT - ECOLE ELEMENTAIRE CAVENNE </option>
+<option value='0694189D'>LYON 7EME ARRONDISSEMENT - ECOLE PRIMAIRE JULIE-VICTOIRE DAUBIE</option>
+<option value='0692940W'>LYON 8EME ARRONDISSEMENT - COLLEGE PRIVE PIERRE TERMIER</option>
+<option value='0693907X'>LYON 8EME ARRONDISSEMENT - ECOLE PRIMAIRE PUBLIQUE LOUIS PASTEUR </option>
+<option value='0692309K'>LYON 8EME ARRONDISSEMENT - FONDATION RICHARD </option>
+<option value='0692285J'>LYON 9EME ARRONDISSEMENT - ECOLE ELEMENTAIRE ALPHONSE DAUDET </option>
+<option value='0690409V'>LYON 9EME ARRONDISSEMENT - ECOLE ELEMENTAIRE AUDREY HEPBURN</option>
+<option value='0693097S'>LYON 9EME ARRONDISSEMENT - ECOLE MATERNELLE FREDERIC MISTRAL </option>
+<option value='0692693C'>LYON CEDEX 02  - CLG-AMPERE</option>
+<option value='0690131T'>LYON CEDEX 03  - CLG-RAOUL DUFY</option>
+<option value='0692937T'>LYON CEDEX 05  - CLG PR-LA FAVORITE SAINTE THERESE </option>
+<option value='0692696F'>LYON CEDEX 05  - CLG-JEAN MOULIN </option>
+<option value='0693479G'>LYON CEDEX 07  - CLG-CITE SCOLAIRE INTERNATIONALE</option>
+<option value='0692578C'>LYON CEDEX 07  - CLG-GABRIEL ROSSET</option>
+<option value='0691668N'>MEYZIEU  - CLG-LES SERVIZIERES </option>
+<option value='0692704P'>MEYZIEU  - CLG-OLIVIER DE SERRES </option>
+<option value='0691571H'>MEYZIEU  - ECOLE PRIMAIRE CONDORCET</option>
+<option value='0691563Z'>MEYZIEU  - ECOLE PRIMAIRE LES CALABRES </option>
+<option value='0692335N'>MEYZIEU CEDEX  - CLG-EVARISTE GALOIS </option>
+<option value='0692579D'>MIONS  - COLLEGE MARTIN LUTHER KING</option>
+<option value='0691629W'>MONTANAY - ECOLE ELEMENTAIRE </option>
+<option value='0693254M'>MONTANAY - ECOLE MATERNELLE</option>
+<option value='0692346A'>MORNANT  - CLG-PIERRE DE RONSARD </option>
+<option value='0692423J'>NEUVILLE SUR SAONE - COLLEGE JEAN RENOIR </option>
+<option value='0692941X'>NEUVILLE SUR SAONE - COLLEGE PRIVE NOTRE-DAME DE BELLEGARDE</option>
+<option value='0690852B'>NEUVILLE SUR SAONE - ECOLE ELEMENTAIRE LUCIE GUIMET</option>
+<option value='0693896K'>NEUVILLE SUR SAONE - ECOLE PRIMAIRE BONY AVENTURIERE </option>
+<option value='0691780K'>NEUVILLE SUR SAONE - SEGPA CLG JEAN RENOIR </option>
+<option value='0691673U'>OULLINS  - CLG-LA CLAVELIERE </option>
+<option value='0690075G'>OULLINS  - CLG-PIERRE BROSSOLETTE</option>
+<option value='0692900C'>OULLINS  - ECOLE ELEMENTAIRE DU GOLF </option>
+<option value='0693712K'>OULLINS  - ECOLE PRIMAIRE JULES FERRY</option>
+<option value='0690076H'>PIERRE BENITE  - CLG-MARCEL PAGNOL </option>
+<option value='0692603E'>PIERRE BENITE  - ECOLE MATERNELLE JEAN LURCAT</option>
+<option value='0691707F'>PIERRE BENITE  - ECOLE MATERNELLE PABLO PICASSO</option>
+<option value='0690853C'>POLEYMIEUX AU MONT D OR  - ECOLE PRIMAIRE A.M. AMPERE</option>
+<option value='0690855E'>QUINCIEUX  - ECOLE ELEMENTAIRE MARIUS GROS </option>
+<option value='0691498D'>RILLIEUX LA PAPE - CLG-MARIA CASARES </option>
+<option value='0692159X'>RILLIEUX LA PAPE - COLLEGE PAUL EMILE VICTOR </option>
+<option value='0691620L'>RILLIEUX LA PAPE - ECOLE MATERNELLE CITE CASTELLANE</option>
+<option value='0692300A'>RILLIEUX LA PAPE - ECOLE MATERNELLE ET ELEMENTAIRE VANCIA</option>
+<option value='0693755G'>RILLIEUX LA PAPE - ECOLE MATERNELLE LES ALLAGNIERS </option>
+<option value='0693754F'>RILLIEUX LA PAPE - ECOLE MATERNELLE LES CHARMILLES </option>
+<option value='0691622N'>RILLIEUX LA PAPE - ECOLE PRIMAIRE CASTELLANE </option>
+<option value='0690856F'>ROCHETAILLEE SUR SAONE - ECOLE PRIMAIRE JEAN RAINE </option>
+<option value='0693423W'>SATHONAY CAMP  - ECOLE PRIMAIRE JOSEPH THEVENOT</option>
+<option value='0691643L'>SATHONAY VILLAGE - ECOLE PRIMAIRE DANIS - LES GRAINS DE BLE</option>
+<option value='0691977Z'>ST DIDIER AU MONT D OR - ECOLE PRIMAIRE PRIVEE SAINT CHARLES SAINT FRANCOIS D'ASSISE </option>
+<option value='0692342W'>ST FONS  - CLG-ALAIN </option>
+<option value='0690478V'>ST FONS  - ECOLE MATERNELLE PARMENTIER </option>
+<option value='0693629V'>ST FONS  - ECOLE PRIMAIRE JULES VALLES </option>
+<option value='0694190E'>ST FONS  - ECOLE PRIMAIRE SALVADOR ALLENDE </option>
+<option value='0696962G'>ST FONS  - ECOLE PRIMAIRE SIMONE DE BEAUVOIR </option>
+<option value='0692521R'>ST GENIS LAVAL - CLG-JEAN GIONO</option>
+<option value='0693287Y'>ST GENIS LAVAL - CLG-PAUL D'AUBAREDE </option>
+<option value='0693562X'>ST GENIS LAVAL - ECOLE ELEMENTAIRE ALBERT MOUTON </option>
+<option value='0690614T'>ST LAURENT DE CHAMOUSSET - CLG PR-SAINT LAURENT</option>
+<option value='0691497C'>ST PRIEST  - CLG-COLETTE </option>
+<option value='0692160Y'>ST PRIEST  - CLG-GERARD PHILIPE</option>
+<option value='0692417C'>ST PRIEST  - COLLEGE BORIS VIAN</option>
+<option value='0693532P'>ST PRIEST  - ECOLE PRIMAIRE DE REVAISON</option>
+<option value='0690860K'>ST ROMAIN AU MONT D OR - ECOLE PRIMAIRE</option>
+<option value='0690078K'>STE FOY L ARGENTIERE - CLG-VAL D'ARGENT</option>
+<option value='0691484N'>STE FOY LES LYON - CLG-LE PLAN DU LOUP </option>
+<option value='0693894H'>STE FOY LES LYON - ECOLE PRIMAIRE DU CENTRE</option>
+<option value='0692943Z'>TASSIN LA DEMI LUNE  - COLLEGE PRIVE SAINT JOSEPH</option>
+<option value='0692163B'>TASSIN LA DEMI LUNE CEDEX  - CLG-JEAN-JACQUES ROUSSEAU </option>
+<option value='0691666L'>VAULX EN VELIN - CLG-AIME CESAIRE</option>
+<option value='0692336P'>VAULX EN VELIN - COLLEGE HENRI BARBUSSE</option>
+<option value='0690249W'>VAULX EN VELIN - COLLEGE PIERRE VALDO</option>
+<option value='0691480J'>VENISSIEUX - COLLEGE HONORE DE BALZAC</option>
+<option value='0691799F'>VENISSIEUX - COLLEGE LOUIS ARAGON</option>
+<option value='0690551Z'>VENISSIEUX - COLLEGE PRIVE LA XAVIERE</option>
+<option value='0692303D'>VENISSIEUX - ECOLE PRIMAIRE B LOUIS PERGAUD</option>
+<option value='0693852M'>VENISSIEUX - ECOLE PRIMAIRE CHARLES PERRAULT </option>
+<option value='0693514V'>VENISSIEUX - ECOLE PRIMAIRE DU CENTRE</option>
+<option value='0693326R'>VENISSIEUX - ECOLE PRIMAIRE LEO LAGRANGE </option>
+<option value='0692343X'>VENISSIEUX CEDEX - CLG-ELSA TRIOLET</option>
+<option value='0690094C'>VENISSIEUX CEDEX - CLG-JULES MICHELET</option>
+<option value='0691645N'>VILLEFRANCHE SUR SAONE - CLG-FAUBERT </option>
+<option value='0691664J'>VILLEURBANNE - CLG-JEAN JAURES </option>
+<option value='0691478G'>VILLEURBANNE - CLG-JEAN MACE </option>
+<option value='0692337R'>VILLEURBANNE - CLG-LAMARTINE </option>
+<option value='0690280E'>VILLEURBANNE - CLG-LES IRIS</option>
+<option value='0693491V'>VILLEURBANNE - COLLEGE PRIVE BETH MENAHEM</option>
+<option value='0692945B'>VILLEURBANNE - COLLEGE PRIVE IMMACULEE CONCEPTION</option>
+<option value='0690626F'>VILLEURBANNE - COLLEGE PRIVE MERE TERESA </option>
+<option value='0693724Y'>VILLEURBANNE - ECOLE ELEMENTAIRE ANATOLE FRANCE</option>
+<option value='0693042G'>VILLEURBANNE - ECOLE ELEMENTAIRE LOUIS PASTEUR </option>
+<option value='0691213U'>VILLEURBANNE - ECOLE MATERNELLE EDOUARD HERRIOT</option>
+<option value='0692155T'>VILLEURBANNE CEDEX - CLG-DES GRATTE-CIEL MORICE LEROUX </option>
+<option value='0693093M'>VILLEURBANNE CEDEX - CLG-DU TONKIN </option>
+<option value='0691675W'>VILLEURBANNE CEDEX - CLG-LOUIS JOUVET</option>
+<option value='0692390Y'>VILLEURBANNE CEDEX - EREA-CITE SCOLAIRE RENE PELLET</option>
 </select>
 ";    
 }

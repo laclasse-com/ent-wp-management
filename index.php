@@ -820,6 +820,7 @@ if (isset($_REQUEST['ENT_action'])) {
 	//
 	// ---------------------------------------------------------------------------------
 	case 'REPRISE_DATA' :
+		phpCAS::forceAuthentication();
 		reprise_data_blogs();
 		$mustDieAfterAction = true;
 		break;
