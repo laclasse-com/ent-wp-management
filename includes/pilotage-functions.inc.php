@@ -449,7 +449,7 @@ function reprise_data_blogs(){
           .msg {border:green solid 1px; float:right; margin-right:20%;background-color:lightgreen;padding:4px;}
     </style>\n</head><body><div style='margin:40px;'><h1>Liste des sites &agrave; reprendre</h1>\n
     $message
-    <table><tr><th>nom</th><th>url</th><th>type_de_blog</th><th>UAI</th><th>classe_ENT</th><th>groupe_ENT</th><th>groupelibre_ENT</th></tr>\n";
+    <table><tr><th>nom</th><th>url</th><th>Archivage</th><th>type_de_blog</th><th>UAI</th><th>classe_ENT</th><th>groupe_ENT</th><th>groupelibre_ENT</th></tr>\n";
     $html .= "<p>Affectation d'un id de classe, de groupe ou d'établissement</p>";
     foreach($liste as $k => $blog) {
         // Récupérer des options du blog
@@ -503,7 +503,8 @@ function reprise_data_blogs(){
             }            
             $champ_data = "$form<input type='text' name='grpid'/>$closeForm";
         }
-
+        $html .= "<td class='$class_warn'>". $blog_opts['groupe_ENT']. "$champ_data</td>";
+        
         $class_warn = "";
         $champ_data = "";
         if ($blog_opts['type_de_blog'] == "ENV") {
