@@ -401,8 +401,14 @@ function reprise_data_blogs(){
     }
 
     // Gestion des actions 
-    $action2 = $_REQUEST['action2'];        
-    if (isset($action2) && $action2 != "") {
+    $action2 = $_REQUEST['action2'];
+
+    if (isset($action2) && ($action2 == "archiveblog" || $action2 == "unarchiveblog")) {
+        $id = $_REQUEST['id'];
+        update_blog_status( $id, 'archived', ( 'archiveblog' === $action2 ) ? '1' : '0' );
+    }
+
+    if (isset($action2) && $action2 == "maj") {
         $id = $_REQUEST['id'];
         if(isset($_REQUEST['uai'])){
             $message = "<div class='msg'>Blog #$id : Etablissement mis &agrave; jour. uai=".$_REQUEST['uai']."</div>";
@@ -419,7 +425,6 @@ function reprise_data_blogs(){
             $message = "<div class='msg'>Blog #$id : Id de groupe mis &agrave; jour. grpid=".$_REQUEST['grpid']."</div>";
             update_blog_option( $id, 'groupe_ENT', $_REQUEST['grpid'] );
         }
-        //header("Location: http://".BLOG_DOMAINE."/?ENT_action=$ENT_action");
     }
 
     // Extraction bdd
@@ -431,6 +436,7 @@ function reprise_data_blogs(){
     <style>
           table td {padding:3px 20px 3px 20px;}
           table td {border:black solid 1px;}
+          .gris-sale {background-color:#aaa;}
           .warn {background-color:orange;}
           .lilipute {font-size:0.6em;}
           .msg {border:green solid 1px; float:right; margin-right:20%;background-color:lightgreen;padding:4px;}
@@ -445,14 +451,21 @@ function reprise_data_blogs(){
                                             "where option_name in ('".$opts_str."') order by option_name", ARRAY_A);
         $blog_opts = flatten($blog_details, 'option_name', 'option_value'); 
 
+        $gris_sale = ( $blog['archived'] == 0 ) ? '' : 'gris-sale';
+
         $form = "<form method='post'>
         <input type='hidden' name='ENT_action' value='".$_REQUEST['ENT_action']."'/>
         <input type='hidden' name='action2' value='maj'/>
         <input type='hidden' name='id' value='" . $blog['blog_id'] . "'/>";
     
-        $html .= "<tr class=''>";
+        $html .= "<tr class='$gris_sale'>";
         $html .= "<td><a name='".($k+1)."'></a>".($k+1)."</td>";
         $html .= "<td><a href='http://".$blog['domain']."/' target='_blank'>".$blog['domain']."</a><br/> ".$blog_opts['blogdescription']."</td>";
+        if ($blog['archived'] == 0) {
+            $html .= "<td><a href='?ENT_action=".$_REQUEST['ENT_action']."&action2=archiveblog&id=".$blog['blog_id']."#".($k+1)."'>Archiver</a></td>";              
+        } else {
+            $html .= "<td>Archivé !&nbsp;&nbsp;&nbsp;<a href='?ENT_action=".$_REQUEST['ENT_action']."&action2=unarchiveblog&id=".$blog['blog_id']."#".($k+1)."'><span class='lilipute'>Désarchiver</span></a></td>";                
+        }
         $html .= "<td>". $blog_opts['type_de_blog']. "</td>";
 
         $class_warn = "";
