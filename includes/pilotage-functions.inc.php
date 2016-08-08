@@ -387,7 +387,7 @@ function reprise_data_blogs(){
     $message = "";
     $need_data_completion = false; // true si un formulaire quelconque est affiché.
     $tout_voir_quand_meme = false;
-    if (isset($_REQUEST('tout_voir')) && $_REQUEST('tout_voir') != "") {
+    if (isset($_REQUEST['tout_voir']) && $_REQUEST['tout_voir'] != "") {
         $tout_voir_quand_meme = true;
     }
     $need_data_completion = ($need_data_completion || $tout_voir_quand_meme);
