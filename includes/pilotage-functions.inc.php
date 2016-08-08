@@ -486,7 +486,7 @@ function reprise_data_blogs(){
             }            
             $champ_data = "$form" . selectbox_etabs() . "$closeForm";
         }
-        $html .= "<td class='$class_warn'>". $blog_opts['etablissement_ENT']. "$champ_data</td>";
+        $html .= "<td class='$class_warn $gris_sale'>". $blog_opts['etablissement_ENT']. "$champ_data</td>";
 
         $class_warn = "";
         $champ_data = "";
@@ -496,7 +496,7 @@ function reprise_data_blogs(){
             }            
             $champ_data = "$form<input type='text' name='clsid'/>$closeForm";
         }
-        $html .= "<td class='$class_warn'>". $blog_opts['classe_ENT']. "$champ_data</td>";
+        $html .= "<td class='$class_warn $gris_sale'>". $blog_opts['classe_ENT']. "$champ_data</td>";
 
         $class_warn = "";
         $champ_data = "";
@@ -506,7 +506,7 @@ function reprise_data_blogs(){
             }            
             $champ_data = "$form<input type='text' name='grpid'/>$closeForm";
         }
-        $html .= "<td class='$class_warn'>". $blog_opts['groupe_ENT']. "$champ_data</td>";
+        $html .= "<td class='$class_warn $gris_sale'>". $blog_opts['groupe_ENT']. "$champ_data</td>";
         
         $class_warn = "";
         $champ_data = "";
@@ -517,7 +517,7 @@ function reprise_data_blogs(){
             $champ_data = "$form<input type='text' name='gplid'/>$closeForm";
         }
 
-        $html .= "<td class='$class_warn'>". $blog_opts['groupelibre_ENT']. "$champ_data</td>";
+        $html .= "<td class='$class_warn $gris_sale'>". $blog_opts['groupelibre_ENT']. "$champ_data</td>";
 
         $html .= "</tr>\n";
     }
