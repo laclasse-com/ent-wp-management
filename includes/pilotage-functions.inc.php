@@ -385,6 +385,11 @@ function reprise_data_blogs(){
     $opts_str = implode("','", $opts);
     $closeForm = "&nbsp;<button type='submit'>Ok</button></form>";
     $message = "";
+    $need_data_completion = false; // true si un formulaire quelconque est affiché.
+    $tout_voir_quand_meme = false;
+    if (isset($_REQUEST('tout_voir')) && $_REQUEST('tout_voir') != "") {
+        $tout_voir_quand_meme = true;
+    }
 
     // Quelques vérifications d'usage pour controler les résultats de l'extraction
     $current_user = get_user_by('login',phpCAS::getUser());
@@ -453,7 +458,10 @@ function reprise_data_blogs(){
     </style>\n</head><body><div style='margin:40px;'><h1>Liste des sites &agrave; reprendre</h1>\n
     $message
     <table><tr><th>nom</th><th>url</th><th>Archivage</th><th>type_de_blog</th><th>UAI</th><th>classe_ENT</th><th>groupe_ENT</th><th>groupelibre_ENT</th></tr>\n";
-    $html .= "<p>Affectation d'un id de classe, de groupe d'élèves, de groupe libre ou d'établissement. Pour chaque blog, les <span class='warn'> zones en orange</span> sont à mettre à jour.</p>";
+    $html .= "<p>Affectation d'un id de classe, de groupe d'élèves, de groupe libre ou d'établissement. Pour chaque blog, les <span class='warn'> zones en orange</span> sont à mettre à jour.</p>
+    <p>Le systèem filtre les blogs déjà complètés mais vous avez la possibilité de <a href='/?ENT_action=REPRISE_DATA&tout_voir=Yesman'>tout voir quand même</a>.</p>
+    <p>Pour récupérer un site archivé par mégarde, allez voir sur la page de <a href='/?ENT_action=LISTE_ARCHIVAGE' target='_blank'>gestion de l'archivage</a>.</p>";
+
     foreach($liste as $k => $blog) {
         // Récupérer des options du blog
         $blog_details = $wpdb->get_results( "SELECT option_name, option_value ". 
@@ -468,58 +476,67 @@ function reprise_data_blogs(){
         <input type='hidden' name='action2' value='maj'/>
         <input type='hidden' name='id' value='" . $blog['blog_id'] . "'/>";
     
-        $html .= "<tr class='$gris_sale'>";
-        $html .= "<td><a name='".($k+1)."'></a>".($k+1)."</td>";
-        $html .= "<td><a href='http://".$blog['domain']."/' target='_blank'>".$blog['domain']."</a><br/> ".$blog_opts['blogdescription']."</td>";
+        $need_data_completion = false || $tout_voir_quand_meme;
+        $ligne = "<tr class='$gris_sale'>";
+        $ligne .= "<td><a name='".($k+1)."'></a>".($k+1)."</td>";
+        $ligne .= "<td><a href='http://".$blog['domain']."/' target='_blank'>".$blog['domain']."</a><br/> ".$blog_opts['blogdescription']."</td>";
         if ($blog['archived'] == 0) {
-            $html .= "<td><a href='?ENT_action=".$_REQUEST['ENT_action']."&action2=archiveblog&id=".$blog['blog_id']."#".($k+1)."'>Archiver</a></td>";              
+            $ligne .= "<td><a href='?ENT_action=".$_REQUEST['ENT_action']."&action2=archiveblog&id=".$blog['blog_id']."#".($k+1)."'>Archiver</a></td>";              
         } else {
-            $html .= "<td>Archivé !&nbsp;&nbsp;&nbsp;<a href='?ENT_action=".$_REQUEST['ENT_action']."&action2=unarchiveblog&id=".$blog['blog_id']."#".($k+1)."'><span class='lilipute'>Désarchiver</span></a></td>";                
+            $ligne .= "<td>Archivé !&nbsp;&nbsp;&nbsp;<a href='?ENT_action=".$_REQUEST['ENT_action']."&action2=unarchiveblog&id=".$blog['blog_id']."#".($k+1)."'><span class='lilipute'>Désarchiver</span></a></td>";                
         }
-        $html .= "<td>". $blog_opts['type_de_blog']. "</td>";
+        $ligne .= "<td>". $blog_opts['type_de_blog']. "</td>";
 
         $class_warn = "";
         $champ_data = "";
         if ($blog_opts['type_de_blog'] == "ETB" || $blog_opts['type_de_blog'] == "CLS" || $blog_opts['type_de_blog'] == "GRP") {
             if ($blog_opts['etablissement_ENT'] == "") {
                 $class_warn = "warn";
+                $need_data_completion = true;
             }            
             $champ_data = "$form" . selectbox_etabs() . "$closeForm";
         }
-        $html .= "<td class='$class_warn $gris_sale'>". $blog_opts['etablissement_ENT']. "$champ_data</td>";
+        $ligne .= "<td class='$class_warn $gris_sale'>". $blog_opts['etablissement_ENT']. "$champ_data</td>";
 
         $class_warn = "";
         $champ_data = "";
         if ($blog_opts['type_de_blog'] == "CLS") {
             if ($blog_opts['classe_ENT'] == "") {
                 $class_warn = "warn";
+                $need_data_completion = true;
             }            
             $champ_data = "$form<input type='text' name='clsid'/>$closeForm";
         }
-        $html .= "<td class='$class_warn $gris_sale'>". $blog_opts['classe_ENT']. "$champ_data</td>";
+        $ligne .= "<td class='$class_warn $gris_sale'>". $blog_opts['classe_ENT']. "$champ_data</td>";
 
         $class_warn = "";
         $champ_data = "";
         if ($blog_opts['type_de_blog'] == "GRP") {
             if ($blog_opts['groupe_ENT'] == "") {
                 $class_warn = "warn";
+                $need_data_completion = true;
             }            
             $champ_data = "$form<input type='text' name='grpid'/>$closeForm";
         }
-        $html .= "<td class='$class_warn $gris_sale'>". $blog_opts['groupe_ENT']. "$champ_data</td>";
+        $ligne .= "<td class='$class_warn $gris_sale'>". $blog_opts['groupe_ENT']. "$champ_data</td>";
         
         $class_warn = "";
         $champ_data = "";
         if ($blog_opts['type_de_blog'] == "ENV") {
             if ($blog_opts['groupelibre_ENT'] == "") {
                 $class_warn = "warn";
+                $need_data_completion = true;
             }            
             $champ_data = "$form<input type='text' name='gplid'/>$closeForm";
         }
 
-        $html .= "<td class='$class_warn $gris_sale'>". $blog_opts['groupelibre_ENT']. "$champ_data</td>";
+        $ligne .= "<td class='$class_warn $gris_sale'>". $blog_opts['groupelibre_ENT']. "$champ_data</td>";
 
-        $html .= "</tr>\n";
+        $ligne .= "</tr>\n";
+        // S'il y a eu un formulaire, on affiche.
+        if ($need_data_completion) {
+            $html .= $ligne;
+        }
     }
     $html .= "</table>\n</div></body></html>";
     echo $html;

@@ -799,7 +799,7 @@ if (isset($_REQUEST['ENT_action'])) {
 				$html .= "<tr class='$gris_sale'>";
 				$html .= "<td><a name='".($k+1)."'></a>".($k+1)."</td>";
 
-				// $html .= "<td><a href='http://".$blog['domain']."/' target='_blank'>".$blog['domain']."</a></td>";
+				$html .= "<td><a href='http://".$blog['domain']."/' target='_blank'>".$blog['domain']."</a></td>";
 				if ($blog['archived'] == 0) {
 					$html .= "<td><a href='?ENT_action=$ENT_action&action2=archiveblog&id=".$blog['blog_id']."#".($k+1)."'>Archiver</a></td>";				
 				} else {
