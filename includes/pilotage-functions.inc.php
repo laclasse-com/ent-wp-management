@@ -390,6 +390,7 @@ function reprise_data_blogs(){
     if (isset($_REQUEST('tout_voir')) && $_REQUEST('tout_voir') != "") {
         $tout_voir_quand_meme = true;
     }
+    $need_data_completion = ($need_data_completion || $tout_voir_quand_meme);
 
     // Quelques vérifications d'usage pour controler les résultats de l'extraction
     $current_user = get_user_by('login',phpCAS::getUser());
@@ -476,7 +477,6 @@ function reprise_data_blogs(){
         <input type='hidden' name='action2' value='maj'/>
         <input type='hidden' name='id' value='" . $blog['blog_id'] . "'/>";
     
-        $need_data_completion = false || $tout_voir_quand_meme;
         $ligne = "<tr class='$gris_sale'>";
         $ligne .= "<td><a name='".($k+1)."'></a>".($k+1)."</td>";
         $ligne .= "<td><a href='http://".$blog['domain']."/' target='_blank'>".$blog['domain']."</a><br/> ".$blog_opts['blogdescription']."</td>";
