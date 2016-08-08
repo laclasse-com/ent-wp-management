@@ -385,6 +385,7 @@ function reprise_data_blogs(){
     $opts_str = implode("','", $opts);
     $closeForm = "&nbsp;<button type='submit'>Ok</button></form>";
     $message = "";
+    $nb_a_reprendre = 0;
     $need_data_completion = false; // true si un formulaire quelconque est affiché.
     $tout_voir_quand_meme = false;
     if (isset($_REQUEST['tout_voir']) && $_REQUEST['tout_voir'] != "") {
@@ -448,7 +449,7 @@ function reprise_data_blogs(){
     $query = "";
     $liste = $wpdb->get_results( "SELECT blog_id, domain, archived FROM $wpdb->blogs WHERE domain != '".BLOG_DOMAINE."' and archived = 0  order by domain", ARRAY_A );
 
-    $html = "<html><head><title>Liste des sites à reprendre</title>
+    $headerHtml = "<html><head><title>Liste des sites à reprendre</title>
     <style>
           table td {padding:3px 20px 3px 20px;}
           table td {border:black solid 1px;}
@@ -459,7 +460,7 @@ function reprise_data_blogs(){
     </style>\n</head><body><div style='margin:40px;'><h1>Liste des sites &agrave; reprendre</h1>\n
     $message
     <table><tr><th>nom</th><th>url</th><th>Archivage</th><th>type_de_blog</th><th>UAI</th><th>classe_ENT</th><th>groupe_ENT</th><th>groupelibre_ENT</th></tr>\n";
-    $html .= "<p>Affectation d'un id de classe, de groupe d'élèves, de groupe libre ou d'établissement. Pour chaque blog, les <span class='warn'> zones en orange</span> sont à mettre à jour.</p>
+    $headerHtml .= "<p>Affectation d'un id de classe, de groupe d'élèves, de groupe libre ou d'établissement. Pour chaque blog, les <span class='warn'> zones en orange</span> sont à mettre à jour.</p>
     <p>Le systèem filtre les blogs déjà complètés mais vous avez la possibilité de <a href='/?ENT_action=REPRISE_DATA&tout_voir=Yesman'>tout voir quand même</a>.</p>
     <p>Pour récupérer un site archivé par mégarde, allez voir sur la page de <a href='/?ENT_action=LISTE_ARCHIVAGE' target='_blank'>gestion de l'archivage</a>.</p>";
 
@@ -536,11 +537,10 @@ function reprise_data_blogs(){
         // S'il y a eu un formulaire, on affiche.
         if ($need_data_completion) {
             $html .= $ligne;
+            $nb_a_reprendre += 1;
         }
     }
-    $html .= "</table>\n</div></body></html>";
-    echo $html;
-
+    echo $headerHtml . "<p><b>Plus que $nb_a_reprendre sur " . count($liste) . " à reprendre !</b></p>" . $html . "</table>\n</div></body></html>";
 }
 
 // --------------------------------------------------------------------------------
