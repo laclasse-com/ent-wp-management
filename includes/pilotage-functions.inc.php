@@ -377,6 +377,9 @@ function get_user_id_by_login($login) {
     return $r[0]->ID;
 }
 
+// --------------------------------------------------------------------------------
+// Reprendre les données pour les blogs restants / Migration v2 => v3
+// --------------------------------------------------------------------------------
 function reprise_data_blogs(){
     $opts = Array('admin_email','siteurl','name','blogdescription','blogtype','etablissement_ENT','display_name', 'type_de_blog', 'classe_ENT', 'groupe_ENT', 'groupelibre_ENT');
     $opts_str = implode("','", $opts);
@@ -523,6 +526,9 @@ function reprise_data_blogs(){
 
 }
 
+// --------------------------------------------------------------------------------
+// renvoie un sélectbox des établissements présents dans la v3 au déploiement
+// --------------------------------------------------------------------------------
 function selectbox_etabs(){
 return "
 <select name='uai'>
