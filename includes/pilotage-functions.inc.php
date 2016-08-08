@@ -440,7 +440,7 @@ function reprise_data_blogs(){
     // Extraction bdd
     global $wpdb;
     $query = "";
-    $liste = $wpdb->get_results( "SELECT blog_id, domain, archived FROM $wpdb->blogs WHERE domain != '".BLOG_DOMAINE."'   order by domain", ARRAY_A );
+    $liste = $wpdb->get_results( "SELECT blog_id, domain, archived FROM $wpdb->blogs WHERE domain != '".BLOG_DOMAINE."' and archived = 0  order by domain", ARRAY_A );
 
     $html = "<html><head><title>Liste des sites à reprendre</title>
     <style>
