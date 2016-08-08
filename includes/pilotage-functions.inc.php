@@ -131,10 +131,10 @@ function blogList() {
     $uai_user_WP = $userMeta['etablissement_ENT'][0];
     $classe_user_WP = $userMeta['classe_ENT'][0];
 
-    fais_voir($uid_ent_WP, "uid_ent_WP=");
-    fais_voir($profil_ent_WP, "profil_ent_WP=");
-    fais_voir($uai_user_WP, "uai_user_WP=");
-    fais_voir($classe_user_WP, "classe_user_WP=");
+    // fais_voir($uid_ent_WP, "uid_ent_WP=");
+    // fais_voir($profil_ent_WP, "profil_ent_WP=");
+    // fais_voir($uai_user_WP, "uai_user_WP=");
+    // fais_voir($classe_user_WP, "classe_user_WP=");
 
     // Interrogation de l'annuaireV3 de l'ENT
     $userENT =json_decode(get_http(generate_url(ANNUAIRE_URL."api/app/users/$uid_ent_WP", Array("expand" => "true"))));
@@ -440,7 +440,7 @@ function reprise_data_blogs(){
     // Extraction bdd
     global $wpdb;
     $query = "";
-    $liste = $wpdb->get_results( "SELECT blog_id, domain, archived FROM $wpdb->blogs WHERE domain != '".BLOG_DOMAINE."'  and archived = 0 order by domain", ARRAY_A );
+    $liste = $wpdb->get_results( "SELECT blog_id, domain, archived FROM $wpdb->blogs WHERE domain != '".BLOG_DOMAINE."'   order by domain", ARRAY_A );
 
     $html = "<html><head><title>Liste des sites à reprendre</title>
     <style>
@@ -453,7 +453,7 @@ function reprise_data_blogs(){
     </style>\n</head><body><div style='margin:40px;'><h1>Liste des sites &agrave; reprendre</h1>\n
     $message
     <table><tr><th>nom</th><th>url</th><th>Archivage</th><th>type_de_blog</th><th>UAI</th><th>classe_ENT</th><th>groupe_ENT</th><th>groupelibre_ENT</th></tr>\n";
-    $html .= "<p>Affectation d'un id de classe, de groupe ou d'établissement</p>";
+    $html .= "<p>Affectation d'un id de classe, de groupe d'élèves, de groupe libre ou d'établissement. Pour chaque blog, les <span class='warn'> zones en orange</span> sont à mettre à jour.</p>";
     foreach($liste as $k => $blog) {
         // Récupérer des options du blog
         $blog_details = $wpdb->get_results( "SELECT option_name, option_value ". 
@@ -480,7 +480,7 @@ function reprise_data_blogs(){
 
         $class_warn = "";
         $champ_data = "";
-        if ($blog_opts['type_de_blog'] == "ETB") {
+        if ($blog_opts['type_de_blog'] == "ETB" || $blog_opts['type_de_blog'] == "CLS" || $blog_opts['type_de_blog'] == "GRP") {
             if ($blog_opts['etablissement_ENT'] == "") {
                 $class_warn = "warn";
             }            
