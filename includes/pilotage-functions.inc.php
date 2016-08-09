@@ -441,6 +441,10 @@ function reprise_data_blogs(){
             $message = "<div class='msg'>Blog #$id : Id de groupe mis &agrave; jour. gplid=".$_REQUEST['gplid']."</div>";
             update_blog_option( $id, 'groupelibre_ENT', $_REQUEST['gplid'] );
         }
+        if(isset($_REQUEST['type_de_blog'])){
+            $message = "<div class='msg'>Blog #$id : Type de blog mis &agrave; jour. type_de_blog=".$_REQUEST['type_de_blog']."</div>";
+            update_blog_option( $id, 'type_de_blog', $_REQUEST['type_de_blog'] );
+        }
     }
 
     // Extraction bdd
@@ -486,7 +490,9 @@ function reprise_data_blogs(){
         } else {
             $ligne .= "<td>Archivé !&nbsp;&nbsp;&nbsp;<a href='?ENT_action=".$_REQUEST['ENT_action']."&action2=unarchiveblog&id=".$blog['blog_id']."#".($k+1)."'><span class='lilipute'>Désarchiver</span></a></td>";                
         }
-        $ligne .= "<td>". $blog_opts['type_de_blog']. "</td>";
+
+        $champ_data = "$form" . selectbox_type_blog() . "$closeForm";
+        $ligne .= "<td>". $blog_opts['type_de_blog'] . "$champ_data</td>";
 
         $class_warn = "";
         $champ_data = "";
@@ -542,6 +548,21 @@ function reprise_data_blogs(){
         }
     }
     echo $headerHtml . "<p><b>Plus que $nb_a_reprendre sur " . count($liste) . " à reprendre !</b></p>" . $html . "</table>\n</div></body></html>";
+}
+
+
+// --------------------------------------------------------------------------------
+// renvoie un sélectbox des type de blogs
+// --------------------------------------------------------------------------------
+function selectbox_type_blog() {
+    return "
+    <select name='type_de_blog'>
+    <option value=''>...</option>
+    <option value='ETB'>ETB</option>
+    <option value='CLS'>CLS</option>
+    <option value='GRP'>GRP</option>
+    <option value='ENV'>ENV</option>
+    </select>";
 }
 
 // --------------------------------------------------------------------------------
