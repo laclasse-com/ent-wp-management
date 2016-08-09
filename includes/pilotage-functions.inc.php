@@ -495,7 +495,8 @@ function reprise_data_blogs(){
                 $class_warn = "warn";
                 $need_data_completion = true;
             }            
-            $champ_data = "$form" . selectbox_etabs() . "$closeForm";
+            // $champ_data = "$form" . selectbox_etabs() . "$closeForm";
+            $champ_data = "$form<input type='text' name='uai'/>$closeForm";
         }
         $ligne .= "<td class='$class_warn $gris_sale'>". $blog_opts['etablissement_ENT']. "$champ_data</td>";
 
