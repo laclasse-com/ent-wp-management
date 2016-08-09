@@ -391,7 +391,6 @@ function reprise_data_blogs(){
     if (isset($_REQUEST['tout_voir']) && $_REQUEST['tout_voir'] != "") {
         $tout_voir_quand_meme = true;
     }
-    $need_data_completion = ($need_data_completion || $tout_voir_quand_meme);
 
     // Quelques vérifications d'usage pour controler les résultats de l'extraction
     $current_user = get_user_by('login',phpCAS::getUser());
@@ -465,6 +464,7 @@ function reprise_data_blogs(){
     <p>Pour récupérer un site archivé par mégarde, allez voir sur la page de <a href='/?ENT_action=LISTE_ARCHIVAGE' target='_blank'>gestion de l'archivage</a>.</p>";
 
     foreach($liste as $k => $blog) {
+        $need_data_completion = (false || $tout_voir_quand_meme);
         // Récupérer des options du blog
         $blog_details = $wpdb->get_results( "SELECT option_name, option_value ". 
                                             "FROM wp_". $blog['blog_id'] ."_options ".
