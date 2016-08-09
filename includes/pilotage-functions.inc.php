@@ -494,9 +494,9 @@ function reprise_data_blogs(){
             if ($blog_opts['etablissement_ENT'] == "") {
                 $class_warn = "warn";
                 $need_data_completion = true;
+                $champ_data = "$form<input type='text' name='uai'/>$closeForm";
             }            
             // $champ_data = "$form" . selectbox_etabs() . "$closeForm";
-            $champ_data = "$form<input type='text' name='uai'/>$closeForm";
         }
         $ligne .= "<td class='$class_warn $gris_sale'>". $blog_opts['etablissement_ENT']. "$champ_data</td>";
 
@@ -506,8 +506,8 @@ function reprise_data_blogs(){
             if ($blog_opts['classe_ENT'] == "") {
                 $class_warn = "warn";
                 $need_data_completion = true;
+                $champ_data = "$form<input type='text' name='clsid'/>$closeForm";
             }            
-            $champ_data = "$form<input type='text' name='clsid'/>$closeForm";
         }
         $ligne .= "<td class='$class_warn $gris_sale'>". $blog_opts['classe_ENT']. "$champ_data</td>";
 
@@ -517,8 +517,8 @@ function reprise_data_blogs(){
             if ($blog_opts['groupe_ENT'] == "") {
                 $class_warn = "warn";
                 $need_data_completion = true;
+                $champ_data = "$form<input type='text' name='grpid'/>$closeForm";
             }            
-            $champ_data = "$form<input type='text' name='grpid'/>$closeForm";
         }
         $ligne .= "<td class='$class_warn $gris_sale'>". $blog_opts['groupe_ENT']. "$champ_data</td>";
         
@@ -528,8 +528,8 @@ function reprise_data_blogs(){
             if ($blog_opts['groupelibre_ENT'] == "") {
                 $class_warn = "warn";
                 $need_data_completion = true;
+                $champ_data = "$form<input type='text' name='gplid'/>$closeForm";
             }            
-            $champ_data = "$form<input type='text' name='gplid'/>$closeForm";
         }
 
         $ligne .= "<td class='$class_warn $gris_sale'>". $blog_opts['groupelibre_ENT']. "$champ_data</td>";
