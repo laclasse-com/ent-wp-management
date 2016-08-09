@@ -483,7 +483,7 @@ function reprise_data_blogs(){
         <input type='hidden' name='id' value='" . $blog['blog_id'] . "'/>";
     
         $ligne = "<tr class='$gris_sale'>";
-        $ligne .= "<td><a name='".($k+1)."'></a>".($k+1)."</td>";
+        $ligne .= "<td><a name='".$k."'></a>".$k."</td>";
         $ligne .= "<td><a href='http://".$blog['domain']."/' target='_blank'>".$blog['domain']."</a><br/> ".$blog_opts['blogdescription']."</td>";
         if ($blog['archived'] == 0) {
             $ligne .= "<td><a href='?ENT_action=".$_REQUEST['ENT_action']."&action2=archiveblog&id=".$blog['blog_id']."#".($k+1)."'>Archiver</a></td>";              
