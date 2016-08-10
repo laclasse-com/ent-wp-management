@@ -483,7 +483,7 @@ function reprise_data_blogs(){
 
         $gris_sale = ( $blog['archived'] == 0 ) ? '' : 'gris-sale';
 
-        $form = "<form method='post'>
+        $form = "<form method='post' action='#".($k+1)."'>
         <input type='hidden' name='ENT_action' value='".$_REQUEST['ENT_action']."'/>
         <input type='hidden' name='action2' value='maj'/>
         <input type='hidden' name='id' value='" . $blog['blog_id'] . "'/>";
