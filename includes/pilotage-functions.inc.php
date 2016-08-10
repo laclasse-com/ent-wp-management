@@ -450,7 +450,8 @@ function reprise_data_blogs(){
     // Extraction bdd
     global $wpdb;
     $query = "";
-    $liste = $wpdb->get_results( "SELECT blog_id, domain, archived FROM $wpdb->blogs WHERE domain != '".BLOG_DOMAINE."' and archived = 0  order by domain", ARRAY_A );
+    $condition_archived = ($tout_voir_quand_meme) ? "" :"and archived = 0";
+    $liste = $wpdb->get_results( "SELECT blog_id, domain, archived FROM $wpdb->blogs WHERE domain != '".BLOG_DOMAINE."' $condition_archived  order by domain", ARRAY_A );
 
     $headerHtml = "<html><head><title>Liste des sites à reprendre</title>" . css() .
     "<style>
@@ -467,8 +468,13 @@ function reprise_data_blogs(){
     <p>Le systèem filtre les blogs déjà complètés mais vous avez la possibilité de <a href='/?ENT_action=REPRISE_DATA&tout_voir=Yesman'>tout voir quand même</a>.</p>
     <p>Pour récupérer un site archivé par mégarde, allez voir sur la page de <a href='/?ENT_action=LISTE_ARCHIVAGE' target='_blank'>gestion de l'archivage</a>.</p>";
 
-    foreach($liste as $k => $blog) {
-        $need_data_completion = (false || $tout_voir_quand_meme);
+    $k = 1;
+    foreach($liste as $blog) {
+        $need_data_completion = false;
+        if ($tout_voir_quand_meme) {
+            $need_data_completion = true;
+        }
+
         // Récupérer des options du blog
         $blog_details = $wpdb->get_results( "SELECT option_name, option_value ". 
                                             "FROM wp_". $blog['blog_id'] ."_options ".
@@ -545,6 +551,7 @@ function reprise_data_blogs(){
         if ($need_data_completion) {
             $html .= $ligne;
             $nb_a_reprendre += 1;
+            $k += 1;
         }
     }
     echo $headerHtml . "<p><b>Plus que $nb_a_reprendre sur " . count($liste) . " à reprendre !</b></p>" . $html . "</table>\n</div></body></html>";
