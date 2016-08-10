@@ -383,7 +383,7 @@ function get_user_id_by_login($login) {
 function reprise_data_blogs(){
     $opts = Array('admin_email','siteurl','name','blogdescription','blogtype','etablissement_ENT','display_name', 'type_de_blog', 'classe_ENT', 'groupe_ENT', 'groupelibre_ENT');
     $opts_str = implode("','", $opts);
-    $closeForm = "&nbsp;<button type='submit'>Ok</button></form>";
+    $closeForm = "<td><button type='submit'>Ok</button></td></form>";
     $message = "";
     $nb_a_reprendre = 0;
     $need_data_completion = false; // true si un formulaire quelconque est affiché.
@@ -488,7 +488,7 @@ function reprise_data_blogs(){
         <input type='hidden' name='action2' value='maj'/>
         <input type='hidden' name='id' value='" . $blog['blog_id'] . "'/>";
     
-        $ligne = "<tr class='$gris_sale'>";
+        $ligne = "<tr class='$gris_sale'>$form";
         $ligne .= "<td><a name='".$k."'></a>".$k."</td>";
         $ligne .= "<td><a href='http://".$blog['domain']."/' target='_blank'>".$blog['domain']."</a><br/> ".$blog_opts['blogdescription']."</td>";
         if ($blog['archived'] == 0) {
@@ -497,8 +497,8 @@ function reprise_data_blogs(){
             $ligne .= "<td>Archivé !&nbsp;&nbsp;&nbsp;<a href='?ENT_action=".$_REQUEST['ENT_action']."&action2=unarchiveblog&id=".$blog['blog_id']."#".($k+1)."'><span class='lilipute'>Désarchiver</span></a></td>";                
         }
 
-        $champ_data = "$form" . selectbox_type_blog() . "$closeForm";
-        $ligne .= "<td>". $blog_opts['type_de_blog'] . "$champ_data</td>";
+        $champ_data = selectbox_type_blog($blog_opts['type_de_blog']);
+        $ligne .= "<td>$champ_data</td>";
 
         $class_warn = "";
         $champ_data = "";
@@ -508,9 +508,9 @@ function reprise_data_blogs(){
                 $need_data_completion = true;
             }            
             // $champ_data = "$form" . selectbox_etabs() . "$closeForm";
-            $champ_data = "$form<input type='text' name='uai'/>$closeForm";
+            $champ_data = "<input type='text' name='uai' value='" . $blog_opts['etablissement_ENT'] . "'/>";
         }
-        $ligne .= "<td class='$class_warn $gris_sale'>". $blog_opts['etablissement_ENT']. "$champ_data</td>";
+        $ligne .= "<td class='$class_warn $gris_sale'>$champ_data</td>";
 
         $class_warn = "";
         $champ_data = "";
@@ -519,9 +519,9 @@ function reprise_data_blogs(){
                 $class_warn = "warn";
                 $need_data_completion = true;
             }            
-            $champ_data = "$form<input type='text' name='clsid'/>$closeForm";
+            $champ_data = "<input type='text' name='clsid' value='". $blog_opts['classe_ENT']. "'/>";
         }
-        $ligne .= "<td class='$class_warn $gris_sale'>". $blog_opts['classe_ENT']. "$champ_data</td>";
+        $ligne .= "<td class='$class_warn $gris_sale'>$champ_data</td>";
 
         $class_warn = "";
         $champ_data = "";
@@ -530,9 +530,9 @@ function reprise_data_blogs(){
                 $class_warn = "warn";
                 $need_data_completion = true;
             }            
-            $champ_data = "$form<input type='text' name='grpid'/>$closeForm";
+            $champ_data = "<input type='text' name='grpid' value='". $blog_opts['groupe_ENT']. "'/>";
         }
-        $ligne .= "<td class='$class_warn $gris_sale'>". $blog_opts['groupe_ENT']. "$champ_data</td>";
+        $ligne .= "<td class='$class_warn $gris_sale'>$champ_data</td>";
         
         $class_warn = "";
         $champ_data = "";
@@ -541,12 +541,12 @@ function reprise_data_blogs(){
                 $class_warn = "warn";
                 $need_data_completion = true;
             }            
-            $champ_data = "$form<input type='text' name='gplid'/>$closeForm";
+            $champ_data = "<input type='text' name='gplid' value='". $blog_opts['groupelibre_ENT']. "'/>";
         }
 
-        $ligne .= "<td class='$class_warn $gris_sale'>". $blog_opts['groupelibre_ENT']. "$champ_data</td>";
+        $ligne .= "<td class='$class_warn $gris_sale'>$champ_data</td>";
 
-        $ligne .= "</tr>\n";
+        $ligne .= "$closeForm</tr>\n";
         // S'il y a eu un formulaire, on affiche.
         if ($need_data_completion) {
             $html .= $ligne;
@@ -561,14 +561,21 @@ function reprise_data_blogs(){
 // --------------------------------------------------------------------------------
 // renvoie un sélectbox des type de blogs
 // --------------------------------------------------------------------------------
-function selectbox_type_blog() {
+function selectbox_type_blog($selectval) {
+    switch ($selectval) {
+        case 'ETB': $e = "selected"; break;
+        case 'CLS': $c = "selected"; break;
+        case 'GRP': $g = "selected"; break;
+        case 'ENV': $l = "selected"; break;
+        default: break;
+    }
     return "
     <select name='type_de_blog'>
     <option value=''>...</option>
-    <option value='ETB'>ETB</option>
-    <option value='CLS'>CLS</option>
-    <option value='GRP'>GRP</option>
-    <option value='ENV'>ENV</option>
+    <option value='ETB'$e>ETB</option>
+    <option value='CLS'$c>CLS</option>
+    <option value='GRP'$g>GRP</option>
+    <option value='ENV'$l>ENV</option>
     </select>";
 }
 
