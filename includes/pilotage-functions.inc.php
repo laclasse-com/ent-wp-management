@@ -483,7 +483,7 @@ function reprise_data_blogs(){
 
         $gris_sale = ( $blog['archived'] == 0 ) ? '' : 'gris-sale';
 
-        $form = "<form method='post' action='#".($k+1)."'>
+        $form = "<form method='post' action='#".$k."'>
         <input type='hidden' name='ENT_action' value='".$_REQUEST['ENT_action']."'/>
         <input type='hidden' name='action2' value='maj'/>
         <input type='hidden' name='id' value='" . $blog['blog_id'] . "'/>";
@@ -492,9 +492,9 @@ function reprise_data_blogs(){
         $ligne .= "<td><a name='".$k."'></a>".$k."</td>";
         $ligne .= "<td><a href='http://".$blog['domain']."/' target='_blank'>".$blog['domain']."</a><br/> ".$blog_opts['blogdescription']."</td>";
         if ($blog['archived'] == 0) {
-            $ligne .= "<td><a href='?ENT_action=".$_REQUEST['ENT_action']."&action2=archiveblog&id=".$blog['blog_id']."#".($k+1)."'>Archiver</a></td>";              
+            $ligne .= "<td><a href='?ENT_action=".$_REQUEST['ENT_action']."&action2=archiveblog&id=".$blog['blog_id']."#".$k."'>Archiver</a></td>";              
         } else {
-            $ligne .= "<td>Archivé !&nbsp;&nbsp;&nbsp;<a href='?ENT_action=".$_REQUEST['ENT_action']."&action2=unarchiveblog&id=".$blog['blog_id']."#".($k+1)."'><span class='lilipute'>Désarchiver</span></a></td>";                
+            $ligne .= "<td>Archivé !&nbsp;&nbsp;&nbsp;<a href='?ENT_action=".$_REQUEST['ENT_action']."&action2=unarchiveblog&id=".$blog['blog_id']."#".$k."'><span class='lilipute'>Désarchiver</span></a></td>";                
         }
 
         $champ_data = selectbox_type_blog($blog_opts['type_de_blog']);
