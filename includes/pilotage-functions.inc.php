@@ -423,10 +423,10 @@ function reprise_data_blogs(){
     if (isset($action2) && $action2 == "maj") {
         $id = $_REQUEST['id'];
         if(isset($_REQUEST['uai'])){
-            $message = "<div class='msg'>Blog #$id : Etablissement mis &agrave; jour. uai=".$_REQUEST['uai']."</div>";
+            $message = "<div class='msg'>Blog #$id : Etablissement mis &agrave; jour. uai=".strtoupper($_REQUEST['uai'])."</div>";
             // switch_to_blog( $id );
             // $wpdb->replace( "wp_".$id."_options", array('option_name' => 'etablissement_ENT', 'option_value' => $_REQUEST['uai']));
-            update_blog_option( $id, 'etablissement_ENT', $_REQUEST['uai'] );
+            update_blog_option( $id, 'etablissement_ENT', strtoupper($_REQUEST['uai']) );
             // restore_current_blog();
         }
         if(isset($_REQUEST['clsid'])){
