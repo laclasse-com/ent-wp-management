@@ -263,7 +263,8 @@ if (isset($_REQUEST['ENT_action'])) {
 				}
 			}
 		}
-		echo json_encode($interests);
+		$diff = array_values($interests);
+		echo json_encode($diff);
 		$mustDieAfterAction = true;
 		break;
 
