@@ -246,14 +246,29 @@ if (isset($_REQUEST['ENT_action'])) {
 	// ?ENT_action=BLOG_LIST
 	// --------------------------------------------------------------------------------
 	case 'BLOG_LIST' :
-		phpCAS::forceAuthentication();
+		$t = Array("error" => "Vous devez vous authentifier...");
 		header('Content-Type: application/json');
-		echo json_encode(blogList());	
+		if (!phpCAS::isAuthenticated()) {
+			phpCAS::forceAuthentication();
+		}
+
+		$interests = blogList();
+		$mines = userBlogList($username);
+
+		foreach ($mines as $mine) {
+			foreach($interests as $k => $interest) {
+				if ($mine->domain == $interest['domain']) {
+					unset($interests[$k]);
+					break;
+				}
+			}
+		}
+		echo json_encode($interests);
 		$mustDieAfterAction = true;
 		break;
 
 	// --------------------------------------------------------------------------------
-	// Liste des blogs de la plateforme
+	// Liste des blogs de la plateforme auquel l'utilisateur est inscrit
 	// ?ENT_action=USER_BLOG_LIST&username=[login]
 	// --------------------------------------------------------------------------------
 	case 'USER_BLOG_LIST' :

@@ -112,7 +112,7 @@ function has_groupe($groupes, $wanted_groupe) {
 // --------------------------------------------------------------------------------
 function blogList() {
     global $wpdb;
-    $opts = Array('admin_email','siteurl','name','blogdescription','blogtype','etablissement_ENT','display_name', 'type_de_blog', 'classe_ENT', 'groupe_ENT', 'groupelibre_ENT');
+    $opts = Array('admin_email','siteurl','name','blogname','blogdescription','blogtype','etablissement_ENT','display_name', 'type_de_blog', 'classe_ENT', 'groupe_ENT', 'groupelibre_ENT');
     $opts_str = implode("','", $opts);
     $liste = array();
     $query = "";
@@ -130,11 +130,6 @@ function blogList() {
     $profil_ent_WP = $userMeta['profil_ENT'][0];
     $uai_user_WP = $userMeta['etablissement_ENT'][0];
     $classe_user_WP = $userMeta['classe_ENT'][0];
-
-    // fais_voir($uid_ent_WP, "uid_ent_WP=");
-    // fais_voir($profil_ent_WP, "profil_ent_WP=");
-    // fais_voir($uai_user_WP, "uai_user_WP=");
-    // fais_voir($classe_user_WP, "classe_user_WP=");
 
     // Interrogation de l'annuaireV3 de l'ENT
     $userENT =json_decode(get_http(generate_url(ANNUAIRE_URL."api/app/users/$uid_ent_WP", Array("expand" => "true"))));
@@ -157,7 +152,7 @@ function blogList() {
     // Constitution de la liste
     $blogs = $wpdb->get_results( 
         "SELECT * FROM $wpdb->blogs WHERE domain != '".BLOG_DOMAINE."'  
-        and archived = 0 order by domain", 
+        and archived = 0 and blog_id > 1 order by domain", 
         ARRAY_A );
 
     // Constitution de la liste
@@ -205,89 +200,32 @@ function userBlogList($username) {
     global $wpdb;
     $user_id = username_exists($username);
     $blogs = get_blogs_of_user( $user_id );
+    $opts = Array('admin_email','siteurl','name','blogname','blogdescription','blogtype','etablissement_ENT','display_name', 'type_de_blog', 'classe_ENT', 'groupe_ENT', 'groupelibre_ENT');
+    $opts_str = implode("','", $opts);
     $list = array();
     foreach ($blogs as $blog) {
-
+        // Supprimer le blog es blogs #1.
+        if ($blog->userblog_id == 1) {
+            continue;
+        }
         // Virer ce champ tout batard 
         $blog->blog_id = "$blog->userblog_id";
         unset($blog->userblog_id);
-        // Normaliser celui-là
-        $blog->name = $blog->blogname;
-        unset($blog->blogname);
 
-        $blog_details = $wpdb->get_results( "SELECT * ". 
+        $blog_details = $wpdb->get_results( "SELECT option_name, option_value ". 
                                             "FROM wp_". $blog->blog_id ."_options ".
-                                            "order by option_name");
+                                            "where option_name in ('".$opts_str."') order by option_name", ARRAY_A);
+        $blog_opts = flatten($blog_details, 'option_name', 'option_value');
 
-        foreach ($blog_details as $opt) {
-            switch ($opt->option_name) {
-                case 'admin_email':
-                    $blog->admin_email = $opt->option_value;
-                    break;
-                // case 'idBLogENT':
-                //     $blog->idBLogENT = $opt->option_value;
-                    break;
-                case 'etablissement_ENT':
-                    $blog->etablissement_ENT = $opt->option_value;
-                    break;
-                case 'classe_ENT':
-                    $blog->classe_ENT = $opt->option_value;
-                    break;
-                case 'groupe_ENT':
-                    $blog->groupe_ENT = $opt->option_value;
-                    break;
-                case 'groupelibre_ENT':
-                    $blog->groupelibre_ENT = $opt->option_value;
-                    break;
-                case 'post_count':
-                    $blog->nb_posts = $opt->option_value;
-                    break;
-                case 'blogname':
-                    $blog->blogname = $opt->option_value;
-                    break;
-                case 'blogdescription':
-                    $blog->blogdescription = $opt->option_value;
-                    break;
-                default:
-                    break;
-            }
-        }
-    
-
-        // L'administrateur de chaque blog
-        $user_id_from_email = get_user_id_from_string( get_blog_option($blog->blog_id, 'admin_email'));
-        $details = get_userdata($user_id_from_email);
-        $blog->owner_name = $details->display_name;
-        // UID
-        $u = get_userdata($details->ID);
-        $uid_proprio = get_user_meta($u->ID, "uid_ENT", true);
-        $blog->owner_uid = $uid_proprio;
-
-        // Details du parametrage du blog
-        $blog->public = get_blog_option($blog->blog_id, 'blog_public');
-        $blog->blogtype = get_blog_option($blog->blog_id, 'type_de_blog');
-       $blog->lang_id = "0";
-
-        // Les posts de l'utilisateur
-        $post_details = $wpdb->get_results( "SELECT * FROM wp_". $blog->blog_id ."_posts");
-        //$blog->nb_posts = count($post_details);
-        $blog->my_posts = 0;
-
-        // S'il n'y a qu'un article, et que c'est l'article par défaut, si le blog est ancien, il n'est pas utilisé.
-        $blog->admin_comment = " ";
-        if (count($post_details) == 1) {
-             if (substr($post_details[0]->post_title, 0, 35) == "Bienvenue dans votre nouveau weblog" && $post_details[0]->ID == 1) {
-                $blog->admin_comment = "Unused blog";
-            }
+        foreach ($blog_opts as $n => $v) {
+            $blog->$n = $v;
         }
 
-        foreach ($post_details as $p) {
-            if ($p->post_author == $user_id){
-                $blog->my_posts++;
-            }
-        }
+        unset($blog->registered);
+        unset($blog->last_updated);
         $list[] = $blog;
     }
+    usort($list, function ($a, $b) { return strcmp($a->domain, $b->domain); });
     return $list;
 }
 
