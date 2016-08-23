@@ -194,6 +194,7 @@ function blogList() {
         // Restriction de la liste selon le profil
         if ( 
             $superadmin || // tous pour le superadmin
+            ($blog['type_de_blog'] == 'ENV') ||  //Tous les blogs transverses
             ( 
                  $admin || // tous pour l'admin d'atablissement
                  ( 

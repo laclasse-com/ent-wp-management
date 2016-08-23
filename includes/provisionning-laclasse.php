@@ -79,20 +79,20 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   //
   
   logIt("____________________D&eacute;finition Routage____________________");
-  // si blogname n'est pas renseigné, on le calcule.
+  $domain = $_REQUEST['domain'] . '.' . BLOG_DOMAINE;
+  $url = str_replace("http://", "", $domain);
 
+  // si blogname n'est pas renseigné, on le calcule.
   if (isset($_REQUEST['blogname']) && $_REQUEST['blogname'] != "") {
     logIt("Blogname est renseign&eacute;.");
-    $url = str_replace("http://", "", $_REQUEST['blogname'].".".BLOG_DOMAINE);
     $sitename = $_REQUEST['blogname'];
-    $domain = $sitename . '.' .BLOG_DOMAINE; 
   }
   else {
     logIt("Blogname n'est pas renseign&eacute;.");
     $url = str_replace("http://", "", home_url());
     $sitename = str_replace(".".BLOG_DOMAINE, "", $url);
     // FIX : si le domaine doit être identique au blog des blogs 
-    // pour éviter blogs.laclasse.com.blogs.laclasse;com !
+    // pour éviter blogs.laclasse.com.blogs.laclasse.com !
     $domain = $sitename; 
   }
   

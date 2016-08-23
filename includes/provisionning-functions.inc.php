@@ -240,11 +240,9 @@ function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $si
 	add_blog_option( $wpBlogId, 'type_de_blog', $TypeDeBlog );
 	logIt(" -> Ajout du type de blog '".$TypeDeBlog."'.");
 	
-	// Si ce type de blog est un blog d'établissement, on enregistre le code rne de cet établissement
-	if ($TypeDeBlog == 'ETB') {
-	   add_blog_option( $wpBlogId, 'etablissement_ENT', $EtbUAI );
-	   logIt(" -> Ajout de l'option 'etablissement_ENT'='".$EtbUAI."'.");
-	}
+	// // Si ce type de blog est un blog d'établissement, on enregistre le code rne de cet établissement
+	add_blog_option( $wpBlogId, 'etablissement_ENT', $EtbUAI );
+	logIt(" -> Ajout de l'option 'etablissement_ENT'='".$EtbUAI."'.");
 	
 	// Si ce type de blog est un blog de classe, on enregistre l'id de cette classe
 	if ($TypeDeBlog == 'CLS') {
@@ -259,13 +257,10 @@ function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $si
 	}
 	
 	// Si ce type de blog est un blog d'établissement, on enregistre l'id de ce groupe
-	if ($TypeDeBlog == 'GPL') {
+	if ($TypeDeBlog == 'ENV' || $TypeDeBlog == 'GPL') {
 	   add_blog_option( $wpBlogId, 'groupelibre_ENT', $GplID );
 	   logIt(" -> Ajout de l'option 'groupelibre_ENT'='".$GplID."'.");
 	}
-	
-	// add_blog_option( $wpBlogId, 'idBLogENT', $_REQUEST['idAncienBlogEnt'] );
-	// logIt(" -> Ce blog est identifi&eacute; comme #".$_REQUEST['idAncienBlogEnt']." dans l'ENT.");
 	
 	add_blog_option( $wpBlogId, 'wordpress_api_key', AKISMET_KEY);
 	logIt(" -> Ajout de la cle ASKIMET pour l'anti-spams sur les commentaires.");
@@ -476,20 +471,21 @@ function get_activation_key($user) {
 // fonction de redirection
 // --------------------------------------------------------------------------------
 function redirection($p_domaine) {
-
+	$api_mode = (isset($_REQUEST['mode']) && $_REQUEST['mode'] == 'API');
+	logIt("mode=".$_REQUEST['mode']);
 	$scriptName = ""; 
 	$qry = Array();
-	// S'occuper de l'embeded
-	if ($_REQUEST['ENT_action'] == 'IFRAME' || isset($_REQUEST['blogname'])) {
-   logIt("On est dans une IFRAME.");
-    $qry[] = 'ENT_action=IFRAME';
-  }
-  
-  // Si le blog est un blog d'établisement on supprime la 2° colonne
-  if ($_REQUEST["blogtype"] == 'ETB') {
-    $qry[] = 'ENT_display=CENTRAL';
-  }
-  
+	// Si on est en mode creation/API on renvoie du Json
+	if ($api_mode) {
+   		logIt("On est en mode API et on vient de cr&eacute;er un blog.");
+   		$jsonMsg = json_encode(array("success" => "Le blog '" . $p_domaine . "' a bien été créé."));
+   		logIt("Le message renvoyé sera <pre>$jsonMsg</pre>");
+		if ($_REQUEST['debug'] != "O") { 
+			header('Content-Type: application/json');   	
+			echo $jsonMsg;
+		}
+    }
+
   // Si le paramètre 'ent' est défini, il faut le reporter pour le logout
   if (isset($_REQUEST['ent']) || $_REQUEST['ent'] != 'laclasse') {
     $qry[] = "ent=".$_REQUEST['ent'];
@@ -503,20 +499,24 @@ function redirection($p_domaine) {
   
   // Lorsqu'on arrive ici, tout s'est bien passé, les blogs et les users sont créés
 	// On redirige donc vers le bon domaine.
-	logIt("Ici on va rediriger vers <a href='http://".$p_domaine.$scriptName.$query."'>http://".$p_domaine.$scriptName.$query."</a>");
-	
-	if (isset($_GET['debug']) && $_GET['debug'] == "O") {
-    $log = "<ul>".getLog() ."</ul>". "Mode DEBUG activ&eacute; : Pas de redirection.";
-    // Ici on ajoute un petit hack pour pouvoir continuer ou analyer le log en mode test
-    if (isset($_GET['mode_test']) && $_GET['mode_test'] == "O") {
-      // ici rien car ce qu'on voudrait c'est récupérer le log et pas forcément l'afficher.
-    }
-    else endMessage($log);
+	if (!$api_mode) {
+		logIt("Ici on va rediriger vers <a href='http://".$p_domaine.$scriptName.$query."'>http://".$p_domaine.$scriptName.$query."</a>");
+	}
+
+	if (isset($_REQUEST['debug']) && $_REQUEST['debug'] == "O") {
+	    $log = "<ul>".getLog() ."</ul>". "Mode DEBUG activ&eacute; : Pas de redirection.";
+	    // Ici on ajoute un petit hack pour pouvoir continuer ou analyer le log en mode test
+	    if (isset($_REQUEST['mode_test']) && $_REQUEST['mode_test'] == "O") {
+	      // ici rien car ce qu'on voudrait c'est récupérer le log et pas forcément l'afficher.
+	    }
+	    else endMessage($log);
 	}
 	else {
-		// Si le blog est de type Etablissement (ETB) on enlève la sidebar
-		// Car la place dans la page est étroite.
-		header('Location: http://'.$p_domaine.$scriptName.$query);
+		if (!$api_mode){
+			// Si le blog est de type Etablissement (ETB) on enlève la sidebar
+			// Car la place dans la page est étroite.
+			header('Location: http://'.$p_domaine.$scriptName.$query);
+		}
 	}
 }
 

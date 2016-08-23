@@ -198,6 +198,24 @@ if (isset($_REQUEST['ENT_action'])) {
 	$mustDieAfterAction = false;  // UtilisÈ pour les actions qui ne nÈcessitent pas d'affichage aprËès s'êÍtre dÈroulÈes.
 	
 	switch ($ENT_action) {
+
+	//  --------------------------------------------------------------------------------
+	//
+	// CrÈation de blogs
+	//
+	// ---------------------------------------------------------------------------------
+	case 'CREATE_BLOG' :
+		if (phpCAS::isAuthenticated()) {
+			$_REQUEST['mode'] = 'API';
+			require_once('includes/provisionning-laclasse.php');
+			provision_comptes_laclasse();
+		} else { 
+			// Si pas authentifiÈ, ion force l'authentification. Du coup, le provisionning du user se fait.
+			phpCAS::forceAuthentication(); 
+		}
+		$mustDieAfterAction = true;
+		break;	
+
 	// --------------------------------------------------------------------------------
 	//
 	// Se mettre en mode INTEGRE dans une IFRAME
@@ -839,6 +857,8 @@ if (isset($_REQUEST['ENT_action'])) {
 	case 'REPRISE_DATA' :
 		if (phpCAS::isAuthenticated()) {
 			reprise_data_blogs();
+		} else { 
+			phpCAS::forceAuthentication(); 
 		}
 		$mustDieAfterAction = true;
 		break;
