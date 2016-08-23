@@ -42,7 +42,7 @@ function userExists($pusername) {
 // avec les données relatives à l'ENT
 function fais_voir($o, $s="") {
     //echo "<pre>";
-    echo $s;
+    echo $s . " : ";
     echo  print_r($o, true);
     echo "\n";
     //echo "</pre>";
@@ -112,6 +112,7 @@ function has_groupe($groupes, $wanted_groupe) {
 // --------------------------------------------------------------------------------
 function blogList() {
     global $wpdb;
+    $debug = ($_REQUEST['debug'] === 'O');
     $opts = Array('admin_email','siteurl','name','blogname','blogdescription','blogtype','etablissement_ENT','display_name', 'type_de_blog', 'classe_ENT', 'groupe_ENT', 'groupelibre_ENT');
     $opts_str = implode("','", $opts);
     $liste = array();
@@ -148,12 +149,33 @@ function blogList() {
     $classes_user_annuaire = $userENT->classes;
     // Groupes de l'utilisateur
     $groupes_user_annuaire = $userENT->groupes_eleves;
+    // Groupes libres de l'utilisateur
+    $groupeslibres_user_annuaire = $userENT->groupes_libres;
 
     // Constitution de la liste
     $blogs = $wpdb->get_results( 
         "SELECT * FROM $wpdb->blogs WHERE domain != '".BLOG_DOMAINE."'  
         and archived = 0 and blog_id > 1 order by domain", 
         ARRAY_A );
+
+    // Débugging data
+    if ($debug) {
+        fais_voir($current_user->user_login, "current_user");
+
+        fais_voir($uid_ent_WP, "uid_ent_WP");
+        fais_voir($profil_ent_WP, "profil_ent_WP");
+        fais_voir($uai_user_WP, "uai_user_WP");
+        fais_voir($classe_user_WP, "classe_user_WP");
+
+        fais_voir($superadmin, "superadmin");
+        fais_voir($admin, "admin");
+        fais_voir($eleve_parent, "eleve_parent");
+        fais_voir($perseducnat, "perseducnat");
+
+        fais_voir($classes_user_annuaire, "classes_user_annuaire");
+        fais_voir($groupes_user_annuaire, "groupes_user_annuaire");       
+        fais_voir($groupeslibres_user_annuaire, "groupeslibres_user_annuaire");       
+    }
 
     // Constitution de la liste
     foreach ($blogs as $blog) {
