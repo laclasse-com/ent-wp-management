@@ -34,8 +34,11 @@
 
     <body>
 
-        <?= yield ?>
-
+    <div class= "purcent-page" data-ng-app="blogsApp" data-ng-strict-di>
+      <div class="row purcent-page" style="width: 100%; margin: 0">
+        <div data-ui-view class="animate scale-fade purcent-page"></div>
+      </div>
+    </div>
 
   <!-- Bootstrap core JavaScript
       ================================================== -->
@@ -70,15 +73,17 @@
         <script>
         angular.module('blogsApp')
           .constant('APP_PATH', '<?=APP_PATH?>')
-          .constant('BLOGS_DOMAIN', '<?=BLOG_DOMAIN?>')
+          .constant('BLOGS_DOMAIN', '<?=BLOG_DOMAINE?>')
           .constant('TRANSFER_PROTOCOLE', 'https://')
           .constant('WP_PATH', '<?=$BLOGS_WORDPRESS['host']?>')
-          .constant('WP_SUBSCRIBE', '<?=$BLOGS_WORDPRESS['subcribe']?>')
-          .constant('WP_UNSUBSCRIBE', '<?=$BLOGS_WORDPRESS['unsubcribe']?>')
+          .constant('WP_SUBSCRIBE', '<?=$BLOGS_WORDPRESS['subscribe']?>')
+          .constant('WP_UNSUBSCRIBE', '<?=$BLOGS_WORDPRESS['unsubscribe']?>')
           .constant('WP_BLOG_EXISTS', '<?=$BLOGS_WORDPRESS['exists']?>')
           .constant('WP_BLOG_LIST', '<?=$BLOGS_WORDPRESS['get_all']?>')
           .constant('WP_USER_BLOG_LIST', '<?=$BLOGS_WORDPRESS['get']?>')
-          .constant('WP_CREATE_BLOG', '<?=$BLOGS_WORDPRESS['create']?>');
+          .constant('WP_CREATE_BLOG', '<?=$BLOGS_WORDPRESS['create']?>')
+          .constant('WP_CURRENT_USER', '<?=$BLOGS_WORDPRESS['getcurrentuser']?>')
+          ;
           
         </script>
         <iframe src="<?=$BLOGS_WORDPRESS['host']?>wp-login.php?ent=laclasse" style="display:none;" ></iframe>

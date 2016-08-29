@@ -6,7 +6,10 @@ angular.module('blogsApp')
 .controller('MainHomeCtrl', ['$scope', '$state', '$rootScope', '$window',  'APP_PATH', 'BLOGS_DOMAIN', 'Blogs', 'Modal', 'CurrentUser', 'Notifications', 'WPApi',
 	function($scope, $state, $rootScope, $window, APP_PATH, BLOGS_DOMAIN, Blogs, Modal, CurrentUser, Notifications, WPApi) {
 
-    WPApi.launchAction("ABONNEMENTS", CurrentUser.get().user)
+	var connectedUser = CurrentUser.get();
+
+	connectedUser.$promise.then(function() {
+	    WPApi.launchAction("ABONNEMENTS", connectedUser.login)
         .then(function(data) {
         	// Chargement de la liste
             $rootScope.blogs = Blogs.attune(data, false);
@@ -35,7 +38,7 @@ angular.module('blogsApp')
 					var b = $rootScope.blog;
 					b.action = 'unsubscribe';
 					if(b.blogname != undefined) {
-						WPApi.launchAction( 'DESINSCRIRE', b.domain.replace(BLOGS_DOMAIN, "") )		                
+						WPApi.launchAction( 'DESINSCRIRE', b.domain.replace("." + BLOGS_DOMAIN, "") )		                
 			            .then(function(data) {
 			                // promise fulfilled
 			                if (data.success != undefined && data.success != "") {
@@ -69,4 +72,5 @@ angular.module('blogsApp')
             Notifications.add( "une erreur s'est produite sur le chargement de la liste des blogs pouvant vous intéresser.'" 
             					+  data.statusText, "error");
         });
+    });
 }]);

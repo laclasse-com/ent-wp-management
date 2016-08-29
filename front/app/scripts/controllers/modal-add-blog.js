@@ -19,18 +19,24 @@ angular.module('blogsApp')
 	$scope.currentRegroupement = {id: null, name: null};
 	$scope.regroupements = [];
 
+	$scope.droitsCreation = 0;
+	var connectedUser = CurrentUser.get();
+	connectedUser.$promise.then(function() {
+		$scope.droitsCreation = connectedUser.roles_max_priority_etab_actif;
+		//les différents type de blogs
+		$scope.typesBlog = $scope.rightTypeBlog($scope.droitsCreation);
+	});
+
 	// ---------------------------------------------------------------------------
 	//renseigne les type de blogs disponible pour le profile utilisateur
 	// ---------------------------------------------------------------------------
-	$scope.rightTypeBlog = function(){
+	$scope.rightTypeBlog = function(droit){
 		return _.reject(TYPES_BLOG, function(type){
-			if (type.code === TYPES_BLOG[0].code && CurrentUser.get().roles_max_priority_etab_actif < 2) {
+			if (type.code === TYPES_BLOG[0].code && droit < 2) {
 				return true;
 			};	
 		})
 	}
-	//les différents type de blogs
-	$scope.typesBlog = $scope.rightTypeBlog();
 
 	//fonction qui permet de changer le type courant
 	$scope.changeTypeBlogs = function(type){
@@ -54,7 +60,7 @@ angular.module('blogsApp')
 
 		//on affecte tous ses regroupements correspondant au type.
 		$scope.currentRegroupement.name = "Choisissez " + genre + " de vos "+ label.replace(' ', 's ') + "s";
-		$scope.regroupements = Blogs.loadRegroupmentsDropdown(type);
+		$scope.regroupements = Blogs.loadRegroupmentsDropdown(type, connectedUser);
 		$scope.blogdescription = "site " + partitif + label + " ";
 	};
 

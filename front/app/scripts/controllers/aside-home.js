@@ -5,19 +5,23 @@
 angular.module('blogsApp')
 .controller('AsideHomeCtrl', ['$scope', '$rootScope', 'Blogs', 'BLOGS_DOMAIN', 'APP_PATH', 'Notifications', 'WPApi', 'CurrentUser', 'Modal',
 	function($scope, $rootScope, Blogs, BLOGS_DOMAIN, APP_PATH, Notifications, WPApi, CurrentUser, Modal) { 
-	//affiche le bouton modification s'il a les droits
-	$scope.canCreateNewBlog = CurrentUser.get().roles_max_priority_etab_actif > 0;
+	var connectedUser = CurrentUser.get();
 
-    WPApi.launchAction("LISTE_INTERETS", CurrentUser.get().user)
-        // then() called when son gets back
-        .then(function(data) {
-            $rootScope.proposedBlogs = data;
-        }, function(error) {
-            // promise rejected, could log the error with: console.log('error', error);
-            console.log('error', error);
-            Notifications.add( "une erreur s'est produite sur le chargement de la liste des blogs pouvant vous intéresser.'" 
-            					+  data.statusText, "error");
-        });
+	connectedUser.$promise.then(function() {
+		//affiche le bouton modification s'il a les droits
+		$scope.canCreateNewBlog = connectedUser.roles_max_priority_etab_actif > 0;
+
+	    WPApi.launchAction("LISTE_INTERETS", connectedUser.login)
+	        // then() called when son gets back
+	        .then(function(data) {
+	            $rootScope.proposedBlogs = data;
+	        }, function(error) {
+	            // promise rejected, could log the error with: console.log('error', error);
+	            console.log('error', error);
+	            Notifications.add( "une erreur s'est produite sur le chargement de la liste des blogs pouvant vous intéresser.'" 
+	            					+  data.statusText, "error");
+        	});
+    });
 	//
 	// affiche le nom complet du type de blog par rapport à son code
 	//
@@ -45,7 +49,7 @@ angular.module('blogsApp')
 			if ( !$rootScope.modification ) {
 				blog.action = 'subscribe'
 
-	            WPApi.launchAction("INSCRIRE", blog.domain.replace(BLOGS_DOMAIN, ""))
+	            WPApi.launchAction("INSCRIRE", blog.domain.replace("." + BLOGS_DOMAIN, ""))
 	                // then() called when son gets back
 	                .then(function(data) {
 	                    // promise fulfilled

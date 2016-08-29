@@ -6,6 +6,7 @@ angular.module('blogsApp')
   function( $rootScope, CurrentUser, Notifications, COLOR_DAMIER, TYPES_BLOG, WPApi) {
   this.idTemp = 0;
   var self = this;
+
   // ------------------------------------------------------------------------
   // ajoute un blog a la liste
   // ------------------------------------------------------------------------
@@ -151,15 +152,15 @@ angular.module('blogsApp')
   // Fonction de chargement de la dropdown des regroupement 
   // en fonction du type de blog choisi
   // ------------------------------------------------------------------------
-  this.loadRegroupmentsDropdown = function(type){
-    var listDetailed = CurrentUser.get().user_detailed;
+  this.loadRegroupmentsDropdown = function(type, user){
+    var listDetailed = null;
     var regroupements = [];
     switch(type){
       //
       // Etablissements
       //
       case TYPES_BLOG[0].code:
-        listDetailed = _.uniq(listDetailed.etablissements, function(etab){
+        listDetailed = _.uniq(user.etablissements, function(etab){
           return etab.code_uai;
         });
         _.each(listDetailed, function(etab){
@@ -170,7 +171,7 @@ angular.module('blogsApp')
       // Classes
       //
       case TYPES_BLOG[1].code:
-        listDetailed = _.uniq(listDetailed.classes, function(cls){
+        listDetailed = _.uniq(user.classes, function(cls){
           return cls.classe_id;
         });
         _.each(listDetailed, function(cls){
@@ -181,7 +182,7 @@ angular.module('blogsApp')
       // Groupes d'élèves
       //
       case TYPES_BLOG[2].code:
-        listDetailed = _.uniq(listDetailed.groupes_eleves, function(grp){
+        listDetailed = _.uniq(user.groupes_eleves, function(grp){
           return grp.groupe_id;
         });
         _.each(listDetailed, function(grp){
@@ -192,7 +193,7 @@ angular.module('blogsApp')
       // Groupes libres
       //
       case TYPES_BLOG[3].code:
-        listDetailed = _.uniq(listDetailed.groupes_libres, function(gpl){
+        listDetailed = _.uniq(user.groupes_libres, function(gpl){
           return gpl.groupe_libre_id;
         });
         _.each(listDetailed, function(gpl){
@@ -218,5 +219,4 @@ angular.module('blogsApp')
     }
     return false;
   };
-
 }]);

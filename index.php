@@ -201,6 +201,24 @@ if (isset($_REQUEST['ENT_action'])) {
 
 	//  --------------------------------------------------------------------------------
 	//
+	// API pour récupérer le current user depuis l'annuaire v3
+	//
+	// ---------------------------------------------------------------------------------
+	case 'CURRENT_USER' :
+		if (phpCAS::isAuthenticated()) {
+			header('Content-Type: application/json');
+			$url = generate_url(ANNUAIRE_URL . "api/app/users/" . $_SESSION['phpCAS']['attributes']['uid'] , Array("expand" => "true"));
+			$res = get_http($url);
+			echo $res;
+		} else { 
+			// Si pas authentifié, ion force l'authentification. Du coup, le provisionning du user se fait.
+			phpCAS::forceAuthentication(); 
+		}
+		$mustDieAfterAction = true;
+		break;	
+
+	//  --------------------------------------------------------------------------------
+	//
 	// Front office de présentation des blogs.
 	//
 	// ---------------------------------------------------------------------------------

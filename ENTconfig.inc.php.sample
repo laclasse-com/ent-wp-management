@@ -67,16 +67,13 @@ define(ANNUAIRE_API_KEY, "La clé de signature des requetes à l'annuaire");
 // Configuration pour le Front
 // ----------------------------------------------------------------------------------------
 
-// define(APP_ROOT, File.expand_path(File.join(File.dirname(__FILE__), '..')));  ------------------------> TROUVER COMMENT ON FAIT EN PHP
+define(APP_ROOT, ABSPATH);
 
-# virtual path de l'application/
-// define(APP_PATH, '/blogs');
+# virtual path de l'application
+define(APP_PATH, 'wp-content/plugins/ent-wp-management/front');
 
 # Version de l'application
 define(APP_VERSION, '2.0.0');
-
-# nom de domaine pour les blogs
-// BLOG_DOMAIN = '.blogs-dev.laclasse.com'  ------------------------> VOIR BLOG_DOMAINE PLUS HAUT
 
 # Nombre de propositions max dnas la partie gauche
 define(MAX_BLOG_PROPOSALS, '10');
@@ -87,9 +84,10 @@ $BLOGS_WORDPRESS = array(
   'get' => '?ENT_action=USER_BLOG_LIST&username=$1',
   'get_all' => '?ENT_action=BLOG_LIST&username=$1',
   'create' => '?ENT_action=CREATE_BLOG&blogname=$1',
-  'subcribe' => '?ENT_action=INSCRIRE&blogname=$1',
-  'unsubcribe' => '?ENT_action=DESINSCRIRE&blogname=$1',
+  'subscribe' => '?ENT_action=INSCRIRE&blogname=$1',
+  'unsubscribe' => '?ENT_action=DESINSCRIRE&blogname=$1',
   'delete' => 'wp-login.php?ENT_action=SUPPRIMER_BLOG&blogname=$1',
-  'exists' => '?ENT_action=BLOG_EXISTS&blogname=$1' + BLOG_DOMAIN,
-  'getwpid' => '?ENT_action=BLOG_ID&blogname=$1' + BLOG_DOMAIN
+  'exists' => '?ENT_action=BLOG_EXISTS&blogname=$1' . "." . BLOG_DOMAINE,
+  'getwpid' => '?ENT_action=BLOG_ID&blogname=$1' . BLOG_DOMAINE,
+  'getcurrentuser' => '?ENT_action=CURRENT_USER'
 );
