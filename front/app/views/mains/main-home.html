@@ -1,0 +1,12 @@
+<ul>
+	<li ng-repeat="blog in blogs track by $index" id="flipped{{blog.blog_id}}" class="col-xs-6 col-sm-4 col-md-3 col-lg-2 petite case flippable show-front">
+		<div class="configure front {{blog.color}}">	
+			<div>
+				<span class="blog-name" ng-click="goBlog(blog)" ng-bind-html="blog.blogname"></span>
+				<a ng-if="blog.blog_id != undefined" class="icon" ng-click="unsubscribeLink(blog)">
+					<i class="glyphicon glyphicon-remove-circle icon"></i>
+				</a>
+			</div>
+		</div>
+ 	</li>
+</ul>

@@ -1,0 +1,23 @@
+/*----- laius -----*/
+div.laius{
+	padding: 20px;
+	font-size: 14px;
+}
+/*----- proposition de blog -----*/
+div.proposition{
+/*	position: absolute;
+	bottom: 15%;
+	left: 0;*/
+	padding: 20px;
+}
+div.proposition label{
+	font-size: 14px;
+	text-decoration: none;
+}
+div.proposition a{
+	cursor: pointer;
+}
+
+button#btnnewblog {
+	padding:2px 5px 2px 5px;
+}

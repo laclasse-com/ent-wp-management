@@ -1,0 +1,49 @@
+
+/*---- Les différents champs et ses labels ----*/
+.champs{
+	margin: 20px;
+}
+.champs label{
+	display: block;
+}
+
+/*----- les glyphicon bootstrap -----*/
+.glyphicon.glyphicon-remove{
+	color: red;
+}
+.glyphicon.glyphicon-ok{
+	color: green;
+}
+
+/*----- le dropdown -----*/
+.btn.btn-modal{
+	background: inherit;
+	border: 1px solid;
+	border-radius: 0;
+	margin: 0 10px;
+}
+.btn.btn-modal.dropdown, .btn.btn-modal label{
+	margin: 0
+}
+
+.dropdown-menu.regroupements{
+	height: 200px;
+	width: 225px;
+	overflow: auto;
+}
+
+.dropdown-search{
+	margin: 5px 15px;
+}
+
+/*----- les deux boutons anuler et valider ----*/
+.btn.btn-modal label{
+	cursor: pointer;
+}
+.btn.btn-modal .glyphicon.glyphicon-remove{
+	margin-right: 5px;
+}
+
+.btn.btn-modal .glyphicon.glyphicon-ok{
+	margin-right: 5px;	
+}

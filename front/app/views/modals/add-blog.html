@@ -1,0 +1,60 @@
+<div class="modal-header"><h2>Créer un blog</h2></div>
+<div class="modal-body">
+	<div class="champs">
+		<label>Titre du blog</label>
+		<input type="text" maxlength="200" ng-model="titleBlog" placeholder="Titre du nouveau blog"/>
+		<i ng-if='required.title' class="glyphicon glyphicon-remove"></i><i ng-if="checkTitle()" class="glyphicon glyphicon-ok"></i>
+		<div>
+			<span ng-if="required.title" class="label label-danger msg-error">Le titre du blog est obligatoire !</span>			
+		</div>
+	</div>
+	<div class="champs">
+		<label>Type du blog</label>
+		<div class="btn-group" dropdown>
+			<button type="button" class="btn btn-modal dropdown">{{currentType.name}}</button>
+			<button type="button" class="btn btn-modal dropdown-toggle" dropdown-toggle>
+				<span class="caret"></span>
+				<span class="sr-only">Split button!</span>
+			</button>
+			<ul class="dropdown-menu" role="menu">
+				<li ng-repeat="type in typesBlog"><a ng-click="changeTypeBlogs(type.code)">{{type.name}}</a></li>
+			</ul>
+		</div>
+		<i ng-if='required.type' class="glyphicon glyphicon-remove"></i><i ng-if="checkType()" class="glyphicon glyphicon-ok"></i>
+		<div>
+			<span ng-if="required.type" class="label label-danger msg-error">Le type du blog est obligatoire !</span>				
+		</div>
+	</div>
+	<div class="champs" ng-if="currentType.code != null">
+		<label>Vos {{currentType.name}}</label>
+		<div class="btn-group" dropdown>
+			<button type="button" class="btn btn-modal dropdown">{{currentRegroupement.name}}</button>
+			<button type="button" class="btn btn-modal dropdown-toggle" dropdown-toggle>
+				<span class="caret"></span>
+				<span class="sr-only">Split button!</span>
+			</button>
+			<ul class="dropdown-menu regroupements" role="menu">
+				<input disable-auto-close type="search" class="dropdown-search" ng-model="searchFilter" placeholder="Rechercher"></input>
+				<li ng-repeat="regroupement in regroupements | filter:searchFilter"><a ng-click="changeTypeRegroupement(regroupement)">{{regroupement.name}}</a></li>
+			</ul>
+		</div>
+		<i ng-if='required.regroupement' class="glyphicon glyphicon-remove"></i><i ng-if="checkRegroupement()" class="glyphicon glyphicon-ok"></i>
+		<div>
+			<span ng-if="required.regroupement" class="label label-danger msg-error">Veuillez préciser votre choix dans la liste des {{currentType.name}} !</span>				
+		</div>
+	</div>
+	<div class="champs">
+		<label>Sous-domaine</label>
+		<input type="text" maxlength="200" ng-model="subDomain" ng-change="checkSubDomain()" placeholder="Nom-du-sous-domaine"/>{{domain}} 
+		<i ng-if='required.domain || existing || subDomain == ""' class="glyphicon glyphicon-remove"></i>
+		<i ng-if="!existing && subDomain != ''" class="glyphicon glyphicon-ok"></i>
+		<div>
+			<span ng-if="required.domain || existing || subDomain == ''" class="label label-danger msg-error">{{errorMsgDomain}}</span>
+			<span ng-if="!existing && subDomain != ''" class="label label-success msg-success">Ce domaine est disponible.</span>			
+		</div>
+	</div>
+</div>
+<div class="modal-footer">
+    <button class="btn btn-modal" ng-click="cancel()"><label><i class="glyphicon glyphicon-remove"></i>Annuler</label></button>
+    <button ng-if="!existing" class="btn btn-modal" ng-click="addBlog()"><label><i class="glyphicon glyphicon-ok"></i>Valider</label></button>
+</div>

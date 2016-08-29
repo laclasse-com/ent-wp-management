@@ -1,0 +1,43 @@
+<div class="row purcent-page">
+	<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 laius">
+		<label>
+		<p>
+			Votre ENT vous propose d'héberger un blog. C'est un outil à part entière au sein de votre ENT, et de fait lorsque vous accédez aux blogs, vous n'avez ni à vous créer un compte, ni à vous ré-authentifier.
+		<p>
+			Vous pouvez vous rattacher à des blogs existants, ou créer vos blogs : celui de votre établissement, de vos classes ou groupes d'élèves.
+			Gardez à l'esprit que cette plateforme est adaptée à un usage pédagogique. Elle n'est donc pas prévue pour vos publications personnelles.
+		</p>
+		</label>
+		<p>
+			<button type="button" id="btnnewblog" ng-show="canCreateNewBlog" href="#" ng-click="addNewBlog()" class="btn btn-default btn-sm pull-right gris1">Créer un blog</button>
+		</p>	
+	</div>
+	<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 proposition" ng-if="proposedBlogs.length > 0">
+		<label>Ces blogs peuvent vous intéresser</label>
+		<div class="table-responsive">
+			<table class="table table-bordered">
+				<tr class="gris2">
+					<th>Nom</th>
+					<th>Description</th>
+					<th>Type</th>
+					<th>Suivre</th></tr>				
+				</tr>
+				<tr ng-repeat="blog in proposedBlogs | limitTo:10">
+					<td><a href="{{blog.siteurl}}" target="_blank" ng-bind-html="blog.blogname"></a></td>
+					<td ng-bind-html="blog.blogdescription"></td>
+					<td>{{nameType(blog.type_de_blog)}}</td>
+					<td>
+						<a ng-click="addBlog(blog)" title="Suivre ce blog">
+							<i class="glyphicon glyphicon-tag"></i>
+						</a>
+					</td>
+					<!-- <td>
+						<a ng-click="deleteBlogFromInterestList(blog)" title="Masquer ce blog">
+							<i class="glyphicon glyphicon-remove-sign"></i>
+						</a>
+					</td> -->
+				</tr>
+			</table>
+		</div>
+	</div>
+</div>
