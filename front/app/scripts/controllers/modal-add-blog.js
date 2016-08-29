@@ -213,7 +213,7 @@ angular.module('blogsApp')
 				rgptId: $scope.currentRegroupement.id,
 				owner: CurrentUser.get().uid,
 				action: 'add',
-				siteurl: "https://" + $scope.subDomain + BLOGS_DOMAIN + "/",
+				siteurl: "https://" + $scope.subDomain + "." + BLOGS_DOMAIN + "/",
 				domain: $scope.subDomain,
 				flux: ""
 			};
