@@ -80,7 +80,7 @@ define(MAX_BLOG_PROPOSALS, '10');
 
 # url pour dialoguer avec l'api de WordPress  ------------------------> MODIFIER LE LAYOUT POUR RECUPERER CORRECTEMENT LES CONSTANTES
 $BLOGS_WORDPRESS = array(
-  'host' => 'http://blogs-dev.laclasse.com/',
+  'host' => 'http://' . BLOG_DOMAINE . '/',
   'get' => '?ENT_action=USER_BLOG_LIST&username=$1',
   'get_all' => '?ENT_action=BLOG_LIST&username=$1',
   'create' => '?ENT_action=CREATE_BLOG&blogname=$1',
