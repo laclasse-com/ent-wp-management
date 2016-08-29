@@ -201,6 +201,21 @@ if (isset($_REQUEST['ENT_action'])) {
 
 	//  --------------------------------------------------------------------------------
 	//
+	// Front office de présentation des blogs.
+	//
+	// ---------------------------------------------------------------------------------
+	case 'FRONT' :
+		if (phpCAS::isAuthenticated()) {
+			include(plugin_dir_path( __FILE__ ) . 'front/index.php');
+		} else { 
+			// Si pas authentifié, ion force l'authentification. Du coup, le provisionning du user se fait.
+			phpCAS::forceAuthentication(); 
+		}
+		$mustDieAfterAction = true;
+		break;	
+
+	//  --------------------------------------------------------------------------------
+	//
 	// Création de blogs
 	//
 	// ---------------------------------------------------------------------------------
