@@ -72,11 +72,9 @@ function has_role($roles, $wanted_role, $uai="") {
 /*
  * vérifier que l'utilisateur a un profil donné sur un etab donné.
  */
-function has_profil($profils, $wanted_profil, $uai="") {
-    foreach ($profils as $profil) {
-        if ($profil->profil_id == $wanted_profil && $profil->etablissement_code_uai == $uai) {
-            return true;
-        }
+function has_profil($profil_actif, $wanted_profil, $uai="") {
+    if ($profil_actif->profil_id == $wanted_profil && $profil_actif->etablissement_code_uai == $uai) {
+        return true;
     }
     return false;
 }
@@ -137,13 +135,15 @@ function blogList() {
 
     // Caractéristiques du user connecté.
     $roles_user_annuaire   = $userENT->roles;
+    $profils_user_annuaire   = $userENT->profil_actif;  // Que sur le profil actif pour le moment.
+
     $superadmin   = has_role($roles_user_annuaire, 'TECH');
-    $admin        = has_role($roles_user_annuaire, 'ADM_ETB', $uai_user_WP) || has_profil($roles_user_annuaire, 'DIR', $uai_user_WP);
-    $eleve_parent = has_profil($roles_user_annuaire, 'ELV', $uai_user_WP) || has_profil($roles_user_annuaire, 'TUT', $uai_user_WP);
-    $perseducnat  = has_profil($roles_user_annuaire, 'ENS', $uai_user_WP) 
-                    || has_profil($roles_user_annuaire, 'DOC', $uai_user_WP) 
-                    || has_profil($roles_user_annuaire, 'ETA', $uai_user_WP) 
-                    || has_profil($roles_user_annuaire, 'EVS', $uai_user_WP);
+    $admin        = has_role($roles_user_annuaire, 'ADM_ETB', $uai_user_WP) || has_profil($profils_user_annuaire, 'DIR', $uai_user_WP);
+    $eleve_parent = has_profil($profils_user_annuaire, 'ELV', $uai_user_WP) || has_profil($profils_user_annuaire, 'TUT', $uai_user_WP);
+    $perseducnat  = has_profil($profils_user_annuaire, 'ENS', $uai_user_WP) 
+                    || has_profil($profils_user_annuaire, 'DOC', $uai_user_WP) 
+                    || has_profil($profils_user_annuaire, 'ETA', $uai_user_WP) 
+                    || has_profil($profils_user_annuaire, 'EVS', $uai_user_WP);
     // Tous les autres profils COL, ACA ne sont pas gérés pour le moment
     // Classes de l'utilisateur
     $classes_user_annuaire = $userENT->classes;
@@ -196,7 +196,7 @@ function blogList() {
             $superadmin || // tous pour le superadmin
             ($blog['type_de_blog'] == 'ENV') ||  //Tous les blogs transverses
             ( 
-                 $admin || // tous pour l'admin d'atablissement
+                 $admin || // tous pour l'admin d'etablissement
                  ( 
                     $blog['etablissement_ENT'] == $uai_user_WP &&
                     (

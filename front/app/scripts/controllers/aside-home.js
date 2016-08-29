@@ -8,6 +8,7 @@ angular.module('blogsApp')
 	var connectedUser = CurrentUser.get();
 
 	connectedUser.$promise.then(function() {
+		console.log(connectedUser);
 		//affiche le bouton modification s'il a les droits
 		$scope.canCreateNewBlog = connectedUser.roles_max_priority_etab_actif > 0;
 
