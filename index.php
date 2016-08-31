@@ -369,7 +369,7 @@ if (isset($_REQUEST['ENT_action'])) {
 
 		assert('$blogname != ""', "Le paramètre \$blogname doit être renseigné.");
 
-		$current_user = wp_get_current_user();
+		$current_user = get_user_by('login', $_SESSION['phpCAS']['attributes']['login']);
 		// Vérifier si l'utilisateur est bien connecté
 		assert ('$current_user->ID  != ""', "L'utilisateur n'est pas connecté sur la plateforme WordPress de laclasse.com.");
 
@@ -470,7 +470,7 @@ if (isset($_REQUEST['ENT_action'])) {
 	case 'DESINSCRIRE' :
 		assert('$blogname != ""', "Le paramètre \$blogname doit être renseigné.");
 
-		$current_user = wp_get_current_user();
+		$current_user = get_user_by('login', $_SESSION['phpCAS']['attributes']['login']);
 		// Vérifier si l'utilisateur est bien connecté
 		assert ('$current_user->ID  != ""', "L'utilisateur n'existe pas sur la plateforme WordPress de laclasse.com.");
 
