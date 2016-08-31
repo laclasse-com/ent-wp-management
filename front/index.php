@@ -86,6 +86,5 @@
           ;
           
         </script>
-        <iframe src="<?=$BLOGS_WORDPRESS['host']?>wp-login.php?ent=laclasse" style="display:none;" ></iframe>
     </body>
 </html>

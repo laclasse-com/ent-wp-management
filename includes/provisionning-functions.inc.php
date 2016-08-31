@@ -513,9 +513,8 @@ function redirection($p_domaine) {
 	}
 	else {
 		if (!$api_mode){
-			// Si le blog est de type Etablissement (ETB) on enlève la sidebar
-			// Car la place dans la page est étroite.
-			header('Location: http://'.$p_domaine.$scriptName.$query);
+			$proto = ($wpcas_options['laclasse']['server_port'] == '443') ? 's': '';
+			header('Location: http'.$proto.'://'.$p_domaine.$scriptName.$query);
 		}
 	}
 }
