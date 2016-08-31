@@ -99,12 +99,12 @@ class wpCAS {
 		  return home_url()."/wp-login.php?ent=$ent";
 		}
 		
-		if ($_REQUEST['ENT_action'] == 'IFRAME') {
-			$qry = '?ent='.$ent.'&ENT_action=IFRAME';
-			$url =  home_url().'/wp-login.php'.$qry;
-		}
+		// if ($_REQUEST['ENT_action'] == 'IFRAME') {
+		// 	$qry = '?ent='.$ent.'&ENT_action=IFRAME';
+		// 	$url =  home_url().'/wp-login.php'.$qry;
+		// }
 		// Si on n'est pas en mode intégré
-		else {		
+		// else {
   		if ($wpcas_options[$ent]['server_port'] == 443) $protoc = "https://";
   		else $protoc = "http://";
   		$url = $protoc.
@@ -113,7 +113,7 @@ class wpCAS {
   			   $wpcas_options[$ent]['server_path'].
   			   "/login?service=".urlencode(home_url()."/wp-login.php?ent=".$ent);
 			   
-		}
+		// }
 		return $url;
 	}
 	
@@ -123,9 +123,9 @@ class wpCAS {
     get_currentuserinfo();
     $nomEnt = get_user_meta( $current_user->ID, "nom_ENT", true);
     
-		if ($_REQUEST['ENT_action'] == 'IFRAME') {
-			$iframe = '&ENT_action=IFRAME';
-		}
+		// if ($_REQUEST['ENT_action'] == 'IFRAME') {
+		// 	$iframe = '&ENT_action=IFRAME';
+		// }
 		return $wpLogoutUrl . "&ent=".$nomEnt.$iframe;	
 	}
 	
@@ -138,9 +138,9 @@ class wpCAS {
 		if (!$cas_configured)
 			die( __( 'wpCAS plugin not configured', 'wpcas' ));
 			
-		if ($_REQUEST['ENT_action'] == 'IFRAME') {
-			$iframe = '&ENT_action=IFRAME';
-		}
+		// if ($_REQUEST['ENT_action'] == 'IFRAME') {
+		// 	$iframe = '&ENT_action=IFRAME';
+		// }
 
     // Supprimer les cookies de WP
     wp_clear_auth_cookie();
