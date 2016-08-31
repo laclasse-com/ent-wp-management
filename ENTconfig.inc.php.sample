@@ -7,16 +7,9 @@
 
 $wpcas_options = array(
   'laclasse' => array(
-  	'cas_version' => '2.0',
-  	'include_path' => '/var/www/html/CAS-1.2.0/CAS.php',
-  	'server_hostname' => 'dev.laclasse.com', 
-  	'server_port' => '443',
-  	'server_path' => '/sso'
-	 ),
-  'laclasseV3' => array(
     'cas_version' => '2.0',
     'include_path' => '/var/www/html/CAS-1.2.0/CAS.php',
-    'server_hostname' => 'v3.laclasse.com',.
+    'server_hostname' => 'v3dev.laclasse.com',.
     'server_port' => '443',
     'server_path' => '/sso'
    ),
@@ -80,7 +73,7 @@ define(MAX_BLOG_PROPOSALS, '10');
 
 # url pour dialoguer avec l'api de WordPress  ------------------------> MODIFIER LE LAYOUT POUR RECUPERER CORRECTEMENT LES CONSTANTES
 $BLOGS_WORDPRESS = array(
-  'host' => 'http://' . BLOG_DOMAINE . '/',
+  'host' => 'https://' . BLOG_DOMAINE . '/',
   'get' => '?ENT_action=USER_BLOG_LIST&username=$1',
   'get_all' => '?ENT_action=BLOG_LIST&username=$1',
   'create' => '?ENT_action=CREATE_BLOG&blogname=$1',
