@@ -16,13 +16,6 @@
 	<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 proposition" ng-if="proposedBlogs.length > 0">
 		<label>Ces blogs peuvent vous intéresser</label>
 
-<!-- 		<form class="form-inline">
-		  <div class="form-group">
-		    <label for="inputSearch">Recherche un blog&nbsp;</label>
-		    <input type="text" class="form-control" ng-id="inputSearch" ng-model="searchPattern" ng-keyup="reduceList(searchPattern)" placeholder="  ...">
-		  </div>
-		  <button type="submit" class="btn btn-default" ng-click="reduceList(searchPattern)">Ok</button>
-		</form> -->
 		  <div class="form-group">
 		    <input type="text" class="form-control" ng-id="inputSearch" ng-model="search.$" placeholder="  Recherche un blog...">
 		  </div>
@@ -37,10 +30,10 @@
 					<th></th>
 				</tr>				
 				</tr>
-				<tr ng-repeat="blog in proposedBlogs | filter:search:strict | limitTo:10">
+				<tr ng-repeat="blog in proposedBlogs | filter:search:false | limitTo:10">
 					<td><a href="{{blog.siteurl}}" target="_blank" ng-bind-html="blog.blogname"></a></td>
 					<td ng-bind-html="blog.blogdescription"></td>
-					<td>{{nameType(blog.type_de_blog)}}</td>
+					<td ng-bind-html="nameType(blog.type_de_blog)"></td>
 					<td>
 						<a ng-click="addBlog(blog)" title="Suivre ce blog">
 							<i class="glyphicon glyphicon-tag"></i>

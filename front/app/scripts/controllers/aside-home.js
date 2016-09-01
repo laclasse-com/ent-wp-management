@@ -5,9 +5,8 @@
 angular.module('blogsApp')
 .controller('AsideHomeCtrl', ['$scope', '$rootScope', 'Blogs', 'BLOGS_DOMAIN', 'APP_PATH', 'Notifications', 'WPApi', 'CurrentUser', 'Modal',
 	function($scope, $rootScope, Blogs, BLOGS_DOMAIN, APP_PATH, Notifications, WPApi, CurrentUser, Modal) { 
-	$scope.searchPattern = "";
-	var connectedUser = CurrentUser.get();
 
+	var connectedUser = CurrentUser.get();
 	connectedUser.$promise.then(function() {
 		console.log(connectedUser);
 		//affiche le bouton modification s'il a les droits
@@ -24,24 +23,6 @@ angular.module('blogsApp')
 	            					+  data.statusText, "error");
         	});
     });
-
-	//
-	// Fonction de réduction de liste
-	//
-	// $scope.reduceList = function(pattern) {
-	// 	// Pour toute pattern supérieure ou égale à 3 caratères, on réduit la liste
-	// 	if (pattern.length >= 3) {
-	// 		console.log("Pattern=" + pattern + ", lg=" + pattern.length);
-	// 		var filteredBlogs = Array();
-	// 		_.find($rootScope.proposedBlogs, function (blog) {
-	// 		    if (blog.blogname.match(new RegExp( '[' + pattern + ']', 'i'))) {
-	// 		    	filteredBlogs.push(blog);
-	// 		    };
-	// 		});
-	// 		console.log(filteredBlogs);
-	// 	}
-	// }
-
 	//
 	// affiche le nom complet du type de blog par rapport à son code
 	//
