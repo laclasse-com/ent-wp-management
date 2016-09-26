@@ -131,20 +131,10 @@ class wpCAS {
 	
 	// hook CAS logout to WP logout
 	function logout() {
-		global $cas_configured, $current_user;
-    get_currentuserinfo();
-		$nomEnt = get_user_meta( $current_user->ID, "nom_ENT", true);
-		
-		if (!$cas_configured)
-			die( __( 'wpCAS plugin not configured', 'wpcas' ));
-			
-		// if ($_REQUEST['ENT_action'] == 'IFRAME') {
-		// 	$iframe = '&ENT_action=IFRAME';
-		// }
-
-    // Supprimer les cookies de WP
-    wp_clear_auth_cookie();
-		phpCAS::logout( array( 'url' => get_option( 'siteurl' )."?ent=".$nomEnt.$iframe ));
+	    // Supprimer les cookies de WP
+	    wp_destroy_current_session();
+	    wp_clear_auth_cookie();
+		phpCAS::logout( array( 'url' => get_option( 'siteurl' )."?ent=laclasse".$_REQUEST['ent']));
 		exit();
 	}
 

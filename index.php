@@ -335,12 +335,14 @@ if (isset($_REQUEST['ENT_action'])) {
 	//
 	// --------------------------------------------------------------------------------
 	case 'LOGOUT' :	
-		global $current_user;
-		if (phpCAS::isAuthenticated()) {
-			$current_user = get_user_by('login',phpCAS::getUser());
-			$urlLogOut = htmlspecialchars_decode(wp_logout_url());
-			header('Location: '.$urlLogOut);
-		}
+		wpCAS::logout();
+		// global $current_user;
+		// if (phpCAS::isAuthenticated()) {
+		// 	$current_user = get_user_by('login',phpCAS::getUser());
+		// 	$urlLogOut = htmlspecialchars_decode(wp_logout_url());
+		// 	wpCAS::logout();
+		// 	//header('Location: '.$urlLogOut);
+		// }
 		$mustDieAfterAction = true;
 		break;
 
