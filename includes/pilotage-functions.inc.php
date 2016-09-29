@@ -271,10 +271,7 @@ function modifierParams($domain) {
 // fonction qui renvoie vrai si l'utilisateur a un role quelconque sur le blog donné.
 // --------------------------------------------------------------------------------
 function aUnRoleSurCeBlog($pUserId, $pBlogId){
-  switch_to_blog($pBlogId);
-  $res = is_blog_user($pBlogId);
-  restore_current_blog();
-  return $res;
+  return is_user_member_of_blog($pUserId, $pBlogId);
 }
 
 // --------------------------------------------------------------------------------
