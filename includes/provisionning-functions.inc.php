@@ -230,7 +230,12 @@ function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $si
 	logIt("Cr&eacute;ation du blog pour le domaine '".$domain."'.");
 	$wpBlogId = create_empty_blog( $domain, $path, $sitename, $site_id);
 	logIt("Ce blog a pour id #".$wpBlogId.".");
-	
+
+	// HACK: problème de droit lors de la création d'un blog MU
+	// dans wp_x_options l'option_name = wp_user_roles est crée
+	// alors qu'il faudrait l'option_name wp_x_user_roles
+    add_blog_option($wpBlogId, 'wp_'.$wpBlogId.'_user_roles', get_blog_option( $wpBlogId, 'wp_user_roles'));
+    	
 	logIt("Param&eacute;trage des options par d&eacute;faut pour le blog #".$wpBlogId.".");
 	// Ajout du role administrator sur le blog crée
 	add_user_to_blog($wpBlogId, $wpUsrId, "administrator");
