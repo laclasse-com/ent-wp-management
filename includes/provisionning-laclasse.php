@@ -90,10 +90,10 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   else {
     logIt("Blogname n'est pas renseign&eacute;.");
     $url = str_replace("http://", "", home_url());
+    $url = str_replace("https://", "", $url);
+
+    $domain = $url;
     $sitename = str_replace(".".BLOG_DOMAINE, "", $url);
-    // FIX : si le domaine doit être identique au blog des blogs 
-    // pour éviter blogs.laclasse.com.blogs.laclasse.com !
-    $domain = $sitename; 
   }
   
   logIt("url : '".$url."'.");
