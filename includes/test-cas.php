@@ -28,11 +28,11 @@ function script_info() {
 }
 //-----------------------------------------------------------------------------------------
 
-$cas_host = 'cas.cybercolleges42.fr';
-//$cas_host = 'www.dev.laclasse.com';
+//$cas_host = 'cas.cybercolleges42.fr';
+$cas_host = 'v3dev.laclasse.com';
 $cas_port = 443;
-$cas_context = '';
-//$cas_context = '/sso';
+//$cas_context = '';
+$cas_context = '/sso';
 
 // Load the CAS lib
 require_once '/var/www/html/CAS-1.2.0/CAS.php';
