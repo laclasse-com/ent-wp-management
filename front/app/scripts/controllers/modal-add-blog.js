@@ -43,23 +43,26 @@ angular.module('blogsApp')
 		$scope.currentType.code = type;
 		$scope.currentType.name = Blogs.changeTypeDropdown(type);
 
-		if ($scope.currentType.name == "Classe") {
+		if ($scope.currentType.code == "CLS") {
 			$scope.currentRegroupement.name = "Choisissez une de vos classes";
 			$scope.blogdescription = "site de la classe ";
 		}
-		else if ($scope.currentType.name == "Etablissement") {
+		else if ($scope.currentType.code == "ETB") {
 			$scope.currentRegroupement.name = "Choisissez un de vos établissements";
 			$scope.blogdescription = "site de l'établissement ";
 		}
-		else if ($scope.currentType.name == "Groupe d'élèves") {
+		else if ($scope.currentType.code == "GRP") {
 			$scope.currentRegroupement.name = "Choisissez un de vos groupes d'élèves";
 			$scope.blogdescription = "site du groupe d'élèves ";
 		}
-		else if ($scope.currentType.name == "Groupe libre") {
+		else if ($scope.currentType.code == "GPL") {
 			$scope.currentRegroupement.name = "Choisissez un de vos groupes libres";
 			$scope.blogdescription = "site du groupe libre ";
 		}
-		//on affecte tous ses regroupements correspondant au type.
+        else {
+			$scope.blogdescription = "site public";
+        }
+		// on affecte tous ses regroupements correspondant au type.
 		$scope.regroupements = Blogs.loadRegroupmentsDropdown(type, connectedUser);
 	};
 
@@ -194,9 +197,10 @@ angular.module('blogsApp')
 		//vérification des champs
 		$scope.required.title = !Blogs.checkField("title", $scope.titleBlog, "");
 		$scope.required.type = !Blogs.checkField("type", $scope.currentType.code, null);
-		$scope.required.regroupement = !Blogs.checkField("regroupement", $scope.currentRegroupement.id, null);
+		$scope.required.regroupement = !(($scope.currentType.code == 'ENV') || Blogs.checkField("regroupement", $scope.currentRegroupement.id, null));
 		$scope.errorMsgDomain ="Le sous-domaine est obligatoire et il doit être en miniscule !";
 		$scope.required.domain = !Blogs.checkField("subdomain", $scope.subDomain, "");
+        console.log($scope.required);
 		//pour pouvoir fermer la modal et créer le blogs, il faut que tous les champs soit correcte
 		// tester aussi l'existance dans WP
 		if ($scope.subDomain.length > 3) {
@@ -206,7 +210,7 @@ angular.module('blogsApp')
 			var blog = {
 				blog_id: Blogs.tempId(),
 				blogname: $scope.titleBlog,
-				description: $scope.blogdescription + $scope.currentRegroupement.name,
+				description: $scope.blogdescription + (($scope.currentType.code == 'ENV')?'': $scope.currentRegroupement.name),
 				type: $scope.currentType.code,
 				uai: $scope.currentRegroupement.uai,
 				rgptId: $scope.currentRegroupement.id,

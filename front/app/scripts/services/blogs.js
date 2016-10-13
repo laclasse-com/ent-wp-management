@@ -83,7 +83,7 @@ angular.module('blogsApp')
 
     _.each($rootScope.modifBlogs, function(blog){
       var qryStr = "&" + blog.type.toLowerCase() + "id=" + blog.rgptId;
-      var type = ( blog.type == "GPL" ? "ENV" : blog.type );
+      var type = blog.type;
       qryStr += "&blogtype=" + type + "&domain=" + blog.domain + "&blogdescription=" + encodeURI(blog.description);
 
     WPApi.launchAction( "CREATION_BLOG", encodeURI(blog.blogname) + qryStr )
@@ -135,9 +135,6 @@ angular.module('blogsApp')
   // Fonction de gestion de la sélectbox "type de blog"
   // ------------------------------------------------------------------------
   this.changeTypeDropdown = function(type){
-    // Convertir le type qui vient de WP :( #FuckingHack 
-    type = (type =='ENV') ? 'GPL' : type;
-
     if (type == "none") {
       return "Type de blogs"; 
     }

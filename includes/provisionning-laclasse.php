@@ -55,8 +55,6 @@ function provision_comptes_laclasse($User_Mode_Test="") {
   $username = "";
   // Setting des variables couramment utilisées dans les api WP
   $site_id = 1;
-  
-  error_log("DANIEL provision_comptes_laclasse");
 
   if (has_action( 'wp_authenticate', array('wpCAS', 'authenticate') )) {
     logIt('L\'autentification CAS est connect&eacute; sur le hook "wp_authenticate".');

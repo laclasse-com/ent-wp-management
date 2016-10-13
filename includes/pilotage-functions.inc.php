@@ -95,6 +95,14 @@ function has_groupe($groupes, $wanted_groupe) {
     return false;
 }
 
+function has_groupelibre($groupes, $wanted_groupe) {
+    foreach ($groupes as $groupe) {
+        if ($groupe->regroupement_libre_id == $wanted_groupe) {
+            return true;
+        }
+    }
+    return false;
+}
 
 //
 // Return a WordPress role for the given user on the given blog
@@ -153,7 +161,7 @@ function getUserWpRole($userENT, $blog) {
     elseif($blog['type_de_blog'] == 'GPL') {
         if(has_role($userENT->roles, 'ADM_ETB', $uai) || has_role($userENT->roles, 'DIR_ETB', $uai))
             return 'administrator';
-        if(has_groupe($userENT->groupes_libres, $blog['groupelibre_ENT'])) {
+        if(has_groupelibre($userENT->groupes_libres, $blog['groupelibre_ENT'])) {
             if(has_role($userENT->roles, 'AVS_ETB', $uai) ||
                has_role($userENT->roles, 'CPE_ETB', $uai) || 
                has_role($userENT->roles, 'PROF_ETB', $uai))
@@ -200,7 +208,7 @@ function has_right($userENT, $blog) {
        }
     }
     elseif($blog['type_de_blog'] == 'GPL') {
-       if(has_groupe($userENT->groupes_libres, $blog['groupelibre_ENT'])) {
+       if(has_groupelibre($userENT->groupes_libres, $blog['groupelibre_ENT'])) {
            return true;
        }
     }

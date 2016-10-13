@@ -25,7 +25,7 @@
 			<span ng-if="required.type" class="label label-danger msg-error">Le type du blog est obligatoire !</span>				
 		</div>
 	</div>
-	<div class="champs" ng-if="currentType.code != null">
+	<div class="champs" ng-if="(currentType.code != null) && (currentType.code != 'ENV')">
 		<label>Vos {{currentType.name}}</label>
 		<div class="btn-group" dropdown>
 			<button type="button" class="btn btn-modal dropdown">{{currentRegroupement.name}}</button>

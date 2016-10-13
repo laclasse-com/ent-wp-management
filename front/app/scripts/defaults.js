@@ -20,5 +20,9 @@ angular.module('blogsApp')
 	{
 		name: "Groupe libre",
 		code: "GPL"
+	},
+	{
+		name: "Public",
+		code: "ENV"
 	}
 ]);
