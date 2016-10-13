@@ -13,6 +13,8 @@ function get_http($url){
 	curl_setopt($ch, CURLOPT_HEADER, 0);
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+	curl_setopt($ch, CURLOPT_USERPWD, ANNUAIRE_APP_ID . ":" . ANNUAIRE_API_KEY);
+
 	
 	$data = curl_exec($ch);
 	if (curl_errno($ch)) {
@@ -93,48 +95,7 @@ function errMsg($msg){
 		<p>Il semble qu\'il se soit produit une erreur.</p>
 		<p>'.$msg.'.</p>
 		<p>Vous pouvez contacter le support 
-		<a href="mailto:supportblog@laclasse.com" target="_blank">supportblog@laclasse.com</a>.</p>'
+		<a href="mailto:support@laclasse.com" target="_blank">support@laclasse.com</a>.</p>'
 		);
-}
-
-// --------------------------------------------------------------------------------
-// Fonction qui renvoie le role WP en fonction du profil des ENTs.
-// --------------------------------------------------------------------------------
-// - ADMIN : Devient super-administreur de tout les blogs, pas de création de blog.
-
-// - PROF, 
-// - ADM_ETB, CPE, PRINCIPAL : Deviennent administrateur de leur domaine si le domaine n'existe pas,
-//                   avec création de blog, sinon devient éditeur du blog existant.
-               
-//    - PRINCIPAL  : Si le blog est celui de son établissement : Devient administrateur de son domaine. 
-//                   Pour tous les autres blogs, voir la règle ci dessus (profs, cpe, adm_etb).
-					   
-// - ELEVE : Devient contributeur du blog existant dans le domaine, pas de création de blog.
-// - PARENT : Devient souscripteur du blog existant, pas de création de blog.
-// --------------------------------------------------------------------------------
-function get_WP_role_from_ent_profil($profil_ent, $is_new_domain){
-	switch($profil_ent) {
-	case "ADMIN" : 
-	    $role_wp = "administrator";
-	    break;
-	  case "PROF" : 
-	  case "ADM_ETB" : 
-	  case "CPE" : 
-	  case "PRINCIPAL" : 
-	    $role_wp = ($is_new_domain) ? "administrator" : "editor";
-	    break;
-	  case "ELEVE" : 
-	    $role_wp = "contributor";
-	    break;
-	  case "PARENT" : 
-	    $role_wp = "subscriber";
-	    break;
-	  case "INVITE" : 
-	    $role_wp = "subscriber";
-	    break;
-	  default :
-	    $role_wp = "subscriber";
-	}
-	return $role_wp;
 }
 
