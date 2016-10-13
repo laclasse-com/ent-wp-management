@@ -43,25 +43,24 @@ angular.module('blogsApp')
 		$scope.currentType.code = type;
 		$scope.currentType.name = Blogs.changeTypeDropdown(type);
 
-		// Gérer les pluriels et les genres
-		var genre = "un";
-		var partitif = "du ";
-		var label = $scope.currentType.name.toLowerCase();
-
 		if ($scope.currentType.name == "Classe") {
-			genre = "une";
-			partitif = "de la ";
+			$scope.currentRegroupement.name = "Choisissez une de vos classes";
+			$scope.blogdescription = "site de la classe ";
 		}
-
-		if ($scope.currentType.name == "Etablissement") {
-			label = "établissement";
-			partitif = "de l'";
+		else if ($scope.currentType.name == "Etablissement") {
+			$scope.currentRegroupement.name = "Choisissez un de vos établissements";
+			$scope.blogdescription = "site de l'établissement ";
 		}
-
+		else if ($scope.currentType.name == "Groupe d'élèves") {
+			$scope.currentRegroupement.name = "Choisissez un de vos groupes d'élèves";
+			$scope.blogdescription = "site du groupe d'élèves ";
+		}
+		else if ($scope.currentType.name == "Groupe libre") {
+			$scope.currentRegroupement.name = "Choisissez un de vos groupes libres";
+			$scope.blogdescription = "site du groupe libre ";
+		}
 		//on affecte tous ses regroupements correspondant au type.
-		$scope.currentRegroupement.name = "Choisissez " + genre + " de vos "+ label.replace(' ', 's ') + "s";
 		$scope.regroupements = Blogs.loadRegroupmentsDropdown(type, connectedUser);
-		$scope.blogdescription = "site " + partitif + label + " ";
 	};
 
 	// ---------------------------------------------------------------------------
