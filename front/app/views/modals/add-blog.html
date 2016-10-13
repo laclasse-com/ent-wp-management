@@ -1,8 +1,8 @@
-<div class="modal-header"><h2>Créer un blog</h2></div>
+<div class="modal-header">Créer un blog</div>
 <div class="modal-body">
 	<div class="champs">
 		<label>Titre du blog</label>
-		<input type="text" maxlength="200" ng-model="titleBlog" placeholder="Titre du nouveau blog"/>
+		<input type="text" maxlength="200" class="form-control" ng-model="titleBlog" placeholder="Titre du nouveau blog"/>
 		<i ng-if='required.title' class="glyphicon glyphicon-remove"></i><i ng-if="checkTitle()" class="glyphicon glyphicon-ok"></i>
 		<div>
 			<span ng-if="required.title" class="label label-danger msg-error">Le titre du blog est obligatoire !</span>			
@@ -34,7 +34,7 @@
 				<span class="sr-only">Split button!</span>
 			</button>
 			<ul class="dropdown-menu regroupements" role="menu">
-				<input disable-auto-close type="search" class="dropdown-search" ng-model="searchFilter" placeholder="Rechercher"></input>
+				<input disable-auto-close type="search" class="dropdown-search form-control" ng-model="searchFilter" placeholder="Rechercher"></input>
 				<li ng-repeat="regroupement in regroupements | filter:searchFilter"><a ng-click="changeTypeRegroupement(regroupement)">{{regroupement.name}}</a></li>
 			</ul>
 		</div>
@@ -45,7 +45,7 @@
 	</div>
 	<div class="champs">
 		<label>Sous-domaine</label>
-		<input type="text" maxlength="200" ng-model="subDomain" ng-change="checkSubDomain()" placeholder="Nom-du-sous-domaine"/>{{domain}} 
+		<input type="text" maxlength="200" class="form-control" style="display: inline-block; width: 50%" ng-model="subDomain" ng-change="checkSubDomain()" placeholder="Nom-du-sous-domaine"/>&nbsp;.{{domain}} 
 		<i ng-if='required.domain || existing || subDomain == ""' class="glyphicon glyphicon-remove"></i>
 		<i ng-if="!existing && subDomain != ''" class="glyphicon glyphicon-ok"></i>
 		<div>
@@ -55,6 +55,6 @@
 	</div>
 </div>
 <div class="modal-footer">
-    <button class="btn btn-modal" ng-click="cancel()"><label><i class="glyphicon glyphicon-remove"></i>Annuler</label></button>
-    <button ng-if="!existing" class="btn btn-modal" ng-click="addBlog()"><label><i class="glyphicon glyphicon-ok"></i>Valider</label></button>
+    <button class="btn btn-modal" ng-click="cancel()"><i class="glyphicon glyphicon-remove"></i>Annuler</button>
+    <button ng-if="!existing" class="btn btn-modal" ng-click="addBlog()"><i class="glyphicon glyphicon-ok"></i>Valider</button>
 </div>

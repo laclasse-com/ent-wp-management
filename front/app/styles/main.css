@@ -1,10 +1,13 @@
 html,
 body {
     height: 100%;
+	font-family: 'Open Sans', sans-serif;
 }
 
 .purcent-page {
 	height: 100%;
+	margin: 0;
+	padding: 0;
 }
 
 .purcent-page .filter-display{
@@ -21,6 +24,8 @@ body {
 
 #contentAsideId {
 	overflow-y: auto;
+	box-shadow: rgba(0,0,0,0.5) 0px 0px 8px;
+    z-index: 2;
 }
 
 .purcent-page .sons div{
@@ -45,10 +50,6 @@ body {
     width: 100%;    
 }
 
-.container *{
-    margin: 0;
-    padding: 0;
-}
 .damier {
     background-color: #eee;
 }
@@ -174,4 +175,45 @@ body {
     background-color: yellow;
 }
 
+
+.btn {
+	background: inherit;
+	border-radius: 0;
+	text-transform: uppercase;
+	border-color: #ccc;
+}
+
+.btn.dropdown {
+	text-transform: none;
+}
+
+.btn * {
+	cursor: inherit;
+}
+
+.btn > .glyphicon:first-child {
+	margin-right: 10px;
+}
+
+.modal-header {
+	text-transform: uppercase;
+	font-weight: bold;
+}
+
+.modal-content {
+	border-radius: 0;
+}
+
+.dropdown-menu {
+	border-radius: 0;
+	padding: 0;
+}
+
+.form-control {
+	border-radius: 0;
+}
+
+input {
+	padding: 5px;
+}
 
