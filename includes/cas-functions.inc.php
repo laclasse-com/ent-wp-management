@@ -59,6 +59,7 @@ class wpCAS {
 	*/
 	function authenticate() {
 		global $wpcas_options, $cas_configured, $ent;
+
 		logIt("<h1>ENT : $ent</h1>");
 		$proto = ($wpcas_options[$ent]['server_port'] == '443') ? 's': '';
 		logIt("Serveur d'authentification : http".$proto."://".$wpcas_options[$ent]['server_hostname'].":".$wpcas_options[$ent]['server_port'].$wpcas_options[$ent]['server_path'].".");
@@ -79,12 +80,28 @@ class wpCAS {
 				wp_set_current_user( $user->ID );
 				
 				// Enregistrement de l'ENT de provenance pour ce username
-				update_user_meta($user->ID, 'nom_ENT', $ent);
+	   			if(phpCAS::getAttribute('LaclassePrenom') && phpCAS::getAttribute('LaclasseNom')) {
+
+	                // Met à jour les données de l'utilisateur
+					wp_update_user( 
+						array (
+							'ID' => $user->ID, 
+							'first_name' => phpCAS::getAttribute('LaclassePrenom'), 
+							'last_name' => phpCAS::getAttribute('LaclasseNom'),
+							'display_name' => phpCAS::getAttribute('LaclasseNom').' '.
+								phpCAS::getAttribute('LaclassePrenom'),
+							'user_email' => phpCAS::hasAttribute('MailAdressePrincipal') ?
+								phpCAS::getAttribute('MailAdressePrincipal') :
+								phpCAS::getAttribute('LaclasseEmail')
+						)
+					);
+				}
 			}
 			// On provisionne ce qu'il manque : user ou blog, ou les deux
 			wpcas_provisioning();
 		
-		}else{
+		}
+		else {
 			// hey, authenticate
 			phpCAS::forceAuthentication();
 			die();
@@ -194,6 +211,5 @@ if ($cas_configured) {
 	unset($phpCas);
 	
 	// if you want to set a cert, replace the above few lines
- }
+}
 
-?>
