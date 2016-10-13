@@ -25,18 +25,16 @@ Author URI: http://www.laclasse.com/
 */
 // Fichier de configuration
 require_once('ENTconfig.inc.php');
-// fonctions génériques
+// fonctions gÃ©nÃ©riques
 require_once('includes/functions.inc.php');
-// Fonctions liées aux hooks WordPress
+// Fonctions liÃ©es aux hooks WordPress
 require_once('includes/hooks-functions.inc.php');
-// Fonctions liées au pilotage d'action sur WordPress depuis l'ENT.
+// Fonctions liÃ©es au pilotage d'action sur WordPress depuis l'ENT.
 require_once('includes/pilotage-functions.inc.php');
-// Fonctions liées à la CASification de WordPress.
+// Fonctions liÃ©es Ã  la CASification de WordPress.
 require_once('includes/cas-functions.inc.php');
-// Fonctions de paramétrage du back-office des options du plugin.
+// Fonctions de paramÃªtrage du back-office des options du plugin.
 require_once('includes/ENTback-office.php'); 
-// Fonctions de signature des requetes
-require_once('includes/signature-functions.php'); 
 
 require_once(ABSPATH . WPINC . '/registration.php');
 require_once(ABSPATH . WPINC . '/formatting.php');
@@ -50,8 +48,8 @@ require_once(ABSPATH.'/wp-admin/includes/ms.php');
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	
-	Paramétrage des assertion : rendre l'assertion silencieuxse 
-	pour gérer une erreur perso.
+	ParamÃ©trage des assertion : rendre l'assertion silencieuxse 
+	pour gÃ©rer une erreur perso.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 assert_options(ASSERT_ACTIVE, 1);
@@ -79,17 +77,17 @@ add_filter('logout_url',array('wpCAS', 'get_url_logout'));
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	
-	h o o k s   e t   f i l t r e s   g é n é r a u x 
+	h o o k s   e t   f i l t r e s   g Ã© n Ã© r a u x 
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
-// ajouter le role à côté du nom à la place de "Howdy"
+// ajouter le role du nom Ã  la place de "Howdy"
 add_filter( 'admin_bar_menu', 'bienvenue');
 // Ajout d'un texte perso dans le footer.
 add_filter('admin_footer_text', 'addEntName', 10, 0);
-// Marquage Ministériel
+// Marquage MinistÃ¨riel
 add_action('wp_footer', 'xiti_MEN_et_google', 10, 0);
 
-// Ma”triser les headers http qui sont envoyés
+// MaÃ®triser les headers http qui sont envoyÃ©s
 add_action( 'login_init', 'remove_frame_options_header',12, 0 );
 add_action( 'admin_init', 'remove_frame_options_header', 12, 0 );
 
@@ -115,7 +113,7 @@ add_filter('manage_sites_custom_column', 'getCustomSiteMeta', 10, 2);
 // liste des blogs de l'utilisateur
 add_filter('myblogs_options', 'getCustomExtraInfoBlog', 10, 2);
 add_filter('myblogs_blog_actions', 'getCustomActionBlog', 10, 2);
-// Hook pour la désinscription d'un blog.
+// Hook pour la dÃ©sinscription d'un blog.
 // add_action( 'myblogs_allblogs_options', 'actionsBlog', 10, 0);
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -123,7 +121,7 @@ add_filter('myblogs_blog_actions', 'getCustomActionBlog', 10, 2);
 	l i s t e   d e s   a r t i c l e s 
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
-// selectbox pour réduire la liste par auteur
+// selectbox pour rÃ©duire la liste par auteur
 add_action('restrict_manage_posts', 'restrict_manage_authors');
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -132,8 +130,8 @@ add_action('restrict_manage_posts', 'restrict_manage_authors');
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
-// Cette action est envoyée à chaque mise à jour d'une option. Il faut donc filtrer 
-// par rapport à la page du back-office en cours et aux noms des options.
+// Cette action est envoyÃ© Ã  chaque mise Ã  jour d'une option. Il faut donc filtrer 
+// par rapport Ã  la page du back-office en cours et aux noms des options.
 add_action( 'update_option', 'synchroENT', 10, 3);
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -149,20 +147,20 @@ add_filter('wpmu_welcome_user_notification', 'disableThisFunc', 10, 2);
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	
-	s é c u r i s a t i o n   d e   l a   p l a t e f o r m e 
+	s Ã© c u r i s a t i o n   d e   l a   p l a t e f o r m e 
 
 http://www.geekpress.fr/wordpress/guide/7-conseils-securite-wordpress-802/
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
-// Supprimer la version de WP dans l'entte publique
+// Supprimer la version de WP dans l'entÃªte publique
 remove_action('wp_head', 'wp_generator');
-// Supprimer l'accs à la modification des tèhmes : editeur de thme
+// Supprimer l'accÃ¨s Ã  la modification des thÃ¨mes : editeur de thÃ¨me
 add_action( 'admin_init', 'remove_editor_menu', 20);
 add_action( '_admin_menu', 'user_role_editor_settings', 25);
 
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	
-	h o o k s   p o u r   a j o u t e r   d e s   a p i   à  R E S T _ A P I .
+	h o o k s   p o u r   a j o u t e r   d e s   a p i   R E S T _ A P I .
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 add_action( 'rest_api_init', function () {
@@ -180,7 +178,7 @@ add_action( 'rest_api_init', function () {
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
 // --------------------------------------------------------------------------------
-// Contrôleur d'actions
+// ContrÃ´leur d'actions
 // --------------------------------------------------------------------------------
 
 if (isset($_REQUEST['ENT_action'])) {
@@ -188,30 +186,29 @@ if (isset($_REQUEST['ENT_action'])) {
 	$ENT_action 		= $_REQUEST['ENT_action'];
 	//$ENTblogid 			= $_REQUEST['ENTblogid'];
 	$ENTblogid 			= $_REQUEST['pblogid'];
+	$blogid 			= $_REQUEST['blogid'];
 	$blogname 			= $_REQUEST['blogname'];
 	$blogtype 			= $_REQUEST['blogtype'];
 	$username			= $_REQUEST['username'];
 	$uid				= $_REQUEST['uid'];
 	$uid_admin			= $_REQUEST['uid_admin'];
-	$signature 			= $_REQUEST['signature'];
 	$blogdescription 	= $_REQUEST['blogdescription'];
-	$mustDieAfterAction = false;  // Utilisé pour les actions qui ne nécessitent pas d'affichage après s'être déroulées.
+	$mustDieAfterAction = false;  // UtilisÃ© pour les actions qui ne nÃ©cessitent pas d'affichage aprÃ¨s s'Ãªtre dÃ©roulÃ©es.
 	
 	switch ($ENT_action) {
 
 	//  --------------------------------------------------------------------------------
 	//
-	// API pour récupérer le current user depuis l'annuaire v3
+	// API pour rÃ©cupÃ©rer le current user depuis l'annuaire v3
 	//
 	// ---------------------------------------------------------------------------------
 	case 'CURRENT_USER' :
 		if (phpCAS::isAuthenticated()) {
-			header('Content-Type: application/json');
-			$url = generate_url(ANNUAIRE_URL . "api/app/users/" . $_SESSION['phpCAS']['attributes']['uid'] , Array("expand" => "true"));
-			$res = get_http($url);
+			header('Content-Type: application/json; charset=UTF-8');
+			$res = get_http(ANNUAIRE_URL . "api/app/users/" . phpCAS::getAttribute('uid') . "?expand=true");
 			echo $res;
 		} else { 
-			// Si pas authentifié, ion force l'authentification. Du coup, le provisionning du user se fait.
+			// Si pas authentifiÃ©, ion force l'authentification. Du coup, le provisionning du user se fait.
 			phpCAS::forceAuthentication(); 
 		}
 		$mustDieAfterAction = true;
@@ -219,14 +216,14 @@ if (isset($_REQUEST['ENT_action'])) {
 
 	//  --------------------------------------------------------------------------------
 	//
-	// Front office de présentation des blogs.
+	// Front office de prÃ©sentation des blogs.
 	//
 	// ---------------------------------------------------------------------------------
 	case 'FRONT' :
 		if (phpCAS::isAuthenticated()) {
 			include(plugin_dir_path( __FILE__ ) . 'front/index.php');
 		} else { 
-			// Si pas authentifié, ion force l'authentification. Du coup, le provisionning du user se fait.
+			// Si pas authentifiÃ©, ion force l'authentification. Du coup, le provisionning du user se fait.
 			phpCAS::forceAuthentication(); 
 		}
 		$mustDieAfterAction = true;
@@ -234,7 +231,7 @@ if (isset($_REQUEST['ENT_action'])) {
 
 	//  --------------------------------------------------------------------------------
 	//
-	// Création de blogs
+	// CrÃ©ation de blogs
 	//
 	// ---------------------------------------------------------------------------------
 	case 'CREATE_BLOG' :
@@ -243,7 +240,7 @@ if (isset($_REQUEST['ENT_action'])) {
 			require_once('includes/provisionning-laclasse.php');
 			provision_comptes_laclasse();
 		} else { 
-			// Si pas authentifié, ion force l'authentification. Du coup, le provisionning du user se fait.
+			// Si pas authentifiÃ©, ion force l'authentification. Du coup, le provisionning du user se fait.
 			phpCAS::forceAuthentication(); 
 		}
 		$mustDieAfterAction = true;
@@ -256,7 +253,7 @@ if (isset($_REQUEST['ENT_action'])) {
 	// --------------------------------------------------------------------------------
 	case 'IFRAME' :
 		setIframeTemplate();
-		$mustDieAfterAction = false;	// Maintenant qu'on a ajouté des filtres, on veut afficher le site.
+		$mustDieAfterAction = false;	// Maintenant qu'on a ajoutÃ© des filtres, on veut afficher le site.
 		break;
 
 	// --------------------------------------------------------------------------------
@@ -265,9 +262,9 @@ if (isset($_REQUEST['ENT_action'])) {
 	//
 	// --------------------------------------------------------------------------------
 	case 'BLOG_EXISTS' :
-		header('Content-Type: application/json');	
+		header('Content-Type: application/json; charset=UTF-8');	
 		$existance = blogExists($blogname);	
-		echo json_encode( array("result" => $existance ) );
+		echo json_encode( array("result" => $existance ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
 		$mustDieAfterAction = true;
 		break;
 
@@ -282,14 +279,14 @@ if (isset($_REQUEST['ENT_action'])) {
 		break;
 
 	// --------------------------------------------------------------------------------
-	// Renvoie l'ID WP d'un blog identifié par son nom.
+	// Renvoie l'ID WP d'un blog identifiÃ© par son nom.
 	// ?ENT_action=BLOG_ID
 	// --------------------------------------------------------------------------------
 	case 'BLOG_ID' :
 		$t = Array();
 		$t['id'] = getBlogIdByDomain($blogname);
-		header('Content-Type: application/json');	
-		echo json_encode($t);
+		header('Content-Type: application/json; charset=UTF-8');	
+		echo json_encode($t, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
 		$mustDieAfterAction = true;
 		break;
 	// --------------------------------------------------------------------------------
@@ -297,35 +294,47 @@ if (isset($_REQUEST['ENT_action'])) {
 	// ?ENT_action=BLOG_LIST
 	// --------------------------------------------------------------------------------
 	case 'BLOG_LIST' :
-		$t = Array("error" => "Vous devez vous authentifier...");
-		header('Content-Type: application/json');
+		header('Content-Type: application/json; charset=UTF-8');
+		// if user is not connected, HTTP 401
 		if (!phpCAS::isAuthenticated()) {
-			phpCAS::forceAuthentication();
+			http_response_code(401);
+			$t = Array("error" => "Vous devez vous authentifier...");
+			echo json_encode($t, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+			$mustDieAfterAction = true;
+			break;
 		}
 
-		$interests = blogList();
-		$mines = userBlogList($username);
+		$interests = blogList(phpCAS::getAttribute('uid'));
+		$mines = userBlogList(phpCAS::getUser());
 
 		foreach ($mines as $mine) {
 			foreach($interests as $k => $interest) {
-				if ($mine->domain == $interest['domain']) {
+				if ($mine->blog_id == $interest['blog_id']) {
 					unset($interests[$k]);
 					break;
 				}
 			}
 		}
 		$diff = array_values($interests);
-		echo json_encode($diff);
+		echo json_encode($diff, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
 		$mustDieAfterAction = true;
 		break;
 
 	// --------------------------------------------------------------------------------
 	// Liste des blogs de la plateforme auquel l'utilisateur est inscrit
-	// ?ENT_action=USER_BLOG_LIST&username=[login]
+	// ?ENT_action=USER_BLOG_LIST
 	// --------------------------------------------------------------------------------
 	case 'USER_BLOG_LIST' :
-		header('Content-Type: application/json');
-		echo json_encode(userBlogList($username));	
+		header('Content-Type: application/json; charset=UTF-8');
+		// if user is not connected, HTTP 401
+		if (!phpCAS::isAuthenticated()) {
+			http_response_code(401);
+			$t = Array("error" => "Vous devez vous authentifier...");
+			echo json_encode($t, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+			$mustDieAfterAction = true;
+			break;
+		}
+		echo json_encode(userBlogList(phpCAS::getUser()), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);	
 		$mustDieAfterAction = true;
 		break;
 
@@ -336,19 +345,12 @@ if (isset($_REQUEST['ENT_action'])) {
 	// --------------------------------------------------------------------------------
 	case 'LOGOUT' :	
 		wpCAS::logout();
-		// global $current_user;
-		// if (phpCAS::isAuthenticated()) {
-		// 	$current_user = get_user_by('login',phpCAS::getUser());
-		// 	$urlLogOut = htmlspecialchars_decode(wp_logout_url());
-		// 	wpCAS::logout();
-		// 	//header('Location: '.$urlLogOut);
-		// }
 		$mustDieAfterAction = true;
 		break;
 
 	// --------------------------------------------------------------------------------
 	//
-	// Modifier les paramtres du blog dans Worpress et mettre à jour dans l'ENT
+	// Modifier les paramÃ©tres du blog dans Worpress et mettre Ã  jour dans l'ENT
 	//
 	// --------------------------------------------------------------------------------
 	case 'MODIFIER_PARAMS' :
@@ -357,9 +359,9 @@ if (isset($_REQUEST['ENT_action'])) {
 		break;
 
 	// --------------------------------------------------------------------------------
-	// On suppose que le compte a déjà été provisionné, ET l'utilisateur est connecté
-	// wp_get_current_user() est donc renseigné
-	// - Il faut vérifier que l'utilisateur a le droit de s'inscrire
+	// On suppose que le compte a dÃ©jÃ  Ã©tÃ© provisionnÃ©, ET l'utilisateur est connectÃ©
+	// wp_get_current_user() est donc renseignÃ©
+	// - Il faut vÃ©rifier que l'utilisateur a le droit de s'inscrire
 	// Si blog ETB => UAI utilisateur == UAI 
 	// Si Blog de classe Classe utilisateur == classe_ENT pour les ELEVE
 	// Si BLog de groupe Groupe utilisateur == Groupe_ENT pour les ELEVE
@@ -369,89 +371,46 @@ if (isset($_REQUEST['ENT_action'])) {
 		$status = "error";
 		$message_retour = "";
 
-		assert('$blogname != ""', "Le paramètre \$blogname doit être renseigné.");
-
-		$current_user = get_user_by('login', $_SESSION['phpCAS']['attributes']['login']);
-		// Vérifier si l'utilisateur est bien connecté
-		assert ('$current_user->ID  != ""', "L'utilisateur n'est pas connecté sur la plateforme WordPress de laclasse.com.");
-
-		// Récupération des champs meta de l'utilisateur 
-		$userMeta = get_user_meta($current_user->ID);
-		assert ('$userMeta[\'profil_ENT\'][0] != ""', "Cet utilisateur n'a pas de profil sur la plateforme WordPress de laclasse.com.");
-
-		$uid_ent =  $userMeta['uid_ENT'][0];
-		$profil_ent = $userMeta['profil_ENT'][0];
-		$uai_user = $userMeta['etablissement_ENT'][0];
-		// $classe_user = $userMeta['classe_ENT'][0];
-
-		// Récupération des détails sur le blog
-		$blogid = getBlogIdByDomain($blogname.".".BLOG_DOMAINE);
-		assert ('$blogid != ""', "Le blog '$blogname.".BLOG_DOMAINE."' n'existe pas.");
-
-		$uai_blog =  get_blog_option($blogid, "etablissement_ENT");
-		$classe_ent = get_blog_option($blogid, "classe_ENT");
-		$groupe_ent = get_blog_option($blogid, "groupe_ENT");
-		$type_de_blog = get_blog_option($blogid, "type_de_blog");
-		assert('$type_de_blog != ""', "Le paramètre \$blogtype n'est pas renseigné pour ce blog.");
-
-		// Interrogation de l'annuaireV3 de l'ENT
-		$userENT =json_decode(get_http(generate_url(ANNUAIRE_URL."api/app/users/$uid_ent", Array("expand" => "true"))));
-
-		// Déterminer le role WordPress de l'utilisateur en fonction de son role ENT.
-		$role_wp = get_WP_role_from_ent_profil($profil_ent, false);
-
-		// Traiter tous les cas d'inscription en fonction du type de blog
-		switch ($type_de_blog) {
-			case "ETB":
-				if($uai_blog == $uai_user) {
-					$inscrire = true;
-					$message_retour = "Inscription de l'utilisateur $current_user->display_name ($profil_ent / $uid_ent) ".
-				 					  "au blog de son établissement $blogname.".BLOG_DOMAINE;
-				}
-				break;
-			
-			case "CLS":
-				foreach($userENT->classes as $c) {
-					if ($c->classe_id == $classe_ent) {
-						$inscrire = true;
-						$message_retour = "Inscription de l'utilisateur $current_user->display_name ($profil_ent / $uid_ent) ".
-				 					  "au blog de sa classe $blogname.".BLOG_DOMAINE;
-					break;
-					} else {
-						$message_retour = "Vous ne pouvez pas vous inscrire sur ce blog de classe.";
-					}
-				}
-				break;
-			
-			case "GRP":
-				foreach($userENT->groupes_eleves as $g) {
-					if ($g->groupe_id == $groupe_ent) {
-						$inscrire = true;
-						$message_retour = "Inscription de l'utilisateur $current_user->display_name ($profil_ent / $uid_ent) ".
-				 					  "au blog de son groupe $blogname.".BLOG_DOMAINE;
-					break;
-					} else {
-						$message_retour = "Vous ne pouvez pas vous inscrire sur ce blog de groupe.";
-					}
-				}
-				break;
-			
-			case "ENV":
-				// Tout le monde peut s'inscrire, avec un profil contributeur, 
-				// car les droits doivent être délégués par le propiétaire du blog (Plus de structure établissement ici)
-				$role_wp = "contributor";
-				$message_retour = "Inscription de l'utilisateur $current_user->display_name ($profil_ent / $uid_ent) ".
-								  "au blog partagé $blogname.".BLOG_DOMAINE;
-				$inscrire = true;
-				break;
-			
-			default:
-				// Pas d'inscription
-				$message_retour = "Pas d'inscription, type de blog inconnu";
-				$status = "error";
-				break;
+		header('Content-Type: application/json; charset=UTF-8');
+		// if user is not connected, HTTP 401
+		if (!phpCAS::isAuthenticated()) {
+			http_response_code(401);
+			$t = Array("error" => "Vous devez vous authentifier...");
+			echo json_encode($t, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+			$mustDieAfterAction = true;
+			break;
 		}
 
+		if($blogid == '') {
+			http_response_code(400);
+			$t = Array("error" => "Le paramÃ¨tre blogid doit Ãªtre enseignÃ©.");
+			echo json_encode($t, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+			$mustDieAfterAction = true;
+			break;
+		}
+
+		$current_user = get_user_by('login', phpCAS::getAttribute('login'));
+		// VÃ©rifier si l'utilisateur est bien connectÃ©
+		assert ('$current_user->ID  != ""', "L'utilisateur n'est pas connectÃ© sur la plateforme WordPress de laclasse.com.");
+
+		// RÃ©cupÃ©ration des dÃ©tails sur le blog
+        $blogData = getBlogData($blogid);
+
+		// Interrogation de l'annuaireV3 de l'ENT
+		$userENT = json_decode(get_http(ANNUAIRE_URL."api/app/users/".phpCAS::getAttribute('uid')."?expand=true"));
+
+		// DÃ©terminer le role WordPress de l'utilisateur en fonction de son role ENT.
+        $role_wp = getUserWpRole($userENT, $blogData);
+
+        if($role_wp != null) {
+            $inscrire = true;
+            $message_retour = "Inscription de l'utilisateur $current_user->display_name ".
+                              "au blog ".$blogData['blogname'].".";
+        }
+        else {
+            $message_retour = "Vous ne pouvez pas vous inscrire sur ce blog.";
+            $status = "error";
+        }
 
 		if ($inscrire) {
 			add_user_to_blog($blogid, $current_user->ID, $role_wp);
@@ -459,37 +418,48 @@ if (isset($_REQUEST['ENT_action'])) {
 			$message_retour .= ", role '$role_wp'";
 		}
 
-		header('Content-Type: application/json; charset=utf-8;');
-		echo json_encode(Array($status => utf8_encode($message_retour)));
+		echo json_encode(Array($status => $message_retour), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
 		$mustDieAfterAction = true;
 		break;
 	// --------------------------------------------------------------------------------
 	//
 	// Desinscription d'un blog.
-	// On suppose que l'utilisateur est logué et provisionné.
+	// On suppose que l'utilisateur est loguÃ© et provisionnÃ©.
 	//
 	// --------------------------------------------------------------------------------
 	case 'DESINSCRIRE' :
-		assert('$blogname != ""', "Le paramètre \$blogname doit être renseigné.");
 
-		$current_user = get_user_by('login', $_SESSION['phpCAS']['attributes']['login']);
-		// Vérifier si l'utilisateur est bien connecté
+		header('Content-Type: application/json; charset=UTF-8');
+		// if user is not connected, HTTP 401
+		if (!phpCAS::isAuthenticated()) {
+			http_response_code(401);
+			echo json_encode(Array("error" => "Vous devez vous authentifier..."),
+                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+			$mustDieAfterAction = true;
+			break;
+		}
+
+		if($blogid == '') {
+			http_response_code(400);
+			echo json_encode(Array("error" => "Le paramÃ¨tre blogid doit Ãªtre renseignÃ©."),
+                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+			$mustDieAfterAction = true;
+			break;
+		}
+
+		$current_user = get_user_by('login', phpCAS::getAttribute('login'));
+		// VÃ©rifier si l'utilisateur est bien connectÃ©
 		assert ('$current_user->ID  != ""', "L'utilisateur n'existe pas sur la plateforme WordPress de laclasse.com.");
 
-		// Récupération des détails sur le blog
-		$blogid = getBlogIdByDomain($blogname.".".BLOG_DOMAINE);
-		assert ('$blogid != ""', "Le blog '$blogname.".BLOG_DOMAINE."' n'existe pas.");
-
-		// Désinscrire l'utilisateur
+		// DÃ©sinscrire l'utilisateur
 		remove_user_from_blog($current_user->ID, $blogid);
 
-		header('Content-Type: application/json; charset=utf-8;');
-    	echo '{ "success" :  "'.str_replace('"', "'", "L'utilisateur $current_user->display_name est desinscrit du blog $blogname.".BLOG_DOMAINE).'" }';
+		echo json_encode(Array("success" => "L'utilisateur $current_user->display_name est dÃ©sinscrit du blog"), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
 		$mustDieAfterAction = true;
 		break;
 
 	case 'LISTE_ARCHIVAGE' : 
-		// Liste des blogs à conserver 
+		// Liste des blogs Ã  conserver 
 		$liste_a_conserver = array (
 		'http://actualitesaqueduc.blogs.laclasse.com/',		'http://actualitesphilo.blogs.laclasse.com/',
 		'http://actualitestheatre.blogs.laclasse.com/',		'http://alacroiseedesfutursconfluence2115.blogs.laclasse.com/',
@@ -854,14 +824,14 @@ if (isset($_REQUEST['ENT_action'])) {
 		$query = "";
 		$liste = $wpdb->get_results( "SELECT blog_id, domain, archived FROM $wpdb->blogs WHERE domain != '".BLOG_DOMAINE."' order by domain", ARRAY_A );
 
-		$html = "<html><head><title>Liste des sites à archiver</title>
+		$html = "<html><head><title>Liste des sites Ã  archiver</title>
 		<style>
 			  table td {padding:3px 20px 3px 20px;}
 			  table td {border:black solid 1px;}
 			  .gris-sale {background-color:#aaa;}
 			  .lilipute {font-size:0.6em;}
 		</style>\n</head><body><div style='margin:40px;'><h1>Liste des sites &agrave; archiver</h1>\n<table>\n";
-		$html .= "<p>Voici la liste des blogs à archiver. Si vous avez un doute, vous pouvez toujours aller visiter le blog pour être sûr. Lorsque vous êtes sûrs cliquez sur 'archiver. Ce processus est réversible, pas de panique, donc...</p>";
+		$html .= "<p>Voici la liste des blogs Ã  archiver. Si vous avez un doute, vous pouvez toujours aller visiter le blog pour Ãªtre sÃ»r. Lorsque vous Ãªtes sÃ»rs cliquez sur l'archiver. Ce processus est rÃ©versible, pas de panique, donc...</p>";
 		foreach($liste as $k => $blog) {
 			if (!in_array("http://".$blog['domain']."/", $liste_a_conserver) && $blog['domain'] != "") {
 				$gris_sale = ( $blog['archived'] == 0 ) ? '' : 'gris-sale';
@@ -872,7 +842,7 @@ if (isset($_REQUEST['ENT_action'])) {
 				if ($blog['archived'] == 0) {
 					$html .= "<td><a href='?ENT_action=$ENT_action&action2=archiveblog&id=".$blog['blog_id']."#".($k+1)."'>Archiver</a></td>";				
 				} else {
-					$html .= "<td>Archivé !&nbsp;&nbsp;&nbsp;<a href='?ENT_action=$ENT_action&action2=unarchiveblog&id=".$blog['blog_id']."#".($k+1)."'><span class='lilipute'>Désarchiver</span></a></td>";				
+					$html .= "<td>ArchivÃ© !&nbsp;&nbsp;&nbsp;<a href='?ENT_action=$ENT_action&action2=unarchiveblog&id=".$blog['blog_id']."#".($k+1)."'><span class='lilipute'>DÃ©sarchiver</span></a></td>";				
 				}
 				$html .= "</tr>\n";
 			}
@@ -886,7 +856,7 @@ if (isset($_REQUEST['ENT_action'])) {
 
 	//  --------------------------------------------------------------------------------
 	//
-	// Reprise de données pour les blogs, 
+	// Reprise de donnÃ©es pour les blogs, 
 	//
 	// ---------------------------------------------------------------------------------
 	case 'REPRISE_DATA' :
@@ -924,7 +894,7 @@ if (isset($_REQUEST['ENT_action'])) {
 		break;
 	// --------------------------------------------------------------------------------
 	//
-	// Action par défaut.
+	// Action par dÃ©faut.
 	//
 	// --------------------------------------------------------------------------------
 	default  :
@@ -933,10 +903,9 @@ if (isset($_REQUEST['ENT_action'])) {
 		break;
 	}
 	
-// ici, pour certaines actions, on veut juste piloter Wordpress avec nos actions émanant de l'ENT
-// et ne rien afficher. La pluspart du temps il s'agit d'actions de mise à jours  ou de provisionning.
-//	Dans ces cas, on arrte tout traitement d'affichage si nécessaire. 
+// ici, pour certaines actions, on veut juste piloter Wordpress avec nos actions Ã©manant de l'ENT
+// et ne rien afficher. La pluspart du temps il s'agit d'actions de mise Ã  jours  ou de provisionning.
+//	Dans ces cas, on arrÃªte tout traitement d'affichage si nÃ©cessaire. 
 if ($mustDieAfterAction) die();
 }
 
-?>
