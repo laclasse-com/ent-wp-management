@@ -43,14 +43,14 @@ angular.module('blogsApp')
 	//
 	$scope.addBlog = function(blog, idx){
 		// Gestion d'erreur
-		if (blog.blogname == undefined || blog.type_de_blog == undefined ) {
+		if (blog.blog_id == undefined || blog.type_de_blog == undefined ) {
 			Notifications.add("Erreur ! Ce blog ne semble pas valide.", "error");
 		} else {
 			//on peut ajouter un blog seulement si nous sommes pas en mode modification.
 			if ( !$rootScope.modification ) {
 				blog.action = 'subscribe'
 
-	            WPApi.launchAction("INSCRIRE", blog.domain.replace("." + BLOGS_DOMAIN, ""))
+	            WPApi.launchAction("INSCRIRE", blog.blog_id)
 	                // then() called when son gets back
 	                .then(function(data) {
 	                    // promise fulfilled

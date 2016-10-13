@@ -38,7 +38,7 @@ angular.module('blogsApp')
 					var b = $rootScope.blog;
 					b.action = 'unsubscribe';
 					if(b.blogname != undefined) {
-						WPApi.launchAction( 'DESINSCRIRE', b.domain.replace("." + BLOGS_DOMAIN, "") )		                
+						WPApi.launchAction( 'DESINSCRIRE', b.blog_id )		                
 			            .then(function(data) {
 			                // promise fulfilled
 			                if (data.success != undefined && data.success != "") {
@@ -51,7 +51,7 @@ angular.module('blogsApp')
 			            }, function(error) {
 			                // promise rejected, could log the error with: console.log('error', error);
 			                console.log('error', error);
-			                Notifications.add( "une erreur s'est produite sur l'ajout du blog '" + 
+			                Notifications.add( "une erreur s'est produite sur la déinscription au blog '" + 
 			    							   b.blogname + "'." +  response.statusText, "error");
 			            });
 			        }
