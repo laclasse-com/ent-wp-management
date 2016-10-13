@@ -28,7 +28,7 @@
 					<th>Suivre</th>
 				</tr>				
 				</tr>
-				<tr ng-repeat="blog in proposedBlogs | filter:search:false | limitTo:10">
+				<tr ng-repeat="blog in proposedBlogs | filter:search:false">
 					<td><a href="{{blog.siteurl}}" target="_blank" ng-bind-html="blog.blogname"></a></td>
 					<td ng-bind-html="blog.blogdescription"></td>
 					<td ng-bind-html="nameType(blog.type_de_blog)"></td>
