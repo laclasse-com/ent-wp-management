@@ -507,7 +507,7 @@ function reprise_data_blogs(){
           .msg {border:green solid 1px; float:right; margin-right:20%;background-color:lightgreen;padding:4px;}
     </style>\n</head><body><div style='margin:40px;'><h1>Liste des sites &agrave; reprendre</h1>\n
     $message
-    <table><tr><th>nom</th><th>url</th><th>Archivage</th><th>type_de_blog</th><th>UAI</th><th>classe_ENT</th><th>groupe_ENT</th><th>groupelibre_ENT</th></tr>\n";
+    <table><tr><th>blog_id</th><th>url</th><th>Archivage</th><th>type_de_blog</th><th>UAI</th><th>classe_ENT</th><th>groupe_ENT</th><th>groupelibre_ENT</th></tr>\n";
     $headerHtml .= "<p>Affectation d'un id de classe, de groupe d'élèves, de groupe libre ou d'établissement. Pour chaque blog, les <span class='warn'> zones en orange</span> sont à mettre à jour.</p>
     <p>Le système filtre les blogs déjà complètés mais vous avez la possibilité de <a href='/?ENT_action=REPRISE_DATA&tout_voir=Yesman'>tout voir quand même</a>.</p>
     <p>Pour récupérer un site archivé par mégarde, allez voir sur la page de <a href='/?ENT_action=LISTE_ARCHIVAGE' target='_blank'>gestion de l'archivage</a>.</p>";
@@ -533,7 +533,7 @@ function reprise_data_blogs(){
         <input type='hidden' name='id' value='" . $blog['blog_id'] . "'/>";
     
         $ligne = "<tr class='$gris_sale'>$form";
-        $ligne .= "<td><a name='".$k."'></a>".$k."</td>";
+        $ligne .= "<td><a name='".$k."'></a>".$blog['blog_id']."</td>";
         $ligne .= "<td><a href='http://".$blog['domain']."/' target='_blank'>".$blog['domain']."</a><br/><input type='text' name='blogname' value='".$blog_opts['blogname']."' style='width: 100%; margin: 4px;'></input><br/><input type='text' name='blogdescription' value='".$blog_opts['blogdescription']."' style='width: 100%; margin: 4px;'></input></td>";
 
         if ($blog['archived'] == 0) {
