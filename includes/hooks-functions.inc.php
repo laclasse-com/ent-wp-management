@@ -195,8 +195,9 @@ function formatTypeBlog($pBlogID, $pTypeBlog) {
 	switch ($pTypeBlog) {
 		case "CLS" : $LibTypeBlog = "Blog de classe"; $color = "chocolate"; break;
 		case "GRP" : $LibTypeBlog = "Blog de groupe d'&eacute;l&egrave;ves"; $color = "lightgreen"; break;
-		case "ENV" : $LibTypeBlog = "Blog de groupe de travail"; $color = "green"; break;
+		case "GPL" : $LibTypeBlog = "Blog de groupe de travail"; $color = "green"; break;
 		case "ETB" : $LibTypeBlog = "Blog d'&eacute;tablissement"; $color = "saddlebrown"; break;
+		case "ENV" : $LibTypeBlog = "Blog public"; $color = "green"; break;
 		default	   : if ($pBlogID == 1) $LibTypeBlog = "<strong>Blog principal</strong>";
 					 else $LibTypeBlog = "inconnu...";
 					 $color = "red";  
