@@ -417,7 +417,7 @@ function get_user_id_by_login($login) {
 // Reprendre les données pour les blogs restants / Migration v2 => v3
 // --------------------------------------------------------------------------------
 function reprise_data_blogs(){
-    $opts = Array('admin_email','siteurl','name','blogdescription','blogtype','etablissement_ENT','display_name', 'type_de_blog', 'classe_ENT', 'groupe_ENT', 'groupelibre_ENT');
+    $opts = Array('admin_email','siteurl','name','blogdescription','blogtype','etablissement_ENT','display_name', 'type_de_blog', 'classe_ENT', 'groupe_ENT', 'groupelibre_ENT', 'blogname');
     $opts_str = implode("','", $opts);
     $closeForm = "<td><button type='submit'>Ok</button></td></form>";
     $message = "";
@@ -481,6 +481,14 @@ function reprise_data_blogs(){
             $message = "<div class='msg'>Blog #$id : Type de blog mis &agrave; jour. type_de_blog=".$_REQUEST['type_de_blog']."</div>";
             update_blog_option( $id, 'type_de_blog', $_REQUEST['type_de_blog'] );
         }
+        if(isset($_REQUEST['blogname'])){
+            $message = "<div class='msg'>Blog #$id : blogname mis &agrave; jour</div>";
+            update_blog_option( $id, 'blogname', $_REQUEST['blogname'] );
+        }
+        if(isset($_REQUEST['blogdescription'])){
+            $message = "<div class='msg'>Blog #$id : blogdescription mis &agrave; jour</div>";
+            update_blog_option( $id, 'blogdescription', $_REQUEST['blogdescription'] );
+        }
     }
 
     // Extraction bdd
@@ -501,7 +509,7 @@ function reprise_data_blogs(){
     $message
     <table><tr><th>nom</th><th>url</th><th>Archivage</th><th>type_de_blog</th><th>UAI</th><th>classe_ENT</th><th>groupe_ENT</th><th>groupelibre_ENT</th></tr>\n";
     $headerHtml .= "<p>Affectation d'un id de classe, de groupe d'élèves, de groupe libre ou d'établissement. Pour chaque blog, les <span class='warn'> zones en orange</span> sont à mettre à jour.</p>
-    <p>Le systèem filtre les blogs déjà complètés mais vous avez la possibilité de <a href='/?ENT_action=REPRISE_DATA&tout_voir=Yesman'>tout voir quand même</a>.</p>
+    <p>Le système filtre les blogs déjà complètés mais vous avez la possibilité de <a href='/?ENT_action=REPRISE_DATA&tout_voir=Yesman'>tout voir quand même</a>.</p>
     <p>Pour récupérer un site archivé par mégarde, allez voir sur la page de <a href='/?ENT_action=LISTE_ARCHIVAGE' target='_blank'>gestion de l'archivage</a>.</p>";
 
     $k = 1;
@@ -526,7 +534,8 @@ function reprise_data_blogs(){
     
         $ligne = "<tr class='$gris_sale'>$form";
         $ligne .= "<td><a name='".$k."'></a>".$k."</td>";
-        $ligne .= "<td><a href='http://".$blog['domain']."/' target='_blank'>".$blog['domain']."</a><br/> ".$blog_opts['blogdescription']."</td>";
+        $ligne .= "<td><a href='http://".$blog['domain']."/' target='_blank'>".$blog['domain']."</a><br/><input type='text' name='blogname' value='".$blog_opts['blogname']."' style='width: 100%; margin: 4px;'></input><br/><input type='text' name='blogdescription' value='".$blog_opts['blogdescription']."' style='width: 100%; margin: 4px;'></input></td>";
+
         if ($blog['archived'] == 0) {
             $ligne .= "<td><a href='?ENT_action=".$_REQUEST['ENT_action']."&action2=archiveblog&id=".$blog['blog_id']."#".$k."'>Archiver</a></td>";              
         } else {
@@ -571,7 +580,7 @@ function reprise_data_blogs(){
         
         $class_warn = "";
         $champ_data = "";
-        if ($blog_opts['type_de_blog'] == "ENV") {
+        if ($blog_opts['type_de_blog'] == "GPL") {
             if ($blog_opts['groupelibre_ENT'] == "") {
                 $class_warn = "warn";
                 $need_data_completion = true;
@@ -601,7 +610,8 @@ function selectbox_type_blog($selectval) {
         case 'ETB': $e = "selected"; break;
         case 'CLS': $c = "selected"; break;
         case 'GRP': $g = "selected"; break;
-        case 'ENV': $l = "selected"; break;
+        case 'GPL': $l = "selected"; break;
+        case 'ENV': $p = "selected"; break;
         default: break;
     }
     return "
@@ -610,7 +620,8 @@ function selectbox_type_blog($selectval) {
     <option value='ETB'$e>ETB</option>
     <option value='CLS'$c>CLS</option>
     <option value='GRP'$g>GRP</option>
-    <option value='ENV'$l>ENV</option>
+    <option value='ENV'$l>GPL</option>
+    <option value='ENV'$p>ENV</option>
     </select>";
 }
 
