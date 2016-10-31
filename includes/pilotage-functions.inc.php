@@ -547,7 +547,7 @@ function reprise_data_blogs(){
 
         $class_warn = "";
         $champ_data = "";
-        if ($blog_opts['type_de_blog'] == "ETB" || $blog_opts['type_de_blog'] == "CLS" || $blog_opts['type_de_blog'] == "GRP") {
+        if ($blog_opts['type_de_blog'] == "ETB" || $blog_opts['type_de_blog'] == "CLS" || $blog_opts['type_de_blog'] == "GRP" || $blog_opts['type_de_blog'] == "GPL") {
             if ($blog_opts['etablissement_ENT'] == "") {
                 $class_warn = "warn";
                 $need_data_completion = true;
@@ -620,7 +620,7 @@ function selectbox_type_blog($selectval) {
     <option value='ETB'$e>ETB</option>
     <option value='CLS'$c>CLS</option>
     <option value='GRP'$g>GRP</option>
-    <option value='ENV'$l>GPL</option>
+    <option value='GPL'$l>GPL</option>
     <option value='ENV'$p>ENV</option>
     </select>";
 }
