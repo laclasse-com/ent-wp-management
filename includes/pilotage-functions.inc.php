@@ -127,6 +127,10 @@ function getUserWpRole($userENT, $blog) {
         if(has_role($userENT->roles, 'ADM_ETB', $uai) ||
            has_role($userENT->roles, 'DIR_ETB', $uai))
             return 'administrator';
+        if(has_role($userENT->roles, 'PROF_ETB', $uai) || 
+           has_role($userENT->roles, 'AVS_ETB', $uai) || 
+           has_role($userENT->roles, 'CPE_ETB', $uai))
+            return 'editor';
         if($uai == $blog['etablissement_ENT'])
             return 'subscriber';
     }
