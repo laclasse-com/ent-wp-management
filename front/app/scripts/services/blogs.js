@@ -100,7 +100,7 @@ angular.module('blogsApp')
   // ------------------------------------------------------------------------
   // harmonise la liste des blogs sur 15 cases puisqu'une est fixe.
   // ------------------------------------------------------------------------
-  this.attune = function( liste, search=false ){
+  this.attune = function( liste ){
     var i = 1;
     _.each(liste, function(item){
       item.color = COLOR_DAMIER[i%COLOR_DAMIER.length];
