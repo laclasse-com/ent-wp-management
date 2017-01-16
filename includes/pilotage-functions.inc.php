@@ -272,7 +272,7 @@ function blogList($uid_ent) {
     // Constitution de la liste
     $blogs = $wpdb->get_results( 
         "SELECT * FROM $wpdb->blogs WHERE domain != '".BLOG_DOMAINE."'
-        and archived = 0 and blog_id > 1 order by domain", 
+        and archived = 0 and deleted = 0 and blog_id > 1 order by domain", 
         ARRAY_A );
 
 	// Get all blogs
