@@ -191,7 +191,7 @@ angular.module('blogsApp')
       //
       case TYPES_BLOG[3].code:
         listDetailed = _.uniq(user.groupes_libres, function(gpl){
-          return gpl.groupe_libre_id;
+          return gpl.regroupement_libre_id;
         });
         _.each(listDetailed, function(gpl){
           regroupements.push({id: gpl.regroupement_libre_id, name: gpl.libelle});
