@@ -185,33 +185,33 @@ function has_right($userENT, $blog) {
         return true;
     }
 
-    // only view blog that correspond to the current
-    // etablissement in the profil_actif
-    if($userENT->profil_actif->etablissement_code_uai != $blog['etablissement_ENT']) {
-        return false;
-    }
-
     // if the user if a TECH allow all blogs
     if(has_role($userENT->roles, 'TECH')) {
         return true;
     }
 
-    // depending on the blog type
-    if($blog['type_de_blog'] == 'ETB') {
-        // like we have an active profil in the etablissement
-        return true;
+
+    // only view blog that correspond to the current
+    // etablissement in the profil_actif
+    if($userENT->profil_actif->etablissement_code_uai == $blog['etablissement_ENT']) {
+        // depending on the blog type
+        if($blog['type_de_blog'] == 'ETB') {
+            // like we have an active profil in the etablissement
+            return true;
+        }
+        elseif($blog['type_de_blog'] == 'CLS') {
+           if(has_classe($userENT->classes, $blog['classe_ENT'])) {
+               return true;
+           }
+        }
+        elseif($blog['type_de_blog'] == 'GRP') {
+           if(has_groupe($userENT->groupes_eleves, $blog['groupe_ENT'])) {
+               return true;
+           }
+        }
     }
-    elseif($blog['type_de_blog'] == 'CLS') {
-       if(has_classe($userENT->classes, $blog['classe_ENT'])) {
-           return true;
-       }
-    }
-    elseif($blog['type_de_blog'] == 'GRP') {
-       if(has_groupe($userENT->groupes_eleves, $blog['groupe_ENT'])) {
-           return true;
-       }
-    }
-    elseif($blog['type_de_blog'] == 'GPL') {
+
+    if($blog['type_de_blog'] == 'GPL') {
        if(has_groupelibre($userENT->groupes_libres, $blog['groupelibre_ENT'])) {
            return true;
        }
