@@ -22,21 +22,21 @@
 		<div class="table-responsive">
 			<table class="table table-bordered">
 				<tr class="gris2">
+					<th>Suivre</th>
 					<th>Nom</th>
 					<th>Description</th>
 					<th>Type</th>
-					<th>Suivre</th>
 				</tr>				
 				</tr>
 				<tr ng-repeat="blog in proposedBlogs | filter:search:false">
-					<td><a href="{{blog.siteurl}}" target="_blank" ng-bind-html="blog.blogname"></a></td>
-					<td ng-bind-html="blog.blogdescription"></td>
-					<td ng-bind-html="nameType(blog.type_de_blog)"></td>
 					<td>
 						<a ng-click="addBlog(blog)" title="Suivre ce blog">
 							<i class="glyphicon glyphicon-tag"></i>
 						</a>
 					</td>
+					<td><a href="{{blog.siteurl}}" target="_blank" ng-bind-html="blog.blogname"></a></td>
+					<td ng-bind-html="blog.blogdescription"></td>
+					<td ng-bind-html="nameType(blog.type_de_blog)"></td>
 				</tr>
 			</table>
 		</div>
