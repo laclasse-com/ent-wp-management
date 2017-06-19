@@ -205,7 +205,7 @@ if (isset($_REQUEST['ENT_action'])) {
 	case 'CURRENT_USER' :
 		if (phpCAS::isAuthenticated()) {
 			header('Content-Type: application/json; charset=UTF-8');
-			$res = get_http(ANNUAIRE_URL . "api/app/users/" . phpCAS::getAttribute('uid') . "?expand=true");
+			$res = get_http(ANNUAIRE_URL . "api/users/" . phpCAS::getAttribute('uid') . "?expand=true");
 			echo $res;
 		} else { 
 			// Si pas authentifié, ion force l'authentification. Du coup, le provisionning du user se fait.
@@ -397,7 +397,7 @@ if (isset($_REQUEST['ENT_action'])) {
         $blogData = getBlogData($blogid);
 
 		// Interrogation de l'annuaireV3 de l'ENT
-		$userENT = json_decode(get_http(ANNUAIRE_URL."api/app/users/".phpCAS::getAttribute('uid')."?expand=true"));
+		$userENT = json_decode(get_http(ANNUAIRE_URL."api/users/".phpCAS::getAttribute('uid')."?expand=true"));
 
 		// Déterminer le role WordPress de l'utilisateur en fonction de son role ENT.
         $role_wp = getUserWpRole($userENT, $blogData);
