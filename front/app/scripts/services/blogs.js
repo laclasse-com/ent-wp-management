@@ -157,44 +157,52 @@ angular.module('blogsApp')
       // Etablissements
       //
       case TYPES_BLOG[0].code:
-        listDetailed = _.uniq(user.etablissements, function(etab){
-          return etab.code_uai;
+        listDetailed = _.uniq(user.user_structures, function(etab) {
+          return etab.id;
         });
         _.each(listDetailed, function(etab){
-          regroupements.push({id: etab.code_uai, name: etab.nom});
+          regroupements.push({id: etab.id, name: etab.name});
         });
         break;
       //
       // Classes
       //
       case TYPES_BLOG[1].code:
-        listDetailed = _.uniq(user.classes, function(cls){
-          return cls.classe_id;
+        listDetailed = _.uniq(user.user_groups, function(cls){
+          return cls.id;
         });
         _.each(listDetailed, function(cls){
-          regroupements.push({uai: cls.etablissement_code, id: cls.classe_id, name: cls.classe_libelle + " " + cls.etablissement_nom});
+          if (cls.type == "CLS") {
+            var struct = user.user_structures.filter(function(s) { if (s.id == cls.structure_id) return true; })[0];
+            regroupements.push({ uai: cls.structure_id, id: cls.id, name: cls.name + " " + struct.name });
+          }
         });
         break;
       //
       // Groupes d'élèves
       //
       case TYPES_BLOG[2].code:
-        listDetailed = _.uniq(user.groupes_eleves, function(grp){
-          return grp.groupe_id;
+        listDetailed = _.uniq(user.user_groups, function(grp){
+          return grp.id;
         });
         _.each(listDetailed, function(grp){
-          regroupements.push({uai: grp.etablissement_code, id: grp.groupe_id, name: grp.groupe_libelle + "  " + grp.etablissement_nom});
+          if (grp.type == "GRP") {
+            var struct = user.user_structures.filter(function(s) { if (s.id == grp.structure_id) return true; })[0];
+            regroupements.push({ uai: grp.structure_id, id: grp.id, name: grp.name + " " + struct.name });
+          }
         });
         break;
       //
       // Groupes libres
       //
       case TYPES_BLOG[3].code:
-        listDetailed = _.uniq(user.groupes_libres, function(gpl){
-          return gpl.regroupement_libre_id;
+        listDetailed = _.uniq(user.user_groups, function(gpl){
+          return gpl.id;
         });
         _.each(listDetailed, function(gpl){
-          regroupements.push({id: gpl.regroupement_libre_id, name: gpl.libelle});
+          if (gpl.type == "GPL") {
+            regroupements.push({id: gpl.id, name: gpl.name });
+          }
         });
         break;
     }

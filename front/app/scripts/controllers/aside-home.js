@@ -8,9 +8,14 @@ angular.module('blogsApp')
 
 	var connectedUser = CurrentUser.get();
 	connectedUser.$promise.then(function() {
-		console.log(connectedUser);
-		//affiche le bouton modification s'il a les droits
-		$scope.canCreateNewBlog = connectedUser.roles_max_priority_etab_actif > 0;
+		// affiche le bouton modification s'il a les droits
+		var canCreateNewBlog = false;
+		for (var i = 0; i < connectedUser.profiles.length; i++) {
+			var profile = connectedUser.profiles[i];
+			if ((profile.type !== 'TUT') && (profile.type !== 'ELV'))
+				canCreateNewBlog = true;
+		}
+		$scope.canCreateNewBlog = canCreateNewBlog;
 
 	    WPApi.launchAction("LISTE_INTERETS", connectedUser.login)
 	        // then() called when son gets back

@@ -22,20 +22,40 @@ angular.module('blogsApp')
 	$scope.droitsCreation = 0;
 	var connectedUser = CurrentUser.get();
 	connectedUser.$promise.then(function() {
-		$scope.droitsCreation = connectedUser.roles_max_priority_etab_actif;
 		//les différents type de blogs
-		$scope.typesBlog = $scope.rightTypeBlog($scope.droitsCreation);
+		$scope.typesBlog = $scope.rightTypeBlog();
 	});
 
 	// ---------------------------------------------------------------------------
 	//renseigne les type de blogs disponible pour le profile utilisateur
 	// ---------------------------------------------------------------------------
-	$scope.rightTypeBlog = function(droit){
-		return _.reject(TYPES_BLOG, function(type){
-			if (type.code === TYPES_BLOG[0].code && droit < 2) {
-				return true;
-			};	
-		})
+	$scope.rightTypeBlog = function(droit) {
+		var typesBlog = [];
+		for(var i = 0; i < TYPES_BLOG.length; i++) {
+			var typeBlog = TYPES_BLOG[i];
+			var allowed = false;
+			if (typeBlog.code === 'ETB') {
+				allowed = connectedUser.profiles.some(function(p) {
+					return p.type === 'ADM' || p.type === 'DIR';
+				});
+			}
+			else if ((typeBlog.code === 'GRP') || (typeBlog.code === 'CLS')) {
+				allowed = connectedUser.profiles.some(function(p) {
+					return p.type === 'ADM' || p.type === 'DIR' || 
+						p.type === 'ACA' || p.type === 'DOC' || 
+						p.type === 'ENS' || p.type === 'ETA' || 
+						p.type === 'EVS' || p.type === 'ORI';
+				});
+			}
+			else if ((typeBlog.code === 'GPL') || (typeBlog.code === 'ENV')) {
+				allowed = true;
+			}
+			if (connectedUser.super_admin == true)
+				allowed = true;
+			if (allowed)
+				typesBlog.push(typeBlog);
+		}
+		return typesBlog;
 	}
 
 	//fonction qui permet de changer le type courant

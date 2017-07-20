@@ -206,7 +206,50 @@ if (isset($_REQUEST['ENT_action'])) {
 		if (phpCAS::isAuthenticated()) {
 			header('Content-Type: application/json; charset=UTF-8');
 			$res = get_http(ANNUAIRE_URL . "api/users/" . phpCAS::getAttribute('uid') . "?expand=true");
-			echo $res;
+
+			$json = json_decode($res);
+			// load all user's structures info
+			$structIds = "";
+			$groupStructIds = "";
+			foreach($json->profiles as $p) {
+				$structIds .= urlencode("id[]")."=".urlencode($p->structure_id)."&";
+
+				if (($p->type != 'TUT') && ($p->type != 'ELV') && ($p->type != 'ENS'))
+					$groupStructIds .= urlencode("structure_id[]")."=".urlencode($p->structure_id)."&";
+			}
+			$res = get_http(ANNUAIRE_URL . "api/structures?".$structIds."expand=false");
+			$json->user_structures = json_decode($res);
+
+			// load all user's groups
+			$groupsIds = "";
+			foreach($json->groups as $g) {
+				$groupsIds .= urlencode("id[]")."=".urlencode($g->group_id)."&";
+			}
+			if ($groupsIds == "") {
+				$json->user_groups = [];
+			}
+			else {
+				$res = get_http(ANNUAIRE_URL . "api/groups?".$groupsIds."expand=false");
+				$json->user_groups = json_decode($res);
+			}
+
+			// add all structures ids if user has required right
+			if ($groupStructIds != "") {
+				$res = get_http(ANNUAIRE_URL . "api/groups?".$groupStructIds."expand=false");
+				$groups = json_decode($res);
+				foreach ($groups as $group) {
+					$found = false;
+					foreach ($json->user_groups as $g) {
+						if ($g->id == $group->id) {
+							$found = true;
+						}
+					}
+					if (!$found) {
+						array_push($json->user_groups, $group);
+					}
+				}
+			}
+			echo json_encode($json);
 		} else { 
 			// Si pas authentifié, ion force l'authentification. Du coup, le provisionning du user se fait.
 			phpCAS::forceAuthentication(); 
@@ -390,6 +433,7 @@ if (isset($_REQUEST['ENT_action'])) {
 		}
 
 		$current_user = get_user_by('login', phpCAS::getAttribute('login'));
+
 		// Vérifier si l'utilisateur est bien connecté
 		assert ('$current_user->ID  != ""', "L'utilisateur n'est pas connecté sur la plateforme WordPress de laclasse.com.");
 
