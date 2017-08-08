@@ -60,6 +60,10 @@ define(ANNUAIRE_API_KEY, "La clé de signature des requetes à l'annuaire");
 // Configuration pour le Front
 // ----------------------------------------------------------------------------------------
 
+// Application API
+define("API_USER", "admin");
+define("API_PASSWORD", "defaultPassword");
+
 define(APP_ROOT, ABSPATH);
 
 # virtual path de l'application
