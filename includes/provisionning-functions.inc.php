@@ -311,6 +311,8 @@ function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $si
   	
 	if (is_wp_error($wpError) )	errMsg($wpError->get_error_message());
 	logIt("___Fin Fonction : creerNouveauBlog");
+
+	return $wpBlogId;
 }
 
 

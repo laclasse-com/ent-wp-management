@@ -31,6 +31,7 @@ require_once('includes/functions.inc.php');
 require_once('includes/hooks-functions.inc.php');
 // Fonctions liées au pilotage d'action sur WordPress depuis l'ENT.
 require_once('includes/pilotage-functions.inc.php');
+require_once('includes/provisionning-functions.inc.php');
 // Fonctions liées à la CASification de WordPress.
 require_once('includes/cas-functions.inc.php');
 // Fonctions de paramêtrage du back-office des options du plugin.
@@ -279,9 +280,19 @@ if (isset($_REQUEST['ENT_action'])) {
 	// ---------------------------------------------------------------------------------
 	case 'CREATE_BLOG' :
 		if (phpCAS::isAuthenticated()) {
-			$_REQUEST['mode'] = 'API';
-			require_once('includes/provisionning-laclasse.php');
-			provision_comptes_laclasse();
+			$user = get_user_by('login', phpCAS::getAttribute('login'));
+
+			$blogId = creerNouveauBlog(
+				$_REQUEST['domain'] . '.' . BLOG_DOMAINE, '/', $_REQUEST['blogname'],
+				phpCAS::getAttribute('login'), $user->data->user_email, 1,
+				$user->ID, $_REQUEST['blogtype'], $_REQUEST['etbid'], $_REQUEST['clsid'],
+				$_REQUEST['grpid'], $_REQUEST['gplid']);
+
+			error_log('new blog: ' . $blogId);
+			add_user_to_blog($blogId, $user->ID, 'administrator');
+
+			header('Content-Type: application/json; charset=utf-8');
+			echo json_encode(array('success' => 'Création réussie'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
 		} else { 
 			// Si pas authentifié, ion force l'authentification. Du coup, le provisionning du user se fait.
 			phpCAS::forceAuthentication(); 
