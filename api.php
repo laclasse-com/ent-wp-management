@@ -45,7 +45,7 @@ switch($_REQUEST['action']) {
 		break;
 	case 'blogs':
         header('Content-Type: application/json; charset=utf-8');
-		$blogs = wp_get_sites();
+		$blogs = wp_get_sites(array("limit" => 100000));
 		$result = [];
 		foreach ($blogs as $blog) {
 			$details = getBlogData($blog['blog_id']);
