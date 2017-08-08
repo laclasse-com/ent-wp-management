@@ -30,8 +30,23 @@
 //  Fonction de provisionning CAS
 // --------------------------------------------------------------------------------
 function wpcas_provisioning(){
-	$ret = include( WP_PLUGIN_DIR."/".dirname( plugin_basename( __FILE__ )).'/provisionning-laclasse.php');
-	provision_comptes_laclasse();
+	global $domain;
+	$user_id = phpCAS::getAttribute('uid');
+	$user_login = phpCAS::getAttribute('login');
+	$user_email = phpCAS::getAttribute('uid') . "@noemail.lan";
+	if (phpCAS::hasAttribute('MailAdressePrincipal') && (phpCAS::getAttribute('MailAdressePrincipal') != ""))
+		$user_email = phpCAS::getAttribute('MailAdressePrincipal');
+	else if (phpCAS::hasAttribute('LaclasseEmail') && (phpCAS::getAttribute('LaclasseEmail') != ""))
+		$user_email = phpCAS::getAttribute('LaclasseEmail');
+
+	$blogId = get_blog_id_by_domain($domain);
+	$blogData = getBlogData($blogId);
+
+	$userENT = json_decode(get_http(ANNUAIRE_URL."api/users/$user_id?expand=true"));
+    $role = getUserWpRole($userENT, $blogData);
+
+	createUserWP($user_login, $user_email, $role, $domain);
+	redirection($domain);
 }
 
 // --------------------------------------------------------------------------------
@@ -82,7 +97,13 @@ class wpCAS {
 				// Enregistrement de l'ENT de provenance pour ce username
 	   			if(phpCAS::getAttribute('LaclassePrenom') && phpCAS::getAttribute('LaclasseNom')) {
 
-	                // Met à jour les données de l'utilisateur
+					$user_email = phpCAS::getAttribute('uid') . "@noemail.lan";
+					if (phpCAS::hasAttribute('MailAdressePrincipal') && (phpCAS::getAttribute('MailAdressePrincipal') != ""))
+						$user_email = phpCAS::getAttribute('MailAdressePrincipal');
+					else if (phpCAS::hasAttribute('LaclasseEmail') && (phpCAS::getAttribute('LaclasseEmail') != ""))
+						$user_email = phpCAS::getAttribute('LaclasseEmail');
+
+	                // Met ï¿½ jour les donnï¿½es de l'utilisateur
 					wp_update_user( 
 						array (
 							'ID' => $user->ID, 
@@ -90,9 +111,7 @@ class wpCAS {
 							'last_name' => phpCAS::getAttribute('LaclasseNom'),
 							'display_name' => phpCAS::getAttribute('LaclasseNom').' '.
 								phpCAS::getAttribute('LaclassePrenom'),
-							'user_email' => phpCAS::hasAttribute('MailAdressePrincipal') ?
-								phpCAS::getAttribute('MailAdressePrincipal') :
-								phpCAS::getAttribute('LaclasseEmail')
+							'user_email' => $user_email
 						)
 					);
 				}
@@ -108,10 +127,10 @@ class wpCAS {
 		}
 	}
 	
-	// renvoie l'url de login, selon le contexte : intégré dans une IFRAME ou normal
+	// renvoie l'url de login, selon le contexte : intï¿½grï¿½ dans une IFRAME ou normal
 	function get_url_login() {
 		global $ent, $wpcas_options, $cas_configured;
-		// Si cas est pas configuré, on retourne une url de login standard, pas liée à une conf.
+		// Si cas est pas configurï¿½, on retourne une url de login standard, pas liï¿½e ï¿½ une conf.
 		if (!$cas_configured){
 		  return home_url()."/wp-login.php?ent=$ent";
 		}
@@ -120,7 +139,7 @@ class wpCAS {
 		// 	$qry = '?ent='.$ent.'&ENT_action=IFRAME';
 		// 	$url =  home_url().'/wp-login.php'.$qry;
 		// }
-		// Si on n'est pas en mode intégré
+		// Si on n'est pas en mode intï¿½grï¿½
 		// else {
   		if ($wpcas_options[$ent]['server_port'] == 443) $protoc = "https://";
   		else $protoc = "http://";
@@ -167,7 +186,7 @@ class wpCAS {
 
 	// disabled reset, lost, and retrieve password features
 	function disable_function_pwd() {
-		echo( __( 'Les fonctions de gestion des mots de passe sont d&eacute;sactiv&eacute;es car la plateforme est connectée &agrave; l\'ENT '.NOM_ENT.'.', 'wpcas' ));
+		echo( __( 'Les fonctions de gestion des mots de passe sont d&eacute;sactiv&eacute;es car la plateforme est connectï¿½e &agrave; l\'ENT '.NOM_ENT.'.', 'wpcas' ));
 	}
 
 	// set the passwords on user creation
@@ -179,7 +198,7 @@ class wpCAS {
 }
 
 // --------------------------------------------------------------------------------
-//  D é b u t   d u   s c r i p t   d e   C A S i f i c a t i o n 
+//  D ï¿½ b u t   d u   s c r i p t   d e   C A S i f i c a t i o n 
 // --------------------------------------------------------------------------------
 $ent = "laclasse";
 if (isset($_REQUEST['ent']) && ($_REQUEST['ent'] != "")) $ent = $_REQUEST['ent'];
