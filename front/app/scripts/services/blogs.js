@@ -81,10 +81,12 @@ angular.module('blogsApp')
   // ------------------------------------------------------------------------
   this.saveWP = function(){
 
-    _.each($rootScope.modifBlogs, function(blog){
+    _.each($rootScope.modifBlogs, function (blog) {
       var qryStr = "&" + blog.type.toLowerCase() + "id=" + blog.rgptId;
       var type = blog.type;
       qryStr += "&blogtype=" + type + "&domain=" + blog.domain + "&blogdescription=" + encodeURI(blog.description);
+      if (blog.uai)
+        qryStr += "&etbid=" + blog.uai;
 
     WPApi.launchAction( "CREATION_BLOG", encodeURI(blog.blogname) + qryStr )
       .then(function(data) {
