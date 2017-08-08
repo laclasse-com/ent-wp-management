@@ -142,6 +142,14 @@ function getUserWpRole($userENT, $blog) {
         if(has_group_profile($userENT, $blog['classe_ENT'], ['MBR','ELV']))
             return 'contributor';
     }
+
+    foreach($userENT->children as $child) {
+        $child->detail = $childDetail = json_decode(get_http(ANNUAIRE_URL."api/users/$child->child_id?expand=true"));
+        $childRole = getUserWpRole($child->detail, $blog);
+        if ($childRole != null)
+            return 'subscriber';
+    }
+
     return null;
 }
 
@@ -182,6 +190,13 @@ function has_right($userENT, $blog) {
            return true;
        }
     }
+
+    // test for children rights
+    foreach ($userENT->children as $child) {
+        if (has_right($child->detail, $blog))
+            return true;
+    }
+
     return false;
 }
 
@@ -234,6 +249,10 @@ function blogList($uid_ent) {
 
     // Interrogation de l'annuaireV3 de l'ENT
     $userENT = json_decode(get_http(ANNUAIRE_URL."api/users/$uid_ent?expand=true"));
+    // get details for each child
+    foreach ($userENT->children as $child) {
+        $child->detail = $childDetail = json_decode(get_http(ANNUAIRE_URL."api/users/$child->child_id?expand=true"));
+    }
 
     // Constitution de la liste
     $blogs = $wpdb->get_results( 
