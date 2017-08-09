@@ -405,12 +405,8 @@ function reprise_data_blogs(){
     $current_user = get_user_by('login',phpCAS::getUser());
     // Vérifier si l'utilisateur est bien connecté
     assert ('$current_user->ID  != ""', "L'utilisateur n'est pas connecté sur la plateforme WordPress de laclasse.com.");
-    // Récupération des champs meta de l'utilisateur 
-    $userMeta = get_user_meta($current_user->ID);
-    assert ('$userMeta[\'profil_ENT\'][0] != ""', "Cet utilisateur n'a pas de profil sur la plateforme WordPress de laclasse.com.");
     // Caractéristiques du blog.
-    $uid_ent_WP = $userMeta['uid_ENT'][0];
-    $userENT = json_decode(get_http(ANNUAIRE_URL."api/users/$uid_ent_WP?expand=true"));
+    $userENT = json_decode(get_http(ANNUAIRE_URL."api/users/".phpCAS::getAttribute('uid')."?expand=true"));
 
     // 
     // Vérification de droits
