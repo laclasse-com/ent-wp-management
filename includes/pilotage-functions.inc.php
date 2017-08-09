@@ -49,19 +49,6 @@ function flatten($a, $name, $val) {
 }
 
 /*
- * vérifier que l'utilisateur a un role donné sur un etab donné.
- * Si on verifie le role 'TECH', l'étab n'est pas pris en compte.
- */
-function has_role($roles, $wanted_role, $uai="") {
-    foreach ($roles as $role) {
-        if ($role->role_id == $wanted_role && ( $role->etablissement_code_uai == $uai || $wanted_role == 'TECH' )) {
-            return true;
-        }
-    }
-    return false;
-}
-
-/*
  * vérifier que l'utilisateur a un profil donné sur un etab donné.
  */
 function has_profile($user, $uai="", $wanted_profiles) {
@@ -101,8 +88,6 @@ function has_group_profile($user, $wanted_group, $profiles) {
 
 //
 // Return a WordPress role for the given user on the given blog
-// depending on his current "profil_actif"
-// TODO: match with all profil and not only "profil_actif"
 //
 function getUserWpRole($userENT, $blog) {
     // if the user if a super admin allow all blogs
@@ -114,8 +99,6 @@ function getUserWpRole($userENT, $blog) {
     if($blog['type_de_blog'] == 'ENV') {
         return 'subscriber';
     }
-
-    $uai = $userENT->profil_actif->etablissement_code_uai;
 
     // depending on the blog type
     if($blog['type_de_blog'] == 'ETB') {
@@ -129,17 +112,18 @@ function getUserWpRole($userENT, $blog) {
     elseif(($blog['type_de_blog'] == 'CLS') || ($blog['type_de_blog'] == 'GRP')) {
         if(has_profile($userENT, $blog['etablissement_ENT'], ['DIR','ADM']))
             return 'administrator';
-        if(has_group_profile($userENT, $blog['classe_ENT'], ['PRI','ADM','ENS']))
+		$blog_id = ($blog['type_de_blog'] == 'GRP') ? $blog['groupe_ENT'] : $blog['classe_ENT'];
+        if(has_group_profile($userENT, $blog_id, ['PRI','ADM','ENS']))
             return 'administrator';
-        if(has_group_profile($userENT, $blog['classe_ENT'], ['MBR','ELV']))
+        if(has_group_profile($userENT, $blog_id, ['MBR','ELV']))
             return 'contributor';
         if(has_profile($userENT, $blog['etablissement_ENT'], ['ENS','ETA','DOC','EVS']))
             return 'subscriber';
     }
     elseif($blog['type_de_blog'] == 'GPL') {
-        if(has_group_profile($userENT, $blog['classe_ENT'], ['PRI','ADM','ENS']))
+        if(has_group_profile($userENT, $blog['groupelibre_ENT'], ['PRI','ADM','ENS']))
             return 'administrator';
-        if(has_group_profile($userENT, $blog['classe_ENT'], ['MBR','ELV']))
+        if(has_group_profile($userENT, $blog['groupelibre_ENT'], ['MBR','ELV']))
             return 'contributor';
     }
 
