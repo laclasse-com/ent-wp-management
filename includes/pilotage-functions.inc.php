@@ -387,6 +387,192 @@ function get_user_id_by_login($login) {
 }
 
 // --------------------------------------------------------------------------------
+// Reprendre les données pour les blogs restants / Migration v2 => v3
+// --------------------------------------------------------------------------------
+function reprise_data_blogs(){
+    $opts = Array('admin_email','siteurl','name','blogdescription','blogtype','etablissement_ENT','display_name', 'type_de_blog', 'classe_ENT', 'groupe_ENT', 'groupelibre_ENT', 'blogname');
+    $opts_str = implode("','", $opts);
+    $closeForm = "<td><button type='submit'>Ok</button></td></form>";
+    $message = "";
+    $nb_a_reprendre = 0;
+    $need_data_completion = false; // true si un formulaire quelconque est affiché.
+    $tout_voir_quand_meme = false;
+    if (isset($_REQUEST['tout_voir']) && $_REQUEST['tout_voir'] != "") {
+        $tout_voir_quand_meme = true;
+    }
+
+    // Quelques vérifications d'usage pour controler les résultats de l'extraction
+    $current_user = get_user_by('login',phpCAS::getUser());
+    // Vérifier si l'utilisateur est bien connecté
+    assert ('$current_user->ID  != ""', "L'utilisateur n'est pas connecté sur la plateforme WordPress de laclasse.com.");
+    // Récupération des champs meta de l'utilisateur 
+    $userMeta = get_user_meta($current_user->ID);
+    assert ('$userMeta[\'profil_ENT\'][0] != ""', "Cet utilisateur n'a pas de profil sur la plateforme WordPress de laclasse.com.");
+    // Caractéristiques du blog.
+    $uid_ent_WP = $userMeta['uid_ENT'][0];
+    $userENT = json_decode(get_http(ANNUAIRE_URL."api/users/$uid_ent_WP?expand=true"));
+
+    // 
+    // Vérification de droits
+    //
+    if (!$userENT->super_admin) {
+        die("Cette page n'est pas pour vous !");
+    }
+
+    // Gestion des actions 
+    $action2 = $_REQUEST['action2'];
+
+    if (isset($action2) && ($action2 == "archiveblog" || $action2 == "unarchiveblog")) {
+        $id = $_REQUEST['id'];
+        update_blog_status( $id, 'archived', ( 'archiveblog' === $action2 ) ? '1' : '0' );
+    }
+
+    if (isset($action2) && $action2 == "maj") {
+        $id = $_REQUEST['id'];
+        if(isset($_REQUEST['uai'])){
+            $message = "<div class='msg'>Blog #$id : Etablissement mis &agrave; jour. uai=".strtoupper($_REQUEST['uai'])."</div>";
+            // switch_to_blog( $id );
+            // $wpdb->replace( "wp_".$id."_options", array('option_name' => 'etablissement_ENT', 'option_value' => $_REQUEST['uai']));
+            update_blog_option( $id, 'etablissement_ENT', strtoupper($_REQUEST['uai']) );
+            // restore_current_blog();
+        }
+        if(isset($_REQUEST['clsid'])){
+            $message = "<div class='msg'>Blog #$id : Id de classe mis &agrave; jour. clsid=".$_REQUEST['clsid']."</div>";
+            update_blog_option( $id, 'classe_ENT', $_REQUEST['clsid'] );
+        }
+        if(isset($_REQUEST['grpid'])){
+            $message = "<div class='msg'>Blog #$id : Id de groupe mis &agrave; jour. grpid=".$_REQUEST['grpid']."</div>";
+            update_blog_option( $id, 'groupe_ENT', $_REQUEST['grpid'] );
+        }
+        if(isset($_REQUEST['gplid'])){
+            $message = "<div class='msg'>Blog #$id : Id de groupe mis &agrave; jour. gplid=".$_REQUEST['gplid']."</div>";
+            update_blog_option( $id, 'groupelibre_ENT', $_REQUEST['gplid'] );
+        }
+        if(isset($_REQUEST['type_de_blog'])){
+            $message = "<div class='msg'>Blog #$id : Type de blog mis &agrave; jour. type_de_blog=".$_REQUEST['type_de_blog']."</div>";
+            update_blog_option( $id, 'type_de_blog', $_REQUEST['type_de_blog'] );
+        }
+        if(isset($_REQUEST['blogname'])){
+            $message = "<div class='msg'>Blog #$id : blogname mis &agrave; jour</div>";
+            update_blog_option( $id, 'blogname', $_REQUEST['blogname'] );
+        }
+        if(isset($_REQUEST['blogdescription'])){
+            $message = "<div class='msg'>Blog #$id : blogdescription mis &agrave; jour</div>";
+            update_blog_option( $id, 'blogdescription', $_REQUEST['blogdescription'] );
+        }
+    }
+
+    // Extraction bdd
+    global $wpdb;
+    $query = "";
+    $condition_archived = ($tout_voir_quand_meme) ? "" :"and archived = 0";
+    $liste = $wpdb->get_results( "SELECT blog_id, domain, archived FROM $wpdb->blogs WHERE domain != '".BLOG_DOMAINE."' $condition_archived  order by domain", ARRAY_A );
+
+    $headerHtml = "<html><head><title>Liste des sites à reprendre</title>" . css() .
+    "<style>
+          table td {padding:3px 20px 3px 20px;}
+          table td {border:black solid 1px;}
+          .gris-sale {background-color:#aaa;}
+          .warn {background-color:orange;}
+          .lilipute {font-size:0.6em;}
+          .msg {border:green solid 1px; float:right; margin-right:20%;background-color:lightgreen;padding:4px;}
+    </style>\n</head><body><div style='margin:40px;'><h1>Liste des sites &agrave; reprendre</h1>\n
+    $message
+    <table><tr><th>blog_id</th><th>url</th><th>Archivage</th><th>type_de_blog</th><th>UAI</th><th>classe_ENT</th><th>groupe_ENT</th><th>groupelibre_ENT</th></tr>\n";
+    $headerHtml .= "<p>Affectation d'un id de classe, de groupe d'élèves, de groupe libre ou d'établissement. Pour chaque blog, les <span class='warn'> zones en orange</span> sont à mettre à jour.</p>
+    <p>Le système filtre les blogs déjà complètés mais vous avez la possibilité de <a href='/?ENT_action=REPRISE_DATA&tout_voir=Yesman'>tout voir quand même</a>.</p>
+    <p>Pour récupérer un site archivé par mégarde, allez voir sur la page de <a href='/?ENT_action=LISTE_ARCHIVAGE' target='_blank'>gestion de l'archivage</a>.</p>";
+
+    $k = 1;
+    foreach($liste as $blog) {
+        $need_data_completion = false;
+        if ($tout_voir_quand_meme) {
+            $need_data_completion = true;
+        }
+
+        // Récupérer des options du blog
+        $blog_details = $wpdb->get_results( "SELECT option_name, option_value ". 
+                                            "FROM wp_". $blog['blog_id'] ."_options ".
+                                            "where option_name in ('".$opts_str."') order by option_name", ARRAY_A);
+        $blog_opts = flatten($blog_details, 'option_name', 'option_value'); 
+
+        $gris_sale = ( $blog['archived'] == 0 ) ? '' : 'gris-sale';
+
+        $form = "<form method='post' action='#".$k."'>
+        <input type='hidden' name='ENT_action' value='".$_REQUEST['ENT_action']."'/>
+        <input type='hidden' name='action2' value='maj'/>
+        <input type='hidden' name='id' value='" . $blog['blog_id'] . "'/>";
+    
+        $ligne = "<tr class='$gris_sale'>$form";
+        $ligne .= "<td><a name='".$k."'></a>".$blog['blog_id']."</td>";
+        $ligne .= "<td><a href='http://".$blog['domain']."/' target='_blank'>".$blog['domain']."</a><br/><input type='text' name='blogname' value='".$blog_opts['blogname']."' style='width: 100%; margin: 4px;'></input><br/><input type='text' name='blogdescription' value='".$blog_opts['blogdescription']."' style='width: 100%; margin: 4px;'></input></td>";
+
+        if ($blog['archived'] == 0) {
+            $ligne .= "<td><a href='?ENT_action=".$_REQUEST['ENT_action']."&action2=archiveblog&id=".$blog['blog_id']."#".$k."'>Archiver</a></td>";              
+        } else {
+            $ligne .= "<td>Archivé !&nbsp;&nbsp;&nbsp;<a href='?ENT_action=".$_REQUEST['ENT_action']."&action2=unarchiveblog&id=".$blog['blog_id']."#".$k."'><span class='lilipute'>Désarchiver</span></a></td>";                
+        }
+
+        $champ_data = selectbox_type_blog($blog_opts['type_de_blog']);
+        $ligne .= "<td>$champ_data</td>";
+
+        $class_warn = "";
+        $champ_data = "";
+        if ($blog_opts['type_de_blog'] == "ETB" || $blog_opts['type_de_blog'] == "CLS" || $blog_opts['type_de_blog'] == "GRP" || $blog_opts['type_de_blog'] == "GPL") {
+            if ($blog_opts['etablissement_ENT'] == "") {
+                $class_warn = "warn";
+                $need_data_completion = true;
+            }
+            $champ_data = "<input type='text' name='uai' value='" . $blog_opts['etablissement_ENT'] . "'/>";
+        }
+        $ligne .= "<td class='$class_warn $gris_sale'>$champ_data</td>";
+
+        $class_warn = "";
+        $champ_data = "";
+        if ($blog_opts['type_de_blog'] == "CLS") {
+            if ($blog_opts['classe_ENT'] == "") {
+                $class_warn = "warn";
+                $need_data_completion = true;
+            }            
+            $champ_data = "<input type='text' name='clsid' value='". $blog_opts['classe_ENT']. "'/>";
+        }
+        $ligne .= "<td class='$class_warn $gris_sale'>$champ_data</td>";
+
+        $class_warn = "";
+        $champ_data = "";
+        if ($blog_opts['type_de_blog'] == "GRP") {
+            if ($blog_opts['groupe_ENT'] == "") {
+                $class_warn = "warn";
+                $need_data_completion = true;
+            }            
+            $champ_data = "<input type='text' name='grpid' value='". $blog_opts['groupe_ENT']. "'/>";
+        }
+        $ligne .= "<td class='$class_warn $gris_sale'>$champ_data</td>";
+        
+        $class_warn = "";
+        $champ_data = "";
+        if ($blog_opts['type_de_blog'] == "GPL") {
+            if ($blog_opts['groupelibre_ENT'] == "") {
+                $class_warn = "warn";
+                $need_data_completion = true;
+            }            
+            $champ_data = "<input type='text' name='gplid' value='". $blog_opts['groupelibre_ENT']. "'/>";
+        }
+
+        $ligne .= "<td class='$class_warn $gris_sale'>$champ_data</td>";
+
+        $ligne .= "$closeForm</tr>\n";
+        // S'il y a eu un formulaire, on affiche.
+        if ($need_data_completion) {
+            $html .= $ligne;
+            $nb_a_reprendre += 1;
+            $k += 1;
+        }
+    }
+    echo $headerHtml . "<p><b>Plus que $nb_a_reprendre sur " . count($liste) . " à reprendre !</b></p>" . $html . "</table>\n</div></body></html>";
+}
+
+// --------------------------------------------------------------------------------
 // renvoie un sélectbox des type de blogs
 // --------------------------------------------------------------------------------
 function selectbox_type_blog($selectval) {
