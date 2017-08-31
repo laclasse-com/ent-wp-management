@@ -7,7 +7,7 @@ $logProvisioning = "";
 // --------------------------------------------------------------------------------
 // fonction d'envoie d'un GET HTTP.
 // --------------------------------------------------------------------------------
-function get_http($url){
+function get_http($url, &$error = null, &$http_status = null){
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_URL, $url);
 	curl_setopt($ch, CURLOPT_HEADER, 0);
@@ -15,8 +15,12 @@ function get_http($url){
 	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 	curl_setopt($ch, CURLOPT_USERPWD, ANNUAIRE_APP_ID . ":" . ANNUAIRE_API_KEY);
 
-	
 	$data = curl_exec($ch);
+
+	$error = curl_errno($ch);
+	$http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+
 	if (curl_errno($ch)) {
 		return curl_error($ch);
 	}

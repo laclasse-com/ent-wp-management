@@ -51,14 +51,18 @@ function flatten($a, $name, $val) {
 /*
  * vérifier que l'utilisateur a un profil donné sur un etab donné.
  */
-function has_profile($user, $uai="", $wanted_profiles) {
+function has_profile($user, $uai="", $wanted_profiles = null) {
     foreach ($user->profiles as $profile)
     {
-      if ($profile->structure_id != $uai)
-        continue;
-      foreach ($wanted_profiles as $wanted_profile)
-        if ($profile->type == $wanted_profile)
-            return true;
+		if ($profile->structure_id != $uai)
+			continue;
+
+		if ($wanted_profiles == null)
+			return true;
+
+		foreach ($wanted_profiles as $wanted_profile)
+			if ($profile->type == $wanted_profile)
+				return true;
     }
     return false;
 }
@@ -273,6 +277,8 @@ function blogList($uid_ent) {
 function userBlogList($username) {
     global $wpdb;
     $user_id = username_exists($username);
+	if (!$user_id)
+		return [];
     $blogs = get_blogs_of_user( $user_id );
     $opts = Array('admin_email','siteurl','name','blogname','blogdescription','blogtype','etablissement_ENT','display_name', 'type_de_blog', 'classe_ENT', 'groupe_ENT', 'groupelibre_ENT');
     $opts_str = implode("','", $opts);
@@ -301,6 +307,76 @@ function userBlogList($username) {
     }
     usort($list, function ($a, $b) { return strcmp($a->domain, $b->domain); });
     return $list;
+}
+
+// --------------------------------------------------------------------------------
+// Return true if a given blog MUST be displayed without choice for a given user
+// --------------------------------------------------------------------------------
+
+function is_forced_blog($blog, $userENT) {
+//	$blog = (array)$blog;
+	// depending on the blog type
+	if($blog['type_de_blog'] == 'ETB') {
+		if (has_profile($userENT, $blog['etablissement_ENT']))
+			return true;
+	}
+	elseif($blog['type_de_blog'] == 'CLS') {
+		if(has_group($userENT->groups, $blog['classe_ENT']))
+			return true;
+	}
+	elseif($blog['type_de_blog'] == 'GRP') {
+		if(has_group($userENT->groups, $blog['groupe_ENT']))
+			return true;
+	}
+	elseif($blog['type_de_blog'] == 'GPL') {
+		if(has_group($userENT->groups, $blog['groupelibre_ENT']))
+			array_push($list, $blog);
+	}
+
+    // test for children rights
+    foreach ($userENT->children as $child) {
+        if (is_forced_blog($blog, $child->detail))
+			return true;
+    }
+	return false;
+}
+
+// --------------------------------------------------------------------------------
+// Return all blogs a user is registered plus the blogs a user is forced to see
+// --------------------------------------------------------------------------------
+
+function userViewBlogList($uid_ent) {
+    // Interrogation de l'annuaireV3 de l'ENT
+    $userENT = json_decode(get_http(ANNUAIRE_URL."api/users/$uid_ent?expand=true"));
+    // get details for each child
+    foreach ($userENT->children as $child) {
+        $child->detail = $childDetail = json_decode(get_http(ANNUAIRE_URL."api/users/$child->child_id?expand=true"));
+    }
+
+	$blogs = blogList($uid_ent);
+	$list = [];
+
+	foreach ($blogs as $blog) {
+		if (is_forced_blog($blog, $userENT)) {
+			$blog['forced'] = true;
+			array_push($list, $blog);
+		}
+	}
+
+	$user_blogs = (array)userBlogList($userENT->login);
+	foreach ($user_blogs as $mine) {
+		$found = false;
+		foreach($list as $blog) {
+			if ($mine->blog_id == $blog->blog_id) {
+				$found = true;
+				break;
+			}
+		}
+		if (!$found)
+			array_push($list, $mine);
+	}
+
+	return $list;
 }
 
 // --------------------------------------------------------------------------------

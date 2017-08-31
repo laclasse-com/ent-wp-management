@@ -358,11 +358,12 @@ if (isset($_REQUEST['ENT_action'])) {
 		}
 
 		$interests = blogList(phpCAS::getAttribute('uid'));
-		$mines = userBlogList(phpCAS::getUser());
+		$mines = userViewBlogList(phpCAS::getAttribute('uid'));
 
 		foreach ($mines as $mine) {
+			$mine = (array)$mine;
 			foreach($interests as $k => $interest) {
-				if ($mine->blog_id == $interest['blog_id']) {
+				if ($mine['blog_id'] == $interest['blog_id']) {
 					unset($interests[$k]);
 					break;
 				}
@@ -387,7 +388,8 @@ if (isset($_REQUEST['ENT_action'])) {
 			$mustDieAfterAction = true;
 			break;
 		}
-		echo json_encode(userBlogList(phpCAS::getUser()), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);	
+
+		echo json_encode(userViewBlogList(phpCAS::getAttribute('uid')), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);	
 		$mustDieAfterAction = true;
 		break;
 

@@ -1,7 +1,41 @@
 <?php
 
+// load wordpress functions
+require_once("../../../wp-load.php");
+
 // load setup
 require_once("ENTconfig.inc.php");
+
+require_once("includes/pilotage-functions.inc.php");
+
+if (!array_key_exists("LACLASSE_AUTH", $_COOKIE)) {
+	http_response_code(401);
+	exit;
+}
+
+// get the current session
+$error; $status;
+$session = get_http(ANNUAIRE_URL . "api/sessions/" . $_COOKIE["LACLASSE_AUTH"], $error, $status);
+
+if ($status != 200) {
+	http_response_code(401);
+	exit;
+}
+
+$session = json_decode($session);
+
+// get the user of the current session
+$user = get_http(ANNUAIRE_URL . "api/users/" . $session->user, $error, $status);
+
+if ($status != 200) {
+	http_response_code(401);
+	exit;
+}
+
+$user = json_decode($user);
+
+echo print_r($user, true);
+exit;
 
 // check if basic HTTP authentication is available
 if (!isset($_SERVER['PHP_AUTH_USER'])) {
@@ -18,10 +52,6 @@ if (($_SERVER['PHP_AUTH_USER'] != API_USER) || ($_SERVER['PHP_AUTH_PW'] != API_P
     exit;
 }
 
-// load wordpress functions
-require_once("../../../wp-load.php");
-
-require_once("includes/pilotage-functions.inc.php");
 
 switch($_REQUEST['action']) {
 	case 'user':

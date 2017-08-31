@@ -3,7 +3,7 @@
 		<div class="configure front {{blog.color}}">	
 			<div>
 				<span class="blog-name" ng-click="goBlog(blog)" ng-bind-html="blog.blogname"></span>
-				<a ng-if="blog.blog_id != undefined" class="icon" ng-click="unsubscribeLink(blog)">
+				<a ng-if="blog.blog_id != undefined && blog.forced !== true" class="icon" ng-click="unsubscribeLink(blog)">
 					<i class="glyphicon glyphicon-remove-circle icon"></i>
 				</a>
 			</div>
