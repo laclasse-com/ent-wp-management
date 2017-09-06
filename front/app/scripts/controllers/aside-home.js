@@ -61,7 +61,9 @@ angular.module('blogsApp')
 	                    // promise fulfilled
 	                    if (data.success != undefined && data.success != "") {
 	                        Notifications.add(data.success, "info");
-	                        Blogs.add(blog);
+	                        // recharge la liste des blogs de l'utilisateur
+	                        $rootScope.loadSubscribeBlogs();
+//	                        Blogs.add(blog);
 	                    } else {
 	                        Notifications.add(data.error, "error");
 	                    }

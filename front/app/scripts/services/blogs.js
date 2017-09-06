@@ -8,95 +8,32 @@ angular.module('blogsApp')
   var self = this;
 
   // ------------------------------------------------------------------------
-  // ajoute un blog a la liste
+  // crée un nouveau blog
   // ------------------------------------------------------------------------
-  this.add = function(blog){
-    var added = false;
-    var i = 0;
-    //on remplace une case vide, s'il y en a une
-    while ( !added && i < $rootScope.blogs.length - 1 ){
-      if ( $rootScope.blogs[i].blog_id == null ) {
-        $rootScope.blogs[i].blog_id = blog.blog_id;
-        $rootScope.blogs[i].blogname = blog.blogname;
-        $rootScope.blogs[i].description = blog.description;
-        $rootScope.blogs[i].type = blog.type;
-        $rootScope.blogs[i].rgptId = blog.rgptId;
-        $rootScope.blogs[i].owner = blog.owner;
-        $rootScope.blogs[i].domain = blog.domain;
-        $rootScope.blogs[i].siteurl = blog.siteurl;
-        $rootScope.blogs[i].flux = blog.flux;
-        $rootScope.blogs[i].active = true;
-        added = true;
-      };
-      i++;
-    }
-    //si aucune des cases sont vides, on l'ajoute a la suite puis on harmonise la liste
-    blog.active = true;
-    if (!added) {
-      $rootScope.blogs.push(blog);
-    }
-    //on enregistre la modification
-    $rootScope.modifBlogs.push(blog);
+  this.create = function(blog) {
+    var qryStr = "&" + blog.type.toLowerCase() + "id=" + blog.rgptId;
+    var type = blog.type;
+    qryStr += "&blogtype=" + type + "&domain=" + blog.domain + "&blogdescription=" + encodeURI(blog.description);
+    if (blog.uai)
+      qryStr += "&etbid=" + blog.uai;
 
-    //on remet les case vide s'il le faut
-    $rootScope.blogs = this.attune($rootScope.blogs, false);
-    // Création dans WordPress s'il ne s'agit pas d'un abonnement mais d'une création de blog.
-    if (blog.action != "subscribe") {
-      this.saveWP();
-    }
-    $rootScope.modifBlogs = [];  
-  }
+    return WPApi.launchAction( "CREATION_BLOG", encodeURI(blog.blogname) + qryStr )
+    .then(function(data) {
+      // recharge la liste des blogs de l'utilisateur
+      $rootScope.loadSubscribeBlogs();
+      Notifications.add( data.success, "info");
+    }, function(error) {
+      console.log('error', error.statusText);
+      Notifications.add( "une erreur s'est produite à la création du blog.'" 
+                  +  error.statusText, "error");
+    });
+  };
 
   // ------------------------------------------------------------------------
   // fonction qui supprime un blog
   // ------------------------------------------------------------------------
   this.delete = function(blog){
     $rootScope.blogs = _.reject($rootScope.blogs, function (b) { return b.blog_id == blog.blog_id});
-  }
-
-  // ------------------------------------------------------------------------
-  // retourne l'objet s'il est trouvé
-  // ------------------------------------------------------------------------
-  this.findBlog = function(blog, liste){
-    return _.find(liste, function(b){
-      return b.url === blog.siteurl;
-    });
-  }
-
-  // ------------------------------------------------------------------------
-  // remplace un objet dans une des listes des blogs 
-  // ------------------------------------------------------------------------
-  this.replaceBlog = function(blog, liste){
-    var index = _.findIndex(liste, function(b){
-      return b.url == blog.siteurl;
-    });
-    if (index != -1) {
-      liste[index] = blog;
-    };
-  }
-
-  // ------------------------------------------------------------------------
-  // Fonction de sauvegarde coté WordPress 
-  // FIXME : Voir si les urls de création sont bonnes ? Voir si elle sert encore...
-  // ------------------------------------------------------------------------
-  this.saveWP = function(){
-
-    _.each($rootScope.modifBlogs, function (blog) {
-      var qryStr = "&" + blog.type.toLowerCase() + "id=" + blog.rgptId;
-      var type = blog.type;
-      qryStr += "&blogtype=" + type + "&domain=" + blog.domain + "&blogdescription=" + encodeURI(blog.description);
-      if (blog.uai)
-        qryStr += "&etbid=" + blog.uai;
-
-    WPApi.launchAction( "CREATION_BLOG", encodeURI(blog.blogname) + qryStr )
-      .then(function(data) {
-          Notifications.add( data.success, "info");
-      }, function(error) {
-         console.log('error', error.statusText);
-          Notifications.add( "une erreur s'est produite à la création du blog.'" 
-                    +  error.statusText, "error");
-      });
-     }); 
   }
 
   // ------------------------------------------------------------------------
@@ -124,13 +61,6 @@ angular.module('blogsApp')
       i++;
     };
     return liste;
-  }
-
-  // ------------------------------------------------------------------------
-  // fonction permettant de générer un id temporaire unique non null 
-  // ------------------------------------------------------------------------
-  this.tempId = function(){
-    return "tempId" + this.idTemp++;
   }
 
   // ------------------------------------------------------------------------

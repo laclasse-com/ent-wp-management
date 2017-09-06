@@ -228,7 +228,6 @@ angular.module('blogsApp')
 		}
 		if (!$scope.required.title && !$scope.required.type && !$scope.required.regroupement && !$scope.required.domain) {
 			var blog = {
-				blog_id: Blogs.tempId(),
 				blogname: $scope.titleBlog,
 				description: $scope.blogdescription + (($scope.currentType.code == 'ENV')?'': $scope.currentRegroupement.name),
 				type: $scope.currentType.code,
@@ -240,9 +239,9 @@ angular.module('blogsApp')
 				domain: $scope.subDomain,
 				flux: ""
 			};
-			Blogs.add(blog);
+			Blogs.create(blog);
 			$modalInstance.close();   
-		};		           			
+		};
 	};
 
 	// ---------------------------------------------------------------------------

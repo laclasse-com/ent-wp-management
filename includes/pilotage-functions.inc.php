@@ -100,34 +100,34 @@ function getUserWpRole($userENT, $blog) {
     }
 
     // if a public blog
-    if($blog['type_de_blog'] == 'ENV') {
+    if($blog->type_de_blog == 'ENV') {
         return 'subscriber';
     }
 
     // depending on the blog type
-    if($blog['type_de_blog'] == 'ETB') {
-        if(has_profile($userENT, $blog['etablissement_ENT'], ['DIR','ADM']))
+    if($blog->type_de_blog == 'ETB') {
+        if(has_profile($userENT, $blog->etablissement_ENT, ['DIR','ADM']))
             return 'administrator';
-        if(has_profile($userENT, $blog['etablissement_ENT'], ['ENS','ETA','DOC','EVS']))
+        if(has_profile($userENT, $blog->etablissement_ENT, ['ENS','ETA','DOC','EVS']))
             return 'editor';
-        if(has_profile($userENT, $blog['etablissement_ENT'], ['ELV','TUT']))
+        if(has_profile($userENT, $blog->etablissement_ENT, ['ELV','TUT']))
             return 'subscriber';
     }
-    elseif(($blog['type_de_blog'] == 'CLS') || ($blog['type_de_blog'] == 'GRP')) {
-        if(has_profile($userENT, $blog['etablissement_ENT'], ['DIR','ADM']))
+    elseif(($blog->type_de_blog == 'CLS') || ($blog->type_de_blog == 'GRP')) {
+        if(has_profile($userENT, $blog->etablissement_ENT, ['DIR','ADM']))
             return 'administrator';
-		$blog_id = ($blog['type_de_blog'] == 'GRP') ? $blog['groupe_ENT'] : $blog['classe_ENT'];
+		$blog_id = ($blog->type_de_blog == 'GRP') ? $blog->groupe_ENT : $blog->classe_ENT;
         if(has_group_profile($userENT, $blog_id, ['PRI','ADM','ENS']))
             return 'administrator';
         if(has_group_profile($userENT, $blog_id, ['MBR','ELV']))
             return 'contributor';
-        if(has_profile($userENT, $blog['etablissement_ENT'], ['ENS','ETA','DOC','EVS']))
+        if(has_profile($userENT, $blog->etablissement_ENT, ['ENS','ETA','DOC','EVS']))
             return 'subscriber';
     }
-    elseif($blog['type_de_blog'] == 'GPL') {
-        if(has_group_profile($userENT, $blog['groupelibre_ENT'], ['PRI','ADM','ENS']))
+    elseif($blog->type_de_blog == 'GPL') {
+        if(has_group_profile($userENT, $blog->groupelibre_ENT, ['PRI','ADM','ENS']))
             return 'administrator';
-        if(has_group_profile($userENT, $blog['groupelibre_ENT'], ['MBR','ELV']))
+        if(has_group_profile($userENT, $blog->groupelibre_ENT, ['MBR','ELV']))
             return 'contributor';
     }
 
@@ -143,7 +143,7 @@ function getUserWpRole($userENT, $blog) {
 
 function has_right($userENT, $blog) {
     // if a public blog
-    if($blog['type_de_blog'] == 'ENV') {
+    if($blog->type_de_blog == 'ENV') {
         return true;
     }
 
@@ -154,27 +154,27 @@ function has_right($userENT, $blog) {
 
     // view all blogs a user can view with its profiles
     foreach($userENT->profiles as $profile) {
-        if ($profile->structure_id != $blog['etablissement_ENT'])
+        if ($profile->structure_id != $blog->etablissement_ENT)
             continue;
         // depending on the blog type
-        if($blog['type_de_blog'] == 'ETB') {
+        if($blog->type_de_blog == 'ETB') {
             // like we have an active profil in the etablissement
             return true;
         }
-        elseif($blog['type_de_blog'] == 'CLS') {
-           if(has_group($userENT->groups, $blog['classe_ENT'])) {
+        elseif($blog->type_de_blog == 'CLS') {
+           if(has_group($userENT->groups, $blog->classe_ENT)) {
                return true;
            }
         }
-        elseif($blog['type_de_blog'] == 'GRP') {
-           if(has_group($userENT->groups, $blog['groupe_ENT'])) {
+        elseif($blog->type_de_blog == 'GRP') {
+           if(has_group($userENT->groups, $blog->groupe_ENT)) {
                return true;
            }
         }
     }
 
-    if($blog['type_de_blog'] == 'GPL') {
-       if(has_group($userENT->groups, $blog['groupelibre_ENT'])) {
+    if($blog->type_de_blog == 'GPL') {
+       if(has_group($userENT->groups, $blog->groupelibre_ENT)) {
            return true;
        }
     }
@@ -213,15 +213,15 @@ function getBlogData($blogId) {
         "WHERE option_name IN ('".$opts_str."') ORDER BY option_name",
         ARRAY_A);
     $blog_opts = flatten($blog_details, 'option_name', 'option_value');
-    $blog = [];
+    $blog = new stdClass();
 
     foreach ($blog_opts as $n => $v) {
-        $blog[$n] = $v;
+        $blog->$n = $v;
     }
-    $blog['blog_id'] = $blogId;
+    $blog->blog_id = $blogId;
 
-    unset($blog['registered']);
-    unset($blog['last_updated']);
+    unset($blog->registered);
+    unset($blog->last_updated);
     return $blog;
 }
 
@@ -246,11 +246,11 @@ function blogList($uid_ent) {
     $blogs = $wpdb->get_results( 
         "SELECT * FROM $wpdb->blogs WHERE domain != '".BLOG_DOMAINE."'
         and archived = 0 and deleted = 0 and blog_id > 1 order by domain", 
-        ARRAY_A );
+        OBJECT );
 
 	// Get all blogs
     foreach ($blogs as $blog) {
-        $blogData = getBlogData($blog['blog_id']);
+        $blogData = getBlogData($blog->blog_id);
         if(has_right($userENT, $blogData)) {
             $liste[] = $blogData;
         }
@@ -258,14 +258,14 @@ function blogList($uid_ent) {
 
     // sort (ETB, CLS, GRP, GPL and others)
     usort($liste, function($a, $b) {
-       $ao = order_type($a['type_de_blog']);
-       $bo = order_type($b['type_de_blog']);
+       $ao = order_type($a->type_de_blog);
+       $bo = order_type($b->type_de_blog);
        if($ao < $bo)
            return 1;
        if($ao > $bo)
            return -1;
        else
-           return strcmp ($a['blogname'], $b['blogname']);
+           return strcmp ($a->blogname, $b->blogname);
     });
 
     return $liste;
@@ -316,20 +316,20 @@ function userBlogList($username) {
 function is_forced_blog($blog, $userENT) {
 //	$blog = (array)$blog;
 	// depending on the blog type
-	if($blog['type_de_blog'] == 'ETB') {
-		if (has_profile($userENT, $blog['etablissement_ENT']))
+	if($blog->type_de_blog == 'ETB') {
+		if (has_profile($userENT, $blog->etablissement_ENT))
 			return true;
 	}
-	elseif($blog['type_de_blog'] == 'CLS') {
-		if(has_group($userENT->groups, $blog['classe_ENT']))
+	elseif($blog->type_de_blog == 'CLS') {
+		if(has_group($userENT->groups, $blog->classe_ENT))
 			return true;
 	}
-	elseif($blog['type_de_blog'] == 'GRP') {
-		if(has_group($userENT->groups, $blog['groupe_ENT']))
+	elseif($blog->type_de_blog == 'GRP') {
+		if(has_group($userENT->groups, $blog->groupe_ENT))
 			return true;
 	}
-	elseif($blog['type_de_blog'] == 'GPL') {
-		if(has_group($userENT->groups, $blog['groupelibre_ENT']))
+	elseif($blog->type_de_blog == 'GPL') {
+		if(has_group($userENT->groups, $blog->groupelibre_ENT))
 			array_push($list, $blog);
 	}
 
@@ -358,12 +358,12 @@ function userViewBlogList($uid_ent) {
 
 	foreach ($blogs as $blog) {
 		if (is_forced_blog($blog, $userENT)) {
-			$blog['forced'] = true;
+			$blog->forced = true;
 			array_push($list, $blog);
 		}
 	}
 
-	$user_blogs = (array)userBlogList($userENT->login);
+	$user_blogs = userBlogList($userENT->login);
 	foreach ($user_blogs as $mine) {
 		$found = false;
 		foreach($list as $blog) {

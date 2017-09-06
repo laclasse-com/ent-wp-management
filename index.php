@@ -361,9 +361,9 @@ if (isset($_REQUEST['ENT_action'])) {
 		$mines = userViewBlogList(phpCAS::getAttribute('uid'));
 
 		foreach ($mines as $mine) {
-			$mine = (array)$mine;
+			$mine = $mine;
 			foreach($interests as $k => $interest) {
-				if ($mine['blog_id'] == $interest['blog_id']) {
+				if ($mine->blog_id == $interest->blog_id) {
 					unset($interests[$k]);
 					break;
 				}
@@ -461,7 +461,7 @@ if (isset($_REQUEST['ENT_action'])) {
         if($role_wp != null) {
             $inscrire = true;
             $message_retour = "Inscription de l'utilisateur $current_user->display_name ".
-                              "au blog ".$blogData['blogname'].".";
+                              "au blog ".$blogData->blogname.".";
         }
         else {
             $message_retour = "Vous ne pouvez pas vous inscrire sur ce blog.";
