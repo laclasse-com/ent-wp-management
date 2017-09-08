@@ -341,11 +341,26 @@ function is_forced_blog($blog, $userENT) {
 	return false;
 }
 
+// Return the current role of a user on a given blog or null if no role
+function get_user_blog_role($user_id, $blog_id) {
+    switch_to_blog($blog_id);
+
+	$role = null;
+    $user = get_userdata($user_id);
+ 
+    if ($user && $user->roles && count($user->roles) > 0) {
+		$role = $user->roles[0];
+    }
+    restore_current_blog();
+    return $role;
+}
+
 // --------------------------------------------------------------------------------
 // Return all blogs a user is registered plus the blogs a user is forced to see
 // --------------------------------------------------------------------------------
 
 function userViewBlogList($uid_ent) {
+
     // Interrogation de l'annuaireV3 de l'ENT
     $userENT = json_decode(get_http(ANNUAIRE_URL."api/users/$uid_ent?expand=true"));
     // get details for each child
@@ -353,13 +368,33 @@ function userViewBlogList($uid_ent) {
         $child->detail = $childDetail = json_decode(get_http(ANNUAIRE_URL."api/users/$child->child_id?expand=true"));
     }
 
+	// récupération des information de l'utilisateur WordPress
+	$userRec = get_user_by('login',$userENT->login);
+	$userId = $userRec->ID;
+
 	$blogs = blogList($uid_ent);
 	$list = [];
+
+	$role_order['subscriber'] = 1;
+	$role_order['contributor'] = 2;
+	$role_order['editor'] = 3;
+	$role_order['administrator'] = 4;
 
 	foreach ($blogs as $blog) {
 		if (is_forced_blog($blog, $userENT)) {
 			$blog->forced = true;
 			array_push($list, $blog);
+			// Add rights on blog if needed
+			if ($userId) {
+		        $default_role = getUserWpRole($userENT, $blog);
+				$current_role = get_user_blog_role($userId, $blog->blog_id);
+				// if the default role is better than the current upgrade/create it
+				if ($default_role != null) {
+					if ($current_role == null || $role_order[$default_role] > $role_order[$current_role]) {
+						add_user_to_blog($blog->blog_id, $userId, $default_role);
+					}
+				}
+			}
 		}
 	}
 

@@ -71,7 +71,7 @@ function createUserWP($p_username, $p_useremail, $p_role, $p_domain) {
 	$userExists = false;
 	$hasToUpdateUserData = true;
 	logIt("___/ Fonction : createUserWP");
-		
+
 	// Vérification de l'existance du compte, par rapport à l'email (donnée unique de Wordpress).
 	$userId = get_user_id_from_string( $p_useremail );
 	if ($userId > 0) {
