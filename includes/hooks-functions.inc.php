@@ -1,11 +1,11 @@
 <?php
 // --------------------------------------------------------------------------------
-// Toutes les fonctions liées aux hooks et aux fitres WordPress.
+// Toutes les fonctions liÈes aux hooks et aux fitres WordPress.
 // --------------------------------------------------------------------------------
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	
-	hooks et filtres généraux
+	hooks et filtres gÈnÈraux
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
@@ -16,7 +16,7 @@
 // --------------------------------------------------------------------------------
 function restrict_manage_authors() {
   global $wpdb, $typenow;
-  // On prepare la requete pour recuperer tous les auteurs qui ont publiés au moins 1 article
+  // On prepare la requete pour recuperer tous les auteurs qui ont publiÈs au moins 1 article
   $query = $wpdb->prepare( 'SELECT DISTINCT post_author
       FROM '. $wpdb->posts . '
       WHERE post_type = %s
@@ -25,7 +25,7 @@ function restrict_manage_authors() {
   // On recupere les id
   $users = $wpdb->get_col($query);
 
- // On génére le select avec la liste des auteurs
+ // On gÈnËre le select avec la liste des auteurs
   wp_dropdown_users(array(
           'show_option_all'       => __('Voir tous les auteurs'),
           'show_option_none'      => false,
@@ -37,22 +37,22 @@ function restrict_manage_authors() {
 
 }
 // --------------------------------------------------------------------------------
-// Paramétrage de l'extension USER_ROLE_EDITOR si elle est installée.
+// ParamÈtrage de l'extension USER_ROLE_EDITOR si elle est installÈe.
 // filter : admin_init
 // http://www.shinephp.com/user-role-editor-wordpress-plugin/#faq
 // --------------------------------------------------------------------------------
 function user_role_editor_settings()
 {
-    // Voir si user_role_editor est installé
+    // Voir si user_role_editor est installÈ
     if (function_exists('ure_init') || function_exists('ure_install')) {
-        // Voir quelle version est installée    
+        // Voir quelle version est installÈe
         define("URE_ENABLE_SIMPLE_ADMIN_FOR_MULTISITE", 1); 
         define('URE_SHOW_ADMIN_ROLE', 0);
-    } // user role editor n'est pas installé
+    } // user role editor n'est pas installÈ
 }
 
 // --------------------------------------------------------------------------------
-// Suppression de l'éditeur de thème
+// Suppression de l'Èditeur de thËme
 // filter : admin_init
 // http://www.geekpress.fr/wordpress/astuce/supprimer-sous-menu-editeur-theme-wordpress-615/
 // --------------------------------------------------------------------------------
@@ -62,7 +62,7 @@ function remove_editor_menu()
 }
 
 // --------------------------------------------------------------------------------
-// fonction pour mettre le rôle de la personne connectée à côté de son nom
+// fonction pour mettre le rÙle de la personne connectÈe ‡ côté de son nom
 // filter : admin_bar_menu
 // http://www.geekpress.fr/wordpress/tutoriel/modifier-howdy-admin-bar-1102/
 // --------------------------------------------------------------------------------
@@ -87,43 +87,14 @@ function addEntName () {
 }
 
 // --------------------------------------------------------------------------------
-// fonction pour ajouter la marquage du Ministère de l'éducation nationale sur tous 
-// les footer des blogs 
-// hook : admin_footer
-// --------------------------------------------------------------------------------
-function xiti_MEN_et_google(){
-	global $current_user;
-	$debug = isset($_REQUEST['debug']) ? $_REQUEST['debug'] : 'N';
-	
-	if ( (strtoupper(MODE_SERVEUR) == 'PROD') || ($debug =='O') ) {
-		if ($current_user->user_login == "")
-			echo '<!-- Page publique non marquée par xiti_men -->';
-		else {
-			echo '<SCRIPT TYPE="text/javascript" src="http://'.SERVEUR_ENT.'/v25/js/marqueur_men/xtfirst_ENT.js"></SCRIPT>';
-			echo '<SCRIPT TYPE="text/javascript" src="http://'.SERVEUR_ENT.'/pls/public/xiti_men.get_marqueur_blogs?plogin='.$current_user->user_login.'"></SCRIPT>';
-		}
-		// Notre marquage Google
-		echo '
-<!-- Marqueur Google Analytics -->
-<script src="http://www.google-analytics.com/urchin.js" type="text/javascript"></script>
-<script type="text/javascript">
-	_uacct = "UA-910479-6";
-	urchinTracker();
-</script>';
-	}
-	else echo '<!-- Site de développement, pas de marquage. -->';
-}
-
-
-// --------------------------------------------------------------------------------
-// Quelques filtres pour le back-office utilisaé dans la connexion avec CAS
+// Quelques filtres pour le back-office utilisÈ dans la connexion avec CAS
 // --------------------------------------------------------------------------------
 function disableThisFunc() {
 	return false;
 }
 
 /*************************************************************************************
-fonction remove_frame_options_header : Maîtriser le paramètre de XSS dans les IFRAMES.
+fonction remove_frame_options_header : MaÓtriser le paramËtre de XSS dans les IFRAMES.
 action : login_init, admin_init
 *************************************************************************************/
 function remove_frame_options_header() {
@@ -147,8 +118,8 @@ function addUsersManagmentScript() {
 }
 
 /*************************************************************************************
-fonction getUserCols : modifier l'entête des colonnes de la liste des utilisateurs
-					   pour ajouter des données issues de l'ENT.
+fonction getUserCols : modifier l'entÍte des colonnes de la liste des utilisateurs
+					   pour ajouter des donnÈes issues de l'ENT.
 filter : wpmu_users_columns
 *************************************************************************************/
 function getUserCols($userCols){
@@ -160,7 +131,7 @@ function getUserCols($userCols){
 }
 
 /*************************************************************************************
-fonction getCustomUserMeta : Fonction de récupération de la valeur des champs usermeta.
+fonction getCustomUserMeta : Fonction de rÈcupÈration de la valeur des champs usermeta.
 filter : manage_users_custom_column
 *************************************************************************************/
 function getCustomUserMeta($ignore, $colName, $userID){
@@ -168,7 +139,7 @@ function getCustomUserMeta($ignore, $colName, $userID){
 	$metaValue = "";
 	$metaValue = get_user_meta( $userID, $colName, true);
 	
-	if ($metaValue == "") // cas des super admin du réseau (bug ci-dessus)
+	if ($metaValue == "") // cas des super admin du rÈseau (bug ci-dessus)
 		$metaValue = "-";
 		
 	echo apply_filters( 'ENT_WP_MGMT_format_output', $colName, $metaValue );
@@ -176,7 +147,7 @@ function getCustomUserMeta($ignore, $colName, $userID){
 
 
 /*************************************************************************************
-fonction formatMeta : Fonction de rformatage des champs custom usermeta : en fonction 
+fonction formatMeta : Fonction de reformatage des champs custom usermeta : en fonction 
 					  de leur nom.
 *************************************************************************************/
 function formatMeta($key, $val) {
@@ -207,7 +178,7 @@ function formatTypeBlog($pBlogID, $pTypeBlog) {
 }
 
 /*************************************************************************************
-fonction getCustomSiteMeta : Fonction de récupération de la valeur des champs blogmeta.
+fonction getCustomSiteMeta : Fonction de rÈcupÈration de la valeur des champs blogmeta.
 filter : manage_blogs_custom_column
 *************************************************************************************/
 function getCustomSiteMeta($colName, $blogID) {
@@ -216,8 +187,8 @@ function getCustomSiteMeta($colName, $blogID) {
 }
 
 /*************************************************************************************
-fonction getBlogsCols : modifier l'entête des colonnes de la liste des sites
-					   pour ajouter des données issues de l'ENT.
+fonction getBlogsCols : modifier l'entÍte des colonnes de la liste des sites
+					   pour ajouter des donnÈes issues de l'ENT.
 filter : wpmu_blogs_columns
 *************************************************************************************/
 function getBlogsCols() {
@@ -233,7 +204,7 @@ function getBlogsCols() {
 }
 
 /*************************************************************************************
-fonction getCustomExtraInfoBlog : Fonction de récupération de la valeur des champs blogmeta.
+fonction getCustomExtraInfoBlog : Fonction de rÈcupÈration de la valeur des champs blogmeta.
 filter : myblogs_options
 *************************************************************************************/
 function getCustomExtraInfoBlog($ignore, $user_blog) {
@@ -252,65 +223,3 @@ function getCustomActionBlog($ActionExistantes, $user_blog) {
 	echo $ActionExistantes. "&nbsp;|&nbsp;<a href='?blogid=".$user_blog->userblog_id."&action=DESINSCRIRE'>Me d&eacute;sinscrire</a>";
 }
 
-/*************************************************************************************
-fonction actionsBlog : Traitement de l'action de désinscription
-action : myblogs_allblogs_options
-*************************************************************************************/
-// function actionsBlog() {
-// 	global $current_user;
-// 	$action = $_REQUEST["action"];
-// 	$blogid = $_REQUEST["blogid"];
-// 	if ($action == 'DESINSCRIRE') {
-// 		if (aUnRoleSurCeBlog($current_user->ID, $blogid)) {
-// 			$cu = (array) $current_user;
-// 			remove_user_from_blog($current_user->ID, $blogid);
-// 		}
-// 	}
-// }
-
-/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	
-	f o n c t i o n s   d e   m o d i f i c a t i o n  d u   b l o g 
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
-
-// --------------------------------------------------------------------------------
-// hook de modif des paramètres généraux pour mise à jour de l'ENT.
-// La technique consiste à rajouter un hook sur la validation des options générales
-// transmettre les modifications de blogtitle et blogdescription à l'ENT.
-//
-// hook : update_option
-// --------------------------------------------------------------------------------
-function synchroENT ($optionName, $old, $new) {
-	// Ce hook est lancé lors de toutes les mise à jours d'options, 
-	// il faut donc filtrer par rapport à la page.
-	if ($_SERVER['SCRIPT_NAME'] == "/wp-admin/options.php") {
-		// On ne fait ça que si on a changé quelquechose.
-		if (($optionName == "blogname" || $optionName == "blogdescription") && $old != $new) {
-			$idBlogEnt = get_blog_option(getBlogIdByDomain($domain),'idBlogENT');
-			// On ne fait des modif que si on n'est pas sur le blog des blogs.
-			if ($idBlogEnt > 1) {
-				$urlMajENT = "http://".SERVEUR_ENT."/pls/education/blogv2.setBlogMeta";
-				$urlMajENT .= "?pBlogId=".$idBlogEnt."&pname=".urlencode("$optionName")."&pvalue=".urlencode("$new");
-				$ret = get_http($urlMajENT);
-				if ($ret != "OK") {
-					message($ret);
-					die();
-				}
-			}
-		}
-	}
-}
-
-/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	
-	f o n c t i o n s   i n s c r i p t i o n  /  d e s i n s c r i p t i o n 
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
-function blog_subscribe($data) {
-	// global $current_user;
-	print_r($data);
-}
-
-
-?>

@@ -45,7 +45,7 @@ function wpcas_provisioning(){
 	$userENT = json_decode(get_http(ANNUAIRE_URL."api/users/$user_id?expand=true"));
     $role = getUserWpRole($userENT, $blogData);
 
-	createUserWP($user_login, $user_email, $role, $domain);
+	createUserWP($user_login, $user_email);
 	redirection($domain);
 }
 
@@ -72,8 +72,12 @@ class wpCAS {
 	 (the script dies there if login was unsuccessful)
 	 If the user is not provisioned, wpcas_nowpuser() is called
 	*/
-	function authenticate() {
-		global $wpcas_options, $cas_configured, $ent;
+	public static function authenticate() {
+		global $wpcas_options, $cas_configured, $ent, $_REQUEST;
+
+		error_log("DANIEL authenticate");
+		error_log(print_r($_REQUEST, true));
+		error_log("TICKET: " . $_REQUEST['ticket']);
 
 		logIt("<h1>ENT : $ent</h1>");
 		$proto = ($wpcas_options[$ent]['server_port'] == '443') ? 's': '';
@@ -86,6 +90,18 @@ class wpCAS {
 			       );
 			die();
 		}
+
+/*		if (isset($_REQUEST['ticket'])) {
+			$req = curl_init();
+	        curl_setopt($req, CURLOPT_URL, 'https://v3dev.laclasse.lan/sso/serviceValidate?ticket=' .
+				urlencode($_REQUEST['ticket']) . '&service=' . get_url_login());
+			curl_exec($req);
+			$error = curl_errno($req);
+		}*/
+
+		//if(is_user_logged_in()) {
+		//}
+
 		if( phpCAS::isAuthenticated() ){
 			// CAS was successful so sets session variables
 			$user = get_user_by('login', phpCAS::getUser());
@@ -128,45 +144,37 @@ class wpCAS {
 	}
 	
 	// renvoie l'url de login, selon le contexte : intï¿½grï¿½ dans une IFRAME ou normal
-	function get_url_login() {
+	public static function get_url_login() {
 		global $ent, $wpcas_options, $cas_configured;
-		// Si cas est pas configurï¿½, on retourne une url de login standard, pas liï¿½e ï¿½ une conf.
+
+		error_log("DANIEL get_url_login");
+
+		// Si CAS n'est pas configuré, on retourne une url de login standard.
 		if (!$cas_configured){
 		  return home_url()."/wp-login.php?ent=$ent";
 		}
 		
-		// if ($_REQUEST['ENT_action'] == 'IFRAME') {
-		// 	$qry = '?ent='.$ent.'&ENT_action=IFRAME';
-		// 	$url =  home_url().'/wp-login.php'.$qry;
-		// }
-		// Si on n'est pas en mode intï¿½grï¿½
-		// else {
-  		if ($wpcas_options[$ent]['server_port'] == 443) $protoc = "https://";
-  		else $protoc = "http://";
-  		$url = $protoc.
-  			   $wpcas_options[$ent]['server_hostname'].
-  			   (($wpcas_options[$ent]['server_port'] != 80 )? ":".$wpcas_options[$ent]['server_port'] : "").
-  			   $wpcas_options[$ent]['server_path'].
-  			   "/login?service=".urlencode(home_url()."/wp-login.php?ent=".$ent);
+		$protoc = ($wpcas_options[$ent]['server_port'] == 443) ? "https://" : "http://";
+		$url = $protoc.
+			$wpcas_options[$ent]['server_hostname'].
+			(($wpcas_options[$ent]['server_port'] != 80 )? ":".$wpcas_options[$ent]['server_port'] : "").
+			$wpcas_options[$ent]['server_path'].
+			"/login?service=".urlencode(home_url()."/wp-login.php?ent=".$ent);
 			   
-		// }
 		return $url;
 	}
 	
 	// Revoie l'url de logout selon l'ent de provenance.
-	function get_url_logout($wpLogoutUrl) {
-	  global $current_user;
-    get_currentuserinfo();
-    $nomEnt = get_user_meta( $current_user->ID, "nom_ENT", true);
-    
-		// if ($_REQUEST['ENT_action'] == 'IFRAME') {
-		// 	$iframe = '&ENT_action=IFRAME';
-		// }
-		return $wpLogoutUrl . "&ent=".$nomEnt.$iframe;	
+	public static function get_url_logout($wpLogoutUrl) {
+		error_log("DANIEL get_url_logout");
+
+		$current_user = wp_get_current_user();
+		$nomEnt = get_user_meta( $current_user->ID, "nom_ENT", true);
+		return $wpLogoutUrl . "&ent=".$nomEnt;
 	}
 	
 	// hook CAS logout to WP logout
-	function logout() {
+	public static function logout() {
 	    // Supprimer les cookies de WP
 	    wp_destroy_current_session();
 	    wp_clear_auth_cookie();
@@ -175,23 +183,23 @@ class wpCAS {
 	}
 
 	// hide password fields on user profile page.
-	function show_password_fields( $show_password_fields ) {
+	public static function show_password_fields( $show_password_fields ) {
 		return false;
 	}
 
 	// disabled reset, lost, and retrieve password features
-	function disable_function_user() {
+	public static function disable_function_user() {
 		echo( __( 'La  fonction d\'ajout d\'un nouvel utilisateur est d&eacute;sactiv&eacute;e. Passez par l\'ENT '.NOM_ENT.' pour ajouter des utilisateurs &agrave; votre blog.', 'wpcas' ));
 	}
 
 	// disabled reset, lost, and retrieve password features
-	function disable_function_pwd() {
+	public static function disable_function_pwd() {
 		echo( __( 'Les fonctions de gestion des mots de passe sont d&eacute;sactiv&eacute;es car la plateforme est connectï¿½e &agrave; l\'ENT '.NOM_ENT.'.', 'wpcas' ));
 	}
 
 	// set the passwords on user creation
 	// patched Mar 25 2010 by Jonathan Rogers jonathan via findyourfans.com
-	function check_passwords( $user, $pass1, $pass2 ) {
+	public static function check_passwords( $user, $pass1, $pass2 ) {
 		$random_password = substr( md5( uniqid( microtime( ))), 0, 8 );
 		$pass1=$pass2=$random_password;
 	}

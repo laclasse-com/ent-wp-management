@@ -33,7 +33,7 @@ function existsAttr($TokenAttrName) {
 // --------------------------------------------------------------------------------
 function emptyAttr($TokenAttrName) {
   global $casToken;
-  return ($casToken[$TokenAttrName] == "");
+  return !isset($casToken[$TokenAttrName]) || ($casToken[$TokenAttrName] == "");
 }
 
 // --------------------------------------------------------------------------------

@@ -48,9 +48,9 @@ function flatten($a, $name, $val) {
     return $res;
 }
 
-/*
- * vérifier que l'utilisateur a un profil donné sur un etab donné.
- */
+//
+// vérifier que l'utilisateur a un profil donné sur un etab donné.
+//
 function has_profile($user, $uai="", $wanted_profiles = null) {
     foreach ($user->profiles as $profile)
     {
@@ -202,26 +202,17 @@ function order_type($type) {
 }
 
 function getBlogData($blogId) {
-    global $wpdb;
     $opts = Array('admin_email', 'siteurl', 'name', 'blogname',
         'blogdescription', 'blogtype', 'etablissement_ENT', 'display_name',
         'type_de_blog', 'classe_ENT', 'groupe_ENT', 'groupelibre_ENT');
-    $opts_str = implode("','", $opts);
-    $blog_details = $wpdb->get_results(
-        "SELECT option_name, option_value ". 
-        "FROM wp_". $blogId ."_options ".
-        "WHERE option_name IN ('".$opts_str."') ORDER BY option_name",
-        ARRAY_A);
-    $blog_opts = flatten($blog_details, 'option_name', 'option_value');
     $blog = new stdClass();
 
-    foreach ($blog_opts as $n => $v) {
-        $blog->$n = $v;
-    }
+	foreach ($opts as $opt) {
+		$val = get_blog_option($blogId, $opt);
+		if ($val != false)
+			$blog->$opt = $val;
+	}
     $blog->blog_id = $blogId;
-
-    unset($blog->registered);
-    unset($blog->last_updated);
     return $blog;
 }
 
@@ -486,16 +477,6 @@ function message_erreur_assertion($file, $line, $code, $desc = null)
     echo '{ "error" :  "'.str_replace('"', "'", $s).'" }';
     die();
 } 
-
-
-// --------------------------------------------------------------------------------
-// renvoie l'id WP de l'utilisateur en fonction de son login
-// --------------------------------------------------------------------------------
-function get_user_id_by_login($login) {
-    global $wpdb;
-    $r = $wpdb->get_results( "SELECT ID FROM wp_users where user_login = '".strtolower($login)."'");    
-    return $r[0]->ID;
-}
 
 // --------------------------------------------------------------------------------
 // Reprendre les données pour les blogs restants / Migration v2 => v3

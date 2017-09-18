@@ -20,17 +20,17 @@ require_once(ABSPATH  . '/wp-admin/includes/template.php');
  	add_settings_section('student_privacy_section',
 		'Anonymat des élèves',
 		'explicationAnonymat',
-		'privacy');
+		'reading');
  	
  	// Ajout du champs "student-privacy" dans cette section
  	add_settings_field('student-privacy',
 		'Signature des élèves',
 		'formulaireAnonymat',
-		'privacy',
+		'reading',
 		'student_privacy_section');
  	
  	// Enregistrement dans $_POST
- 	register_setting('privacy','student-privacy');
+ 	register_setting('reading','student-privacy');
  }
    
  // ------------------------------------------------------------------
@@ -84,17 +84,16 @@ require_once(ABSPATH  . '/wp-admin/includes/template.php');
  // ------------------------------------------------------------------
   function gereAnonymatArticle($post_author){
   	global $post;
-  	$profil = get_usermeta( $post->post_author, 'profil_ENT');
+  	$profil = get_user_meta( $post->post_author, 'profil_ENT');
   	return getSignature($post_author, $post->post_author, $profil);
   }
 
  // ------------------------------------------------------------------
  // Fonction d'affichage de la signature anonymisée sur les commentaires
  // ------------------------------------------------------------------
-  function gereAnonymatCommentaire($comment_author){
-  	global $comment;
-  	$profil = get_usermeta( $comment->user_id, 'profil_ENT');
-  	return getSignature($comment_author, $comment->user_id, $profil);  	
+  function gereAnonymatCommentaire($comment_author, $comment_id, $comment){
+  	$profil = get_user_meta( $comment->user_id, 'profil_ENT');
+  	return getSignature($comment_author, $comment->user_id, $profil);
   }
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -105,6 +104,6 @@ require_once(ABSPATH  . '/wp-admin/includes/template.php');
  add_action('admin_init', 'gestionAnonymatEleves', 11);
  
  add_filter('the_author', 'gereAnonymatArticle', 10, 1);
- add_filter('get_comment_author', 'gereAnonymatCommentaire', 10, 1);
+ add_filter('get_comment_author', 'gereAnonymatCommentaire', 10, 3);
 
-?>
+

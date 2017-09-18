@@ -34,18 +34,19 @@ require_once('includes/pilotage-functions.inc.php');
 require_once('includes/provisionning-functions.inc.php');
 // Fonctions liées à la CASification de WordPress.
 require_once('includes/cas-functions.inc.php');
-// Fonctions de paramêtrage du back-office des options du plugin.
+// Fonctions de paramétrage du back-office des options du plugin.
 require_once('includes/ENTback-office.php'); 
+// API JSON d'administration
+require_once('includes/api.php'); 
 
-require_once(ABSPATH . WPINC . '/registration.php');
-require_once(ABSPATH . WPINC . '/formatting.php');
-require_once(ABSPATH . WPINC . '/wp-db.php');
+//require_once(ABSPATH . WPINC . '/formatting.php');
+//require_once(ABSPATH . WPINC . '/wp-db.php');
 require_once(ABSPATH . WPINC . '/pluggable.php');
-require_once(ABSPATH . "wp-admin" . '/includes/image.php');
-require_once(ABSPATH . WPINC . '/capabilities.php');
+//require_once(ABSPATH . "wp-admin" . '/includes/image.php');
+//require_once(ABSPATH . WPINC . '/capabilities.php');
+//require_once(ABSPATH . '/wp-admin/includes/user.php');
 // fonctions MU
-require_once(ABSPATH.'/wp-admin/includes/ms.php');
-
+require_once(ABSPATH . '/wp-admin/includes/ms.php');
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	
@@ -85,8 +86,6 @@ add_filter('logout_url',array('wpCAS', 'get_url_logout'));
 add_filter( 'admin_bar_menu', 'bienvenue');
 // Ajout d'un texte perso dans le footer.
 add_filter('admin_footer_text', 'addEntName', 10, 0);
-// Marquage Ministèriel
-add_action('wp_footer', 'xiti_MEN_et_google', 10, 0);
 
 // Maîtriser les headers http qui sont envoyés
 add_action( 'login_init', 'remove_frame_options_header',12, 0 );
@@ -127,16 +126,6 @@ add_action('restrict_manage_posts', 'restrict_manage_authors');
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	
-	f o n c t i o n s   d e   m o d i f i c a t i o n  d u   b l o g 
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
-
-// Cette action est envoyé à chaque mise à jour d'une option. Il faut donc filtrer 
-// par rapport à la page du back-office en cours et aux noms des options.
-add_action( 'update_option', 'synchroENT', 10, 3);
-
-/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	
 	s u p p r e s s i o n   d e   l a   n o t i f i c a t i o n 
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
@@ -165,11 +154,11 @@ add_action( '_admin_menu', 'user_role_editor_settings', 25);
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 add_action( 'rest_api_init', function () {
-    // register_rest_route( 'ent-wp-management/v1', '/blog/([A-z0-9])/subscribe/(?P<id>\d+)', array(
-    register_rest_route( 'ent-wp-management/v1', '/blog/(?P<id>\d+)', array(
-        'methods' => 'GET',
-        'callback' => 'blog_subscribe',
-    ) );
+	// Add admin JSON API available at /wp-json/api/...
+    register_rest_route( 'api', '/(?P<path>.*)', array(
+		'methods' => array('GET', 'POST', 'PUT', 'DELETE'),
+		'callback' => 'wp_rest_laclasse_api_handle_request'
+    ));
 } );
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -184,16 +173,23 @@ add_action( 'rest_api_init', function () {
 
 if (isset($_REQUEST['ENT_action'])) {
 
-	$ENT_action 		= $_REQUEST['ENT_action'];
-	//$ENTblogid 			= $_REQUEST['ENTblogid'];
-	$ENTblogid 			= $_REQUEST['pblogid'];
-	$blogid 			= $_REQUEST['blogid'];
-	$blogname 			= $_REQUEST['blogname'];
-	$blogtype 			= $_REQUEST['blogtype'];
-	$username			= $_REQUEST['username'];
-	$uid				= $_REQUEST['uid'];
-	$uid_admin			= $_REQUEST['uid_admin'];
-	$blogdescription 	= $_REQUEST['blogdescription'];
+	$ENT_action = $_REQUEST['ENT_action'];
+	if (isset($_REQUEST['pblogid']))
+		$ENTblogid  = $_REQUEST['pblogid'];
+	if (isset($_REQUEST['blogid']))
+		$blogid	= $_REQUEST['blogid'];
+	if (isset($_REQUEST['blogname']))
+		$blogname = $_REQUEST['blogname'];
+	if (isset($_REQUEST['blogtype']))
+		$blogtype = $_REQUEST['blogtype'];
+	if (isset($_REQUEST['username']))
+		$username = $_REQUEST['username'];
+	if (isset($_REQUEST['uid']))
+		$uid = $_REQUEST['uid'];
+	if (isset($_REQUEST['uid_admin']))
+		$uid_admin = $_REQUEST['uid_admin'];
+	if (isset($_REQUEST['blogdescription']))
+		$blogdescription = $_REQUEST['blogdescription'];
 	$mustDieAfterAction = false;  // Utilisé pour les actions qui ne nécessitent pas d'affichage après s'être déroulées.
 	
 	switch ($ENT_action) {

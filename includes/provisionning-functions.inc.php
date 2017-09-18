@@ -64,7 +64,7 @@ $NewUser = false;
 // --------------------------------------------------------------------------------
 // fonction création d'un utilisateur
 // --------------------------------------------------------------------------------
-function createUserWP($p_username, $p_useremail, $p_role, $p_domain) {
+function createUserWP($p_username, $p_useremail) {
 	global $NewUser;
 	$mailExists = false;
 	$loginExists = false;
@@ -73,14 +73,14 @@ function createUserWP($p_username, $p_useremail, $p_role, $p_domain) {
 	logIt("___/ Fonction : createUserWP");
 
 	// Vérification de l'existance du compte, par rapport à l'email (donnée unique de Wordpress).
-	$userId = get_user_id_from_string( $p_useremail );
-	if ($userId > 0) {
+	$userId;
+	$userRec = get_user_by( 'email', $p_useremail );
+	if ($userRec) {
+		$userId = $userRec->ID;
 		logIt("V&eacute;rification de l'existence du compte, par rapport &agrave; l'email '".$p_useremail."'.");
 		$mailExists = true;
 		$userExists = true;
-		$userRec = get_userdata($userId);
 		logIt("R&eacute;cup&eacute;ration des infos de l'utilisateur #$userId via son email.");
-		
 	}
 
 	$loginId = username_exists( $p_username );
@@ -94,18 +94,16 @@ function createUserWP($p_username, $p_useremail, $p_role, $p_domain) {
 	}
 	
 	// Récupération des données du user s'il existe.
-	if (($mailExists && !$loginExists) 
-		&&
-		($p_username != $userRec->user_login)) {
+	if ($mailExists && !$loginExists &&	($p_username != $userRec->user_login)) {
 		$hasToUpdateUserData = false;
 		logIt("L'utilisateur <b>$p_username</b> ne sera cr&eacute;&eacute;, 
 		car un compte existe d&eacute;j&agrave; avec l'email '$p_useremail' : '".$userRec->user_login."'. 
 		Les donn&eacute;es de '".$userRec->user_login."' ne seront pas mise &agrave; jour avec les donn&eacute;es de '$p_username', 
 		mais l'authentification aura bien lieu avec le compte existant.");
-		}
+	}
 
-  //
-  // L'utilisateur existe déjà.
+	//
+	// L'utilisateur existe déjà.
 	//
 	if ($userExists) { 
 		// récupération des informations de l'utilisateur 
@@ -153,17 +151,17 @@ function createUserWP($p_username, $p_useremail, $p_role, $p_domain) {
 		$NewUser = true;
 		logIt("#$userId est un nouvel utilisateur");
 			
-	  // Suppression du droit même minimum sur le blog des blogs.
-	  switch_to_blog(1);
- 	  remove_user_from_blog($userId, 1, 1);
-    logIt("Suppression des droits sur le blog des blogs pour #$userId.");
-    restore_current_blog();
-    
+		// Suppression du droit même minimum sur le blog des blogs.
+		switch_to_blog(1);
+		remove_user_from_blog($userId, 1, 1);
+		logIt("Suppression des droits sur le blog des blogs pour #$userId.");
+		restore_current_blog();
 	}
 	
 	// maj des données utilisateur
 	logIt("hasToUpdateUserData='$hasToUpdateUserData'");
-	if ($hasToUpdateUserData) majWPUserMetData($userId);
+	if ($hasToUpdateUserData)
+		majWPUserMetData($userId);
 	
 	// cookie d'authentification WP
 	setWPCookie($userId);
@@ -177,8 +175,7 @@ function createUserWP($p_username, $p_useremail, $p_role, $p_domain) {
 // fonction création d'un nouvel article
 // --------------------------------------------------------------------------------
 function creerPremierArticle($domain, $wpBlogId, $pUserId, $pTypeBlog) {
-
-	$idAncienBlogENT = $_REQUEST['idAncienBlogEnt'];
+	global $wp_error;
 	
 	logIt("Publication d'un article par d&eacute;faut.");
 	
@@ -228,60 +225,46 @@ function creerPremierArticle($domain, $wpBlogId, $pUserId, $pTypeBlog) {
 // fonction création d'un nouveau blog
 // --------------------------------------------------------------------------------
 function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $site_id, $wpUsrId, $TypeDeBlog, $EtbUAI, $ClsID ="", $GrpID="", $GplID="") {
+	global $wpError;
+
 	logIt("___Fonction : creerNouveauBlog");
 	logIt("Cr&eacute;ation du blog pour le domaine '".$domain."'.");
-	$wpBlogId = create_empty_blog( $domain, $path, $sitename, $site_id);
+
+	$meta = new stdClass();
+	$meta->type_de_blog = $TypeDeBlog;
+	if ($EtbUAI)
+		$meta->etablissement_ENT = $EtbUAI;
+	if ($TypeDeBlog == 'CLS' && $ClsID)
+		$meta->classe_ENT = $ClsID;
+	if ($TypeDeBlog == 'GRP' && $GrpID)
+		$meta->groupe_ENT = $GrpID;
+	if ($TypeDeBlog == 'GPL' && $GplID)
+		$meta->groupelibre_ENT = $GplID;
+	$meta->admin_email = $user_email;
+	$meta->wordpress_api_key = AKISMET_KEY;
+
+	$wpBlogId = wpmu_create_blog($domain, $path, $sitename, $wpUsrId, $meta, $site_id);
+
+//	$wpBlogId = create_empty_blog( $domain, $path, $sitename, $site_id);
 	logIt("Ce blog a pour id #".$wpBlogId.".");
 
 	// HACK: problème de droit lors de la création d'un blog MU
 	// dans wp_x_options l'option_name = wp_user_roles est crée
 	// alors qu'il faudrait l'option_name wp_x_user_roles
-    add_blog_option($wpBlogId, 'wp_'.$wpBlogId.'_user_roles', get_blog_option( $wpBlogId, 'wp_user_roles'));
+//    add_blog_option($wpBlogId, 'wp_'.$wpBlogId.'_user_roles', get_blog_option( $wpBlogId, 'wp_user_roles'));
     	
 	logIt("Param&eacute;trage des options par d&eacute;faut pour le blog #".$wpBlogId.".");
 	// Ajout du role administrator sur le blog crée
 	add_user_to_blog($wpBlogId, $wpUsrId, "administrator");
 	logIt(" -> Ajout de l'utilisateur '".$username."' comme administrateur du blog #".$wpBlogId.".");
-	
-	// Ajout des options pour ce nouveau blog.
-	add_blog_option( $wpBlogId, 'type_de_blog', $TypeDeBlog );
-	logIt(" -> Ajout du type de blog '".$TypeDeBlog."'.");
-	
-	// // Si ce type de blog est un blog d'établissement, on enregistre le code rne de cet établissement
-	add_blog_option( $wpBlogId, 'etablissement_ENT', $EtbUAI );
-	logIt(" -> Ajout de l'option 'etablissement_ENT'='".$EtbUAI."'.");
-	
-	// Si ce type de blog est un blog de classe, on enregistre l'id de cette classe
-	if ($TypeDeBlog == 'CLS') {
-	   add_blog_option( $wpBlogId, 'classe_ENT', $ClsID );
-	   logIt(" -> Ajout de l'option 'classe_ENT'='".$ClsID."'.");
-	}
-	
-	// Si ce type de blog est un blog d'établissement, on enregistre l'id de ce groupe
-	if ($TypeDeBlog == 'GRP') {
-	   add_blog_option( $wpBlogId, 'groupe_ENT', $GrpID );
-	   logIt(" -> Ajout de l'option 'groupe_ENT'='".$GrpID."'.");
-	}
-	
-	// Si ce type de blog est un blog d'établissement, on enregistre l'id de ce groupe
-	if ($TypeDeBlog == 'ENV' || $TypeDeBlog == 'GPL') {
-	   add_blog_option( $wpBlogId, 'groupelibre_ENT', $GplID );
-	   logIt(" -> Ajout de l'option 'groupelibre_ENT'='".$GplID."'.");
-	}
-	
-	add_blog_option( $wpBlogId, 'wordpress_api_key', AKISMET_KEY);
-	logIt(" -> Ajout de la cle ASKIMET pour l'anti-spams sur les commentaires.");
-	
-	$name = (isset($_REQUEST['blogtitle']) && $_REQUEST['blogtitle'] != "" ) ? $_REQUEST['blogtitle'] : $sitename;
-	update_blog_option($wpBlogId, 'blogname', $name);
-	logIt(" -> Nom du blog : '".$name."'.");
+		
+	update_blog_option($wpBlogId, 'blogname', $sitename);
+	logIt(" -> Nom du blog : '".$sitename."'.");
 
 	if (isset($_REQUEST['blogdescription']) && $_REQUEST['blogdescription'] != "" ) {
 		update_blog_option($wpBlogId, 'blogdescription', $_REQUEST['blogdescription']);
 		logIt(" -> Description du blog : '".$_REQUEST['blogdescription']."'.");
 	}
-	update_blog_option($wpBlogId, 'admin_email', $user_email);
-	logIt(" -> mail de l'administrateur : '".$user_email."'.");
 
 	update_blog_option($wpBlogId, 'users_can_register', 0);
 	logIt(" -> Suppression de l'inscription.");
@@ -304,15 +287,12 @@ function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $si
 
 	update_blog_option($wpBlogId, 'comment_registration', 1 );
 	logIt(" -> Param&eacute;trage du mode de commentaire par d&eacute;faut : Il faut &ecirc;tre enregistrer pour pouvoir commenter.");
-	
-	$wpError = wpmu_validate_blog_signup();
-	logIt("Validation du blog.");
-	
+		
 	// Creer un premier article publié qui parle de la reprise des données.
 	creerPremierArticle($domain, $wpBlogId, $wpUsrId, $TypeDeBlog);
   	
 	if (is_wp_error($wpError) )	errMsg($wpError->get_error_message());
-	logIt("___Fin Fonction : creerNouveauBlog");
+		logIt("___Fin Fonction : creerNouveauBlog");
 
 	return $wpBlogId;
 }
@@ -480,8 +460,8 @@ function get_activation_key($user) {
 // fonction de redirection
 // --------------------------------------------------------------------------------
 function redirection($p_domaine) {
+	global $wpcas_options;
 	$api_mode = (isset($_REQUEST['mode']) && $_REQUEST['mode'] == 'API');
-	logIt("mode=".$_REQUEST['mode']);
 	$scriptName = ""; 
 	$qry = Array();
 	// Si on est en mode creation/API on renvoie du Json
@@ -522,8 +502,8 @@ function redirection($p_domaine) {
 	}
 	else {
 		if (!$api_mode){
-			$proto = ($wpcas_options['laclasse']['server_port'] == '443') ? 's': '';
-			header('Location: http'.$proto.'://'.$p_domaine.$scriptName.$query);
+			//$proto = ($wpcas_options['laclasse']['server_port'] == '443') ? 's': '';
+			header('Location: http://'.$p_domaine.$scriptName.$query);
 		}
 	}
 }
