@@ -128,8 +128,15 @@ function laclasse_api_handle_request($method, $path) {
 
 	$tpath = explode('/', $path);
 
+	// GET /setup
+	if ($method == 'GET' && count($tpath) == 1 && $tpath[0] == 'setup')
+	{
+		header('Content-Type: application/json; charset=utf-8');
+		$result = array("domain" => BLOG_DOMAINE);
+		echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_NUMERIC_CHECK);
+	}
 	// GET /blogs
-	if ($method == 'GET' && count($tpath) == 1 && $tpath[0] == 'blogs')
+	else if ($method == 'GET' && count($tpath) == 1 && $tpath[0] == 'blogs')
 	{
 		header('Content-Type: application/json; charset=utf-8');
 		$blogs = get_sites(array("number" => 100000));
