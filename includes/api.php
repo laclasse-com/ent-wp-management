@@ -186,9 +186,9 @@ function laclasse_api_handle_request($method, $path) {
 
 		// create the blog and add the WP user as administrator
 		$blog_id = creerNouveauBlog(
-			$blog_domain, '/', $blog_name, $user->login, $user_email, 1,
-			$wp_user_id, $blog_type, $blog_structure_id, $blog_cls_id,
-			$blog_grp_id, $blog_gpl_id);
+			$json->domain, '/', $json->name, $user->login, $user_email, 1,
+			$wp_user_id, $json->type, $blog_structure_id, $blog_cls_id,
+			$blog_grp_id, $blog_gpl_id, $json->description);
 
 		error_log("DANIEL: creerNouveauBlog $blog_id");
 		$data = get_site($blog_id);
@@ -275,12 +275,40 @@ function laclasse_api_handle_request($method, $path) {
 	// GET /users/{id}
 	else if ($method == 'GET' && count($tpath) == 2 && $tpath[0] == 'users')
 	{
-		$user_id = intval($tpath[1]);
-		$user = get_user_by('id', $user_id);
+		if ($tpath[1] == 'current') {
+			$user = get_user_by('login', $user->login);
+		}
+		else {
+			$user_id = intval($tpath[1]);
+			$user = get_user_by('id', $user_id);
+		}
 		if ($user == false)
 			http_response_code(404);
 		else {
 			$result = user_data($user);
+			header('Content-Type: application/json; charset=utf-8');
+			echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_NUMERIC_CHECK);
+		}
+	}
+	// GET /users/{id}/blogs
+	else if ($method == 'GET' && count($tpath) == 3 && $tpath[0] == 'users' && $tpath[2] == 'blogs')
+	{
+		$userENT;
+		if ($tpath[1] == 'current') {
+			$userENT = $user;
+			$user = get_user_by('login', $user->login);
+		}
+		else {
+			$user_id = intval($tpath[1]);
+			$user = get_user_by('id', $user_id);
+			if ($user != false) {
+				$userENT = get_http(ANNUAIRE_URL . "api/users?login=" . urlencode($user->login));
+			}
+		}
+		if ($user == false)
+			http_response_code(404);
+		else {
+			$result = userViewBlogList($userENT->id);
 			header('Content-Type: application/json; charset=utf-8');
 			echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_NUMERIC_CHECK);
 		}

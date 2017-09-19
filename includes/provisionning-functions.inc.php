@@ -224,7 +224,7 @@ function creerPremierArticle($domain, $wpBlogId, $pUserId, $pTypeBlog) {
 // --------------------------------------------------------------------------------
 // fonction création d'un nouveau blog
 // --------------------------------------------------------------------------------
-function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $site_id, $wpUsrId, $TypeDeBlog, $EtbUAI, $ClsID ="", $GrpID="", $GplID="") {
+function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $site_id, $wpUsrId, $TypeDeBlog, $EtbUAI, $ClsID ="", $GrpID="", $GplID="", $blogdescription = "") {
 	global $wpError;
 
 	logIt("___Fonction : creerNouveauBlog");
@@ -261,10 +261,15 @@ function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $si
 	update_blog_option($wpBlogId, 'blogname', $sitename);
 	logIt(" -> Nom du blog : '".$sitename."'.");
 
-	if (isset($_REQUEST['blogdescription']) && $_REQUEST['blogdescription'] != "" ) {
-		update_blog_option($wpBlogId, 'blogdescription', $_REQUEST['blogdescription']);
-		logIt(" -> Description du blog : '".$_REQUEST['blogdescription']."'.");
+	if (!empty($blogdescription)) {
+		update_blog_option($wpBlogId, 'blogdescription', $blogdescription);
+		logIt(" -> Description du blog : '$blogdescription'.");
 	}
+
+//	if (isset($_REQUEST['blogdescription']) && $_REQUEST['blogdescription'] != "" ) {
+//		update_blog_option($wpBlogId, 'blogdescription', $_REQUEST['blogdescription']);
+//		logIt(" -> Description du blog : '".$_REQUEST['blogdescription']."'.");
+//	}
 
 	update_blog_option($wpBlogId, 'users_can_register', 0);
 	logIt(" -> Suppression de l'inscription.");

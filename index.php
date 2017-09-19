@@ -290,7 +290,7 @@ if (isset($_REQUEST['ENT_action'])) {
 			$_REQUEST['domain'] . '.' . BLOG_DOMAINE, '/', $_REQUEST['blogname'],
 			$userENT->login, $user->data->user_email, 1,
 			$user->ID, $_REQUEST['blogtype'], $_REQUEST['etbid'], $_REQUEST['clsid'],
-			$_REQUEST['grpid'], $_REQUEST['gplid']);
+			$_REQUEST['grpid'], $_REQUEST['gplid'], $_REQUEST['blogdescription']);
 
 		add_user_to_blog($blogId, $user->ID, 'administrator');
 		header('Content-Type: application/json; charset=utf-8');
