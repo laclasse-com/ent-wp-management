@@ -7,27 +7,11 @@
 
 $wpcas_options = array(
   'laclasse' => array(
-    'cas_version' => '2.0',
-    'include_path' => '/var/www/html/CAS-1.2.0/CAS.php',
-    'server_hostname' => 'v3dev.laclasse.com',.
+    'server_hostname' => 'v3dev.laclasse.com',
     'server_port' => '443',
     'server_path' => '/sso'
-   ),
-	 'cybercollege42' => array(
-  	'cas_version' => '2.0',
-  	'include_path' => '/var/www/html/CAS-1.2.0/CAS.php',
-  	'server_hostname' => 'cas.cybercolleges42.fr', 
-  	'server_port' => '443',
-  	'server_path' => ''
-	 ),
-  'ent01' => array(
-    'cas_version' => '2.0',
-    'include_path' => '/var/www/html/CAS-1.2.0/CAS.php',
-    'server_hostname' => 'cas.colleges.ain.fr',
-    'server_port' => '443',
-    'server_path' => ''
-   )   
-	);
+   )
+);
 
 // Nom du serveur ENT
 define ("SERVEUR_ENT", "www.dev.laclasse.com");
@@ -55,9 +39,6 @@ define("ANNUAIRE_APP_ID", "BLOGS");
 
 // Clé de signature pour l'annuaire
 define("ANNUAIRE_API_KEY", "12345678533643246564254");
-
-// Dossier qui contient les fichiers de chaque blog
-define("BLOG_FILES", "/var/www/wordpress/wp-content/uploads/sites");
 
 // -----------------------------------------------------------------------------
 // Configuration pour le Front
