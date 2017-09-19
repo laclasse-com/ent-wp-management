@@ -61,7 +61,7 @@ define("MAX_BLOG_PROPOSALS", '10');
 
 # url pour dialoguer avec l'api de WordPress
 $BLOGS_WORDPRESS = array(
-  'host' => 'https://' . BLOG_DOMAINE . '/',
+  'host' => '/blogs/',
   'get' => '?ENT_action=USER_BLOG_LIST&username=$1',
   'get_all' => '?ENT_action=BLOG_LIST&username=$1',
   'create' => '?ENT_action=CREATE_BLOG&blogname=$1',
