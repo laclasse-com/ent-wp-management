@@ -21,17 +21,14 @@ function blog_data($data) {
 		$result->structure_id = $result->etablissement_ENT;
 	}
 	unset($result->etablissement_ENT);
-	if (isset($result->classe_ENT)) {
+	if ($result->type == 'CLS' && isset($result->classe_ENT))
 		$result->group_id = $result->classe_ENT;
-	}
-	unset($result->classe_ENT);
-	if (isset($result->groupe_ENT)) {
+	if ($result->type == 'GRP' && isset($result->groupe_ENT))
 		$result->group_id = $result->groupe_ENT;
-	}
-	unset($result->groupe_ENT);
-	if (isset($result->groupelibre_ENT)) {
+	if ($result->type == 'GPL' && isset($result->groupelibre_ENT))
 		$result->group_id = $result->groupelibre_ENT;
-	}
+	unset($result->groupe_ENT);
+	unset($result->classe_ENT);
 	unset($result->groupelibre_ENT);
 	$result->public = $result->public == 1;
 	$result->archived = $result->archived == 1;
