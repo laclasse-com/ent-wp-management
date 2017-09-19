@@ -210,47 +210,35 @@ function laclasse_api_handle_request($method, $path) {
 		$blog_id = intval($tpath[1]);
 		$json = json_decode(file_get_contents('php://input'));
 
-		$blog_name = $json->name;
-		$blog_description = $json->description;
-		$blog_type = $json->type;
-		$blog_structure_id;
-		if (isset($json->structure_id)) {
-			$blog_structure_id = $json->structure_id;
-		}
-		$blog_cls_id;
-		$blog_grp_id;
-		$blog_gpl_id;
-		if ($blog_type == 'CLS') {
-			$blog_cls_id = $json->group_id;
-		}
-		else if ($blog_type == 'GRP') { 
-			$blog_grp_id = $json->group_id;
-		}
-		else if ($blog_type == 'GPL') { 
-			$blog_gpl_id = $json->group_id;
-		}
-
 		$data = get_site($blog_id);
 		if ($data == null)
 			http_response_code(404);
 		else {
-			if (isset($blog_name))
-				update_blog_option($blog_id, 'blogname', $blog_name);
-			if (isset($blog_description))
-				update_blog_option($blog_id, 'blogdescription', $blog_description);
-			if (isset($blog_type))
-				update_blog_option($blog_id, 'type_de_blog', $blog_type);
-			if (isset($blog_structure_id))
-				update_blog_option($blog_id, 'etablissement_ENT', $blog_structure_id);
-			if (isset($blog_cls_id))
-				update_blog_option($blog_id, 'classe_ENT', $blog_cls_id);
-			if (isset($blog_grp_id))
-				update_blog_option($blog_id, 'groupe_ENT', $blog_grp_id);
-			if (isset($blog_gpl_id))
-				update_blog_option($blog_id, 'groupelibre_ENT', $blog_gpl_id);
+			if (isset($json->name))
+				update_blog_option($blog_id, 'blogname', $json->name);
+			if (isset($json->description))
+				update_blog_option($blog_id, 'blogdescription', $json->description);
+			if (isset($json->type))
+				update_blog_option($blog_id, 'type_de_blog', $json->type);
+			if (isset($json->archived))
+				update_blog_status($blog_id, 'archived', $json->archived ? '1' : '0');
+			if (isset($json->deleted))
+				update_blog_status($blog_id, 'deleted', $json->deleted ? '1' : '0');
+
+			$data = blog_data($data);
+
+			if (isset($json->structure_id))
+				update_blog_option($blog_id, 'etablissement_ENT', $json->structure_id);
+			if (isset($json->group_id)) {
+				if ($data->type == 'CLS')
+					update_blog_option($blog_id, 'classe_ENT', $json->group_id);
+				else if ($data->type == 'GRP')
+					update_blog_option($blog_id, 'groupe_ENT', $json->group_id);
+				else if ($data->type == 'GPL')
+					update_blog_option($blog_id, 'groupelibre_ENT', $json->group_id);
+			}
 
 			$data = get_site($blog_id);
-
 			$result = blog_data($data);
 			header('Content-Type: application/json; charset=utf-8');
 			echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_NUMERIC_CHECK);
