@@ -13,8 +13,8 @@ function wpcas_provisioning($userENT, $user_email){
 
     $role = getUserWpRole($userENT, $blogData);
 
-	createUserWP($user_login, $user_email);
-	redirection($domain);
+	createUserWP($user_login, $user_email, $userENT);
+	header('Location: http://'.$domain);
 }
 
 // --------------------------------------------------------------------------------
@@ -27,11 +27,11 @@ class wpCAS {
 	 If the user is not provisioned, wpcas_nowpuser() is called
 	*/
 	public static function authenticate() {
-		global $wpcas_options, $ent, $_REQUEST;
+		global $_REQUEST;
 
 		if (isset($_REQUEST['ticket'])) {
 			$req = curl_init();
-	        curl_setopt($req, CURLOPT_URL, wpCAS::get_url_sso() . 'serviceValidate?ticket=' .
+	        curl_setopt($req, CURLOPT_URL, CAS_URL . 'serviceValidate?ticket=' .
 				urlencode($_REQUEST['ticket']) . '&service=' . wpCAS::get_url_login());
 			curl_setopt($req, CURLOPT_RETURNTRANSFER, 1);
 			$data = curl_exec($req);
@@ -64,7 +64,7 @@ class wpCAS {
 						wp_set_auth_cookie($user->ID);
 						wp_set_current_user($user->ID);
 
-		                // Met à jour les données de l'utilisateur
+		                // Met ï¿½ jour les donnï¿½es de l'utilisateur
 						wp_update_user( 
 							array (
 								'ID' => $user->ID, 
@@ -87,31 +87,19 @@ class wpCAS {
 		}
 	}
 
-	public static function get_url_sso() {
-		global $ent, $wpcas_options;
-
-		return 
-			($wpcas_options[$ent]['server_port'] == 443) ? "https://" : "http://".
-			$wpcas_options[$ent]['server_hostname'].
-			(($wpcas_options[$ent]['server_port'] != 80 )? ":".$wpcas_options[$ent]['server_port'] : "").
-			$wpcas_options[$ent]['server_path'] . "/";
-	}
-
-	// renvoie l'url de login, selon le contexte : intï¿½grï¿½ dans une IFRAME ou normal
+	// renvoie l'url de login, selon le contexte : intÃ©grÃ© dans une IFRAME ou normal
 	public static function get_url_login() {
-		global $ent;
-		return wpCAS::get_url_sso() . "login?service=" . urlencode(home_url() . "/wp-login.php?ent=".$ent);
+		return CAS_URL . "login?service=" . urlencode(home_url() . "/wp-login.php");
 	}
 	
 	// Revoie l'url de logout selon l'ent de provenance.
 	public static function get_url_logout($wpLogoutUrl) {
-		return $wpLogoutUrl . "&ent=laclasse";
+		return $wpLogoutUrl;
 	}
 	
 	// hook CAS logout to WP logout
 	public static function logout() {
-		global $ent;
-		header('Location: ' . wpCAS::get_url_sso() . "logout?service=" . urlencode(home_url() . "/wp-login.php?ent=".$ent));
+		header('Location: ' . CAS_URL . "logout?service=" . urlencode(home_url() . "/wp-login.php"));
 		die();
 	}
 
@@ -122,12 +110,12 @@ class wpCAS {
 
 	// disabled reset, lost, and retrieve password features
 	public static function disable_function_user() {
-		echo( __( 'La  fonction d\'ajout d\'un nouvel utilisateur est d&eacute;sactiv&eacute;e. Passez par l\'ENT '.NOM_ENT.' pour ajouter des utilisateurs &agrave; votre blog.', 'wpcas' ));
+		echo( __( 'La  fonction d\'ajout d\'un nouvel utilisateur est d&eacute;sactiv&eacute;e. Passez par l\'ENT '.ENT_NAME.' pour ajouter des utilisateurs &agrave; votre blog.', 'wpcas' ));
 	}
 
 	// disabled reset, lost, and retrieve password features
 	public static function disable_function_pwd() {
-		echo( __( 'Les fonctions de gestion des mots de passe sont d&eacute;sactiv&eacute;es car la plateforme est connectï¿½e &agrave; l\'ENT '.NOM_ENT.'.', 'wpcas' ));
+		echo( __( 'Les fonctions de gestion des mots de passe sont d&eacute;sactiv&eacute;es car la plateforme est connectï¿½e &agrave; l\'ENT '.ENT_NAME.'.', 'wpcas' ));
 	}
 
 	// set the passwords on user creation
@@ -137,6 +125,3 @@ class wpCAS {
 		$pass1=$pass2=$random_password;
 	}
 }
-
-$ent = "laclasse";
-

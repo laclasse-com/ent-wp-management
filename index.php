@@ -82,8 +82,7 @@ add_filter('logout_url',array('wpCAS', 'get_url_logout'));
 	h o o k s   e t   f i l t r e s   g é n é r a u x 
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
-// ajouter le role du nom à la place de "Howdy"
-add_filter( 'admin_bar_menu', 'bienvenue');
+
 // Ajout d'un texte perso dans le footer.
 add_filter('admin_footer_text', 'addEntName', 10, 0);
 
@@ -98,9 +97,6 @@ add_action( 'admin_init', 'remove_frame_options_header', 12, 0 );
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
 add_filter('wpmu_users_columns', 'getUserCols', 10, 1);
-add_filter('manage_users_custom_column', 'getCustomUserMeta', 10, 3);
-add_filter('ENT_WP_MGMT_format_output', 'formatMeta', 10, 2);
-add_filter('wp_print_scripts', 'addUsersManagmentScript', 10, 0);
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	
@@ -112,9 +108,6 @@ add_filter('wpmu_blogs_columns', 'getBlogsCols', 10, 0);
 add_filter('manage_sites_custom_column', 'getCustomSiteMeta', 10, 2);
 // liste des blogs de l'utilisateur
 add_filter('myblogs_options', 'getCustomExtraInfoBlog', 10, 2);
-add_filter('myblogs_blog_actions', 'getCustomActionBlog', 10, 2);
-// Hook pour la désinscription d'un blog.
-// add_action( 'myblogs_allblogs_options', 'actionsBlog', 10, 0);
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	
@@ -287,7 +280,7 @@ if (isset($_REQUEST['ENT_action'])) {
 		$user = get_user_by('login', $userENT->login);
 
 		$blogId = creerNouveauBlog(
-			$_REQUEST['domain'] . '.' . BLOG_DOMAINE, '/', $_REQUEST['blogname'],
+			$_REQUEST['domain'] . '.' . BLOGS_DOMAIN, '/', $_REQUEST['blogname'],
 			$userENT->login, $user->data->user_email, 1,
 			$user->ID, $_REQUEST['blogtype'], $_REQUEST['etbid'], $_REQUEST['clsid'],
 			$_REQUEST['grpid'], $_REQUEST['gplid'], $_REQUEST['blogdescription']);
@@ -320,17 +313,6 @@ if (isset($_REQUEST['ENT_action'])) {
 		$mustDieAfterAction = true;
 		break;
 
-	// --------------------------------------------------------------------------------
-	// Renvoie l'ID WP d'un blog identifié par son nom.
-	// ?ENT_action=BLOG_ID
-	// --------------------------------------------------------------------------------
-	case 'BLOG_ID' :
-		$t = Array();
-		$t['id'] = getBlogIdByDomain($blogname);
-		header('Content-Type: application/json; charset=UTF-8');	
-		echo json_encode($t, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-		$mustDieAfterAction = true;
-		break;
 	// --------------------------------------------------------------------------------
 	// Liste des blogs de la plateforme
 	// ?ENT_action=BLOG_LIST
@@ -438,30 +420,6 @@ if (isset($_REQUEST['ENT_action'])) {
 		$mustDieAfterAction = true;
 		break;
 
-	// --------------------------------------------------------------------------------
-	//
-	// Supprimer un blog
-	//
-	// --------------------------------------------------------------------------------
-	case 'SUPPRIMER_BLOG' :
-		if (phpCAS::isAuthenticated()) {
-			$user = get_user_by('login',phpCAS::getUser());
-		} else phpCAS::forceAuthentication();
-
-		$blogId = getBlogIdByDomain($domain);
-		if (!$blogId) {
-			echo "L'identifiant de '$domain' n'a pas &eacute;t&eacute; trouv&eacute;. Ce blog existe-t-il ?";
-			exit;
-		}
-		else {
-			if(aLeRoleSurCeBlog($user, $blogId, "administrator") || is_super_admin())  {
-				wpmu_delete_blog ($blogId, true);	
-				message("Le blog '$domain' a &eacute;t&eacute; supprim&eacute;.");
-			}
-			else message("Vous n'&ecirc;tes pas administrateur du blog '$domain'.");
-		}
-		$mustDieAfterAction = true;
-		break;
 	// --------------------------------------------------------------------------------
 	//
 	// Action par défaut.

@@ -209,8 +209,10 @@ function getBlogData($blogId) {
 
 	foreach ($opts as $opt) {
 		$val = get_blog_option($blogId, $opt);
-		if ($val != false)
+		$val = html_entity_decode($val, ENT_QUOTES);
+		if ($val != false) {
 			$blog->$opt = $val;
+		}
 	}
     $blog->blog_id = $blogId;
     return $blog;
@@ -235,7 +237,7 @@ function blogList($uid_ent) {
 
     // Constitution de la liste
     $blogs = $wpdb->get_results( 
-        "SELECT * FROM $wpdb->blogs WHERE domain != '".BLOG_DOMAINE."'
+        "SELECT * FROM $wpdb->blogs WHERE domain != '".BLOGS_DOMAIN."'
         and archived = 0 and deleted = 0 and blog_id > 1 order by domain", 
         OBJECT );
 

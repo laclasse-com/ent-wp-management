@@ -1,65 +1,45 @@
 <?php
-/**********************************************************************
-	Fichier de configuration du plugin de management de WP depuis un ENT.
-**********************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+// Setup file for ENT Management WordPress plugin
+////////////////////////////////////////////////////////////////////////////////
 
-// tableau de configuration pour la connexion à CAS.
+// CAS base URL
+define ("CAS_URL", "https://www.dev.laclasse.com/sso/");
 
-$wpcas_options = array(
-  'laclasse' => array(
-    'server_hostname' => 'v3dev.laclasse.com',
-    'server_port' => '443',
-    'server_path' => '/sso'
-   )
-);
+// ENT URL
+define ("ENT_URL", "www.dev.laclasse.com");
 
-// Nom du serveur ENT
-define ("SERVEUR_ENT", "www.dev.laclasse.com");
+// ENT name
+define ("ENT_NAME", "Laclasse.com");
 
-// Nom de l'ENT
-define ("NOM_ENT", "Laclasse.com");
+// Base domain for blogs creation
+define("BLOGS_DOMAIN", "blogs-dev.laclasse.com");
 
-// Mode du serveur DEV ou PROD : en DEV, pas de marquage Xiti
-define ("MODE_SERVEUR", "DEV"); // PROD
-
-// Nom de domaine de la plateforme de blog.
-define("BLOG_DOMAINE", "blogs-dev.laclasse.com");
-
-// chaine statique MD5 pour les encodages de clé de sécurité sur divers services web avec l'ENT.
-define("MD5_SALT", "xxxxxxxx");
-
-// Cle Akismet pour la gestion des spams dans les commentaires.	
+// Akismet key for handling SPAMs comments
 define("AKISMET_KEY", "123a1b456c78");
 
-// Clé d'application pour l'annuaire
+// Directory API URL
 define("ANNUAIRE_URL", "https://v3dev.laclasse.com/");
 
-// Clé d'application pour l'annuaire
-define("ANNUAIRE_APP_ID", "BLOGS");
+// Directory API user
+define("ANNUAIRE_USER", "BLOGS");
 
-// Clé de signature pour l'annuaire
-define("ANNUAIRE_API_KEY", "12345678533643246564254");
+// Directory API password
+define("ANNUAIRE_PASS", "12345678533643246564254");
 
-// -----------------------------------------------------------------------------
-// Configuration pour le Front
-// -----------------------------------------------------------------------------
-
-// Application API
-define("API_USER", "admin");
-define("API_PASSWORD", "defaultPassword");
+////////////////////////////////////////////////////////////////////////////////
+// Setup for the front
+////////////////////////////////////////////////////////////////////////////////
 
 define("APP_ROOT", ABSPATH);
 
-# virtual path de l'application
+// virtual path de l'application
 define("APP_PATH", 'wp-content/plugins/ent-wp-management/front');
 
-# Version de l'application
+// Version de l'application
 define("APP_VERSION", '2.0.0');
 
-# Nombre de propositions max dnas la partie gauche
-define("MAX_BLOG_PROPOSALS", '10');
-
-# url pour dialoguer avec l'api de WordPress
+// url pour dialoguer avec l'api de WordPress
 $BLOGS_WORDPRESS = array(
   'host' => '/blogs/',
   'get' => '?ENT_action=USER_BLOG_LIST&username=$1',
@@ -67,8 +47,6 @@ $BLOGS_WORDPRESS = array(
   'create' => '?ENT_action=CREATE_BLOG&blogname=$1',
   'subscribe' => '?ENT_action=INSCRIRE&blogname=$1',
   'unsubscribe' => '?ENT_action=DESINSCRIRE&blogname=$1',
-  'delete' => 'wp-login.php?ENT_action=SUPPRIMER_BLOG&blogname=$1',
-  'exists' => '?ENT_action=BLOG_EXISTS&blogname=$1' . "." . BLOG_DOMAINE,
-  'getwpid' => '?ENT_action=BLOG_ID&blogname=$1' . BLOG_DOMAINE,
+  'exists' => '?ENT_action=BLOG_EXISTS&blogname=$1' . "." . BLOGS_DOMAIN,
   'getcurrentuser' => '?ENT_action=CURRENT_USER'
 );
