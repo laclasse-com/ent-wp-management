@@ -218,29 +218,27 @@ angular.module('blogsApp')
 		$scope.required.title = !Blogs.checkField("title", $scope.titleBlog, "");
 		$scope.required.type = !Blogs.checkField("type", $scope.currentType.code, null);
 		$scope.required.regroupement = !(($scope.currentType.code == 'ENV') || Blogs.checkField("regroupement", $scope.currentRegroupement.id, null));
-		$scope.errorMsgDomain ="Le sous-domaine est obligatoire et il doit être en miniscule !";
+		$scope.errorMsgDomain = "Le sous-domaine est obligatoire et il doit être en miniscule !";
 		$scope.required.domain = !Blogs.checkField("subdomain", $scope.subDomain, "");
         console.log($scope.required);
-		//pour pouvoir fermer la modal et créer le blogs, il faut que tous les champs soit correcte
+		// pour pouvoir fermer la modal et créer le blogs, il faut que tous les champs soit correcte
 		// tester aussi l'existance dans WP
 		if ($scope.subDomain.length > 3) {
 			checkSubDomainExistance($scope.subDomain);
 		}
 		if (!$scope.required.title && !$scope.required.type && !$scope.required.regroupement && !$scope.required.domain) {
 			var blog = {
-				blogname: $scope.titleBlog,
+				name: $scope.titleBlog,
 				description: $scope.blogdescription + (($scope.currentType.code == 'ENV')?'': $scope.currentRegroupement.name),
 				type: $scope.currentType.code,
-				uai: $scope.currentRegroupement.uai,
-				rgptId: $scope.currentRegroupement.id,
-				owner: CurrentUser.get().uid,
-				action: 'add',
-				siteurl: "http://" + $scope.subDomain + "." + BLOGS_DOMAIN + "/",
-				domain: $scope.subDomain,
-				flux: ""
+				structure_id: $scope.currentRegroupement.uai,
+				group_id: $scope.currentRegroupement.id,
+				user_id: CurrentUser.get().id,
+				url: "http://" + $scope.subDomain + "." + BLOGS_DOMAIN + "/",
+				domain: $scope.subDomain + "." + BLOGS_DOMAIN
 			};
 			Blogs.create(blog);
-			$modalInstance.close();   
+			$modalInstance.close();
 		};
 	};
 

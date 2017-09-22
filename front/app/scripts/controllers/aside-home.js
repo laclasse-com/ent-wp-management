@@ -17,72 +17,27 @@ angular.module('blogsApp')
 		}
 		$scope.canCreateNewBlog = canCreateNewBlog;
 
-	    WPApi.launchAction("LISTE_INTERETS", connectedUser.login)
-	        // then() called when son gets back
-	        .then(function(data) {
-	            $rootScope.proposedBlogs = data;
-	        }, function(error) {
-	            // promise rejected, could log the error with: console.log('error', error);
-	            console.log('error', error);
-	            Notifications.add( "une erreur s'est produite sur le chargement de la liste des blogs pouvant vous intéresser.'" 
-	            					+  data.statusText, "error");
-        	});
+		Blogs.loadAllBlogs();
     });
 	//
 	// affiche le nom complet du type de blog par rapport à son code
 	//
-	$scope.nameType = function(type){
+	$scope.nameType = function (type) {
 		return Blogs.changeTypeDropdown(type);
-	}
-
-	//
-	// Supprimer un blog de la liste des propositions
-	//
-	$scope.deleteBlogFromInterestList = function(blog) {
-		//on enleve le blog proposé puisqu'on l'a ajouté
-		$rootScope.proposedBlogs = _.reject($rootScope.proposedBlogs, function(item){ return item.blog_id === blog.blog_id;	});
-	}
+	};
 
 	//
 	// ajoute le blogs dans la liste de ses blogs
 	//
-	$scope.addBlog = function(blog, idx){
-		// Gestion d'erreur
-		if (blog.blog_id == undefined || blog.type_de_blog == undefined ) {
-			Notifications.add("Erreur ! Ce blog ne semble pas valide.", "error");
-		} else {
-			//on peut ajouter un blog seulement si nous sommes pas en mode modification.
-			if ( !$rootScope.modification ) {
-				blog.action = 'subscribe'
-
-	            WPApi.launchAction("INSCRIRE", blog.blog_id)
-	                // then() called when son gets back
-	                .then(function(data) {
-	                    // promise fulfilled
-	                    if (data.success != undefined && data.success != "") {
-	                        Notifications.add(data.success, "info");
-	                        // recharge la liste des blogs de l'utilisateur
-	                        $rootScope.loadSubscribeBlogs();
-//	                        Blogs.add(blog);
-	                    } else {
-	                        Notifications.add(data.error, "error");
-	                    }
-	                }, function(error) {
-	                    // promise rejected, could log the error with: console.log('error', error);
-	                    console.log('error', error);
-	                    Notifications.add( "une erreur s'est produite sur l'ajout du blog '" + 
-	        							   blog.name + "'." +  response.statusText, "error");
-	                });
-			};
-			$scope.deleteBlogFromInterestList(blog);
-		}
-	}
+	$scope.addBlog = function (blog, idx) {
+		Blogs.subscribe(blog);
+	};
 
 	//
 	//fonction qui ouvre la modal de création d'un nouveau blog.
 	//
-	$scope.addNewBlog = function() {
-		Modal.open('ModalAddBlogCtrl', APP_PATH+'/app/views/modals/add-blog.html', 'md');
-	}
+	$scope.addNewBlog = function () {
+		Modal.open('ModalAddBlogCtrl', APP_PATH + '/app/views/modals/add-blog.html', 'md');
+	};
 
 }]);

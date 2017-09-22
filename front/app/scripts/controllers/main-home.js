@@ -10,7 +10,7 @@ angular.module('blogsApp')
 	// fonction permettant d'ouvrir un blog dans un nouvel onglet
 	//
 	$scope.goBlog = function(blog) {
-		$window.open(blog.siteurl, '_blank');
+		$window.open(blog.url, '_blank');
 	};
 
 	//
@@ -25,9 +25,11 @@ angular.module('blogsApp')
 
 		$scope.ok = function(){
 			var b = $rootScope.blog;
-			b.action = 'unsubscribe';
-			if(b.blogname != undefined) {
-				WPApi.launchAction( 'DESINSCRIRE', b.blog_id )		                
+			//b.action = 'unsubscribe';
+			if (b.id != undefined) {
+				Blogs.unsubscribe(b);
+
+/*				WPApi.launchAction( 'DESINSCRIRE', b.id )
 	            .then(function(data) {
 	                // promise fulfilled
 	                if (data.success != undefined && data.success != "") {
@@ -42,7 +44,7 @@ angular.module('blogsApp')
 	                console.log('error', error);
 	                Notifications.add( "une erreur s'est produite sur la déinscription au blog '" + 
 	    							   b.blogname + "'." +  response.statusText, "error");
-	            });
+	            });*/
 	        }
 			$modalInstance.close();
 		}
@@ -62,19 +64,7 @@ angular.module('blogsApp')
 
 	var connectedUser;
 
-	$rootScope.loadSubscribeBlogs = function() {
-	    return WPApi.launchAction("ABONNEMENTS", connectedUser.login)
-        .then(function(data) {
-        	// Chargement de la liste
-            $rootScope.blogs = Blogs.attune(data, false);
-        }, function(error) {
-            console.log('error', error);
-            Notifications.add( "une erreur s'est produite sur le chargement de la liste des blogs pouvant vous intéresser.'" 
-            					+  data.statusText, "error");
-        });
-    };
-
 	connectedUser = CurrentUser.get();
 
-	connectedUser.$promise.then($rootScope.loadSubscribeBlogs());
+	connectedUser.$promise.then(Blogs.loadSubscribeBlogs());
 }]);
