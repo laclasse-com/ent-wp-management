@@ -2,8 +2,8 @@
 
 angular.module('blogsApp')
     .factory('WPApi',
-    ['$http', '$q', 'BLOGS_API_URL', 'CurrentUser', 'WP_PATH', 'WP_BLOG_EXISTS',
-        function ($http, $q, BLOGS_API_URL, CurrentUser, WP_PATH, WP_BLOG_EXISTS) {
+    ['$http', '$q', 'BLOGS_API_URL', 'CurrentUser',
+        function ($http, $q, BLOGS_API_URL, CurrentUser) {
             return {
                 // get the WordPress current user
                 getCurrentUser: function () {
@@ -18,6 +18,13 @@ angular.module('blogsApp')
                         }, function (response) {
                             // something went wrong
                             return $q.reject(response.data);
+                        });
+                },
+
+                isDomainAvailable: function (domain) {
+                    return $http.get(BLOGS_API_URL + 'blogs', { params: { domain: domain }})
+                        .then(function (response) {
+                            return response.data.length == 0;
                         });
                 },
 
@@ -99,37 +106,7 @@ angular.module('blogsApp')
                 // create a new blog
                 createBlog: function (blog) {
                     return $http.post(BLOGS_API_URL + 'blogs', blog);
-                },
-
-                //
-                // Action d'inscription ou de désinscription du d'un blog.
-                //
-                launchAction: function (action, param1) {
-                    console.log("BLOGS_API_URL: " + BLOGS_API_URL);
-    			  	var url = WP_PATH; 
-                    switch(action) {
-                        case 'BLOG_EXISTE':
-                            url += WP_BLOG_EXISTS;
-                            break;
-                    }
-
-                    url = url.replace( /\$1/, param1 );			    
-                    // the $http API is based on the deferred/promise APIs exposed by the $q service
-                    // so it returns a promise for us by default
-                    return $http.get( url )
-                        .then(function(response) {
-                            if (typeof response.data === 'object') {
-                                return response.data;
-                            } else {
-                                // invalid response
-                                return $q.reject(response.data);
-                            }
-
-                        }, function(response) {
-                            // something went wrong
-                            return $q.reject(response.data);
-                        });
-                },
+                }
             };
         },
     ] );

@@ -74,8 +74,6 @@
           .constant('APP_PATH', '<?=APP_PATH?>')
           .constant('BLOGS_DOMAIN', '<?=BLOGS_DOMAIN?>')
           .constant('BLOGS_API_URL', '<?=BLOGS_API_URL?>')
-          .constant('WP_PATH', '<?=$BLOGS_WORDPRESS['host']?>')
-          .constant('WP_BLOG_EXISTS', '<?=$BLOGS_WORDPRESS['exists']?>')
           ;  
         </script>
     </body>

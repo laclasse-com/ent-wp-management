@@ -25,27 +25,8 @@ angular.module('blogsApp')
 
 		$scope.ok = function(){
 			var b = $rootScope.blog;
-			//b.action = 'unsubscribe';
-			if (b.id != undefined) {
+			if (b.id != undefined)
 				Blogs.unsubscribe(b);
-
-/*				WPApi.launchAction( 'DESINSCRIRE', b.id )
-	            .then(function(data) {
-	                // promise fulfilled
-	                if (data.success != undefined && data.success != "") {
-	                    Notifications.add(data.success, "info");
-	                    Blogs.delete(b);
-	                    Blogs.attune($rootScope.blogs);
-	                } else {
-	                    Notifications.add(data.error, "error");
-	                }
-	            }, function(error) {
-	                // promise rejected, could log the error with: console.log('error', error);
-	                console.log('error', error);
-	                Notifications.add( "une erreur s'est produite sur la déinscription au blog '" + 
-	    							   b.blogname + "'." +  response.statusText, "error");
-	            });*/
-	        }
 			$modalInstance.close();
 		}
 	}];

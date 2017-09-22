@@ -15,11 +15,14 @@ define ("ENT_NAME", "Laclasse.com");
 // Base domain for blogs creation
 define("BLOGS_DOMAIN", "blogs-dev.laclasse.com");
 
+// Public URL for this plugin JSON API
+define("BLOGS_API_URL", "https://www.dev.laclasse.com/blogs/wp-json/api/");
+
 // Akismet key for handling SPAMs comments
-define("AKISMET_KEY", "123a1b456c78");
+define("AKISMET_KEY", "123456789012");
 
 // Directory API URL
-define("ANNUAIRE_URL", "https://v3dev.laclasse.com/");
+define("ANNUAIRE_URL", "https://www.dev.laclasse.com/");
 
 // Directory API user
 define("ANNUAIRE_USER", "BLOGS");
@@ -38,15 +41,3 @@ define("APP_PATH", 'wp-content/plugins/ent-wp-management/front');
 
 // Version de l'application
 define("APP_VERSION", '2.0.0');
-
-// url pour dialoguer avec l'api de WordPress
-$BLOGS_WORDPRESS = array(
-  'host' => '/blogs/',
-  'get' => '?ENT_action=USER_BLOG_LIST&username=$1',
-  'get_all' => '?ENT_action=BLOG_LIST&username=$1',
-  'create' => '?ENT_action=CREATE_BLOG&blogname=$1',
-  'subscribe' => '?ENT_action=INSCRIRE&blogname=$1',
-  'unsubscribe' => '?ENT_action=DESINSCRIRE&blogname=$1',
-  'exists' => '?ENT_action=BLOG_EXISTS&blogname=$1' . "." . BLOGS_DOMAIN,
-  'getcurrentuser' => '?ENT_action=CURRENT_USER'
-);

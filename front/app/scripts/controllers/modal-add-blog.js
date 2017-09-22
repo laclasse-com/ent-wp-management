@@ -142,10 +142,9 @@ angular.module('blogsApp')
 	// ---------------------------------------------------------------------------
 	// Tester l'existence du sous-domaine sur la plateforme WP
 	// ---------------------------------------------------------------------------
-	var checkSubDomainExistance = function(name) {	
-		WPApi.launchAction( 'BLOG_EXISTE', name )		                
-        .then(function(data) {
-        	if (data.result == 0) {
+	var checkSubDomainExistance = function (name) {	
+		WPApi.isDomainAvailable(name + '.' + BLOGS_DOMAIN).then(function (isAvailable) {
+        	if (isAvailable) {
 				$scope.required.domain = false;
 				$scope.errorMsgDomain = "Ce nom de sous-domaine est valide.";
 				$scope.existing = false;
@@ -154,15 +153,7 @@ angular.module('blogsApp')
 				$scope.errorMsgDomain = "Ce nom de sous-domaine n'est pas disponible.";
 				$scope.existing = true;
 			}
-
-            // return data.result;
-        }, function(error) {
-			$scope.required.domain = true;
-			$scope.errorMsgDomain = "une erreur s'est produite sur la recherche d'existence du sous-domaine.'" + $scope.subDomain + "'.";
-			$scope.existing = false;
-            console.log( "une erreur s'est produite sur la recherche d'existence du blog.'" + 
-							   name + "'. " +  error);
-        });	
+		});
 	}
 
 	// ---------------------------------------------------------------------------

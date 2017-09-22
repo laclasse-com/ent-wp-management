@@ -11,8 +11,8 @@ angular.module('blogsApp', [
   'growlNotifications',
   'ngSanitize'
 ])
-.run(['$rootScope', '$location', 'COLOR_DAMIER', 'Blogs', 'CurrentUser', 'Notifications', 'WP_PATH',
-  function($rootScope, $location, COLOR_DAMIER, Blogs, CurrentUser, Notifications, WP_PATH) {
+.run(['$rootScope', '$location', 'COLOR_DAMIER', 'Blogs', 'CurrentUser', 'Notifications',
+  function($rootScope, $location, COLOR_DAMIER, Blogs, CurrentUser, Notifications) {
   Notifications.clear();
   //chargement de l'utilisateur courant pour l'ihm
   CurrentUser.getOfAnnuaire();
