@@ -1,31 +1,9 @@
 <?php
 
 // --------------------------------------------------------------------------------
-//  Fonction de provisionning CAS
-// --------------------------------------------------------------------------------
-function wpcas_provisioning($userENT, $user_email){
-	global $domain;
-	$user_id = $userENT->id;
-	$user_login = $userENT->login;
-
-	$blogId = get_blog_id_by_domain($domain);
-	$blogData = getBlogData($blogId);
-
-    $role = getUserWpRole($userENT, $blogData);
-
-	createUserWP($user_login, $user_email, $userENT);
-	header('Location: http://'.$domain);
-}
-
-// --------------------------------------------------------------------------------
-//  Classe cd client CAS
+//  Class CAS
 // --------------------------------------------------------------------------------
 class wpCAS {
-	/*
-	 We call phpCAS to authenticate the user at the appropriate time 
-	 (the script dies there if login was unsuccessful)
-	 If the user is not provisioned, wpcas_nowpuser() is called
-	*/
 	public static function authenticate() {
 		global $_REQUEST;
 
@@ -47,37 +25,13 @@ class wpCAS {
 				$uids = $xml->xpath("//cas:uid");
 				if (count($uids) > 0) {
 					$uid = (string)$uids[0];
-					$userENT = json_decode(get_http(ANNUAIRE_URL."api/users/$uid?expand=true"));
 
-					$user_email;
-					foreach($userENT->emails as $email) {
-						if (!isset($user_email) || $email->primary)
-							$user_email = $email->address;
-					}
-					if (!isset($user_email))
-						$user_email = $user->id . '@noemail.lan';
+					$userENT = get_ent_user($uid);
+					$user = sync_ent_user_to_wp_user($userENT);
 
-					$user = get_user_by('login', $userENT->login);
-					// if user already exists
-					if ($user) {
-						// the CAS user has a WP account
-						wp_set_auth_cookie($user->ID);
-						wp_set_current_user($user->ID);
-
-		                // Met � jour les donn�es de l'utilisateur
-						wp_update_user( 
-							array (
-								'ID' => $user->ID, 
-								'first_name' => $userENT->firstname, 
-								'last_name' => $userENT->lastname,
-								'display_name' => $userENT->lastname . ' '.
-									$userENT->firstname,
-								'user_email' => $user_email
-							)
-						);
-					}
-					// On provisionne ce qu'il manque : user ou blog, ou les deux
-					wpcas_provisioning($userENT, $user_email);
+					// the CAS user has a WP account
+					wp_set_auth_cookie($user->ID);
+					wp_set_current_user($user->ID);
 				}
 			}
 		}

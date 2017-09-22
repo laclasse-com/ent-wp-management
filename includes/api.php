@@ -4,16 +4,33 @@
 // HELPERS FUNCTIONS
 ////////////////////////////////////////////////////////////////////////////////
 
-function blog_data($data) {
-	$result = getBlogData($data->blog_id);
-	foreach($data as $k => $v) { $result->$k = $v; }
-	$result->id = $result->blog_id;
+// Convert WP_Site to our own blog object
+function blog_data($blogWp) {
+	$result = new stdClass();
+	foreach($blogWp as $k => $v) { $result->$k = $v; }
+
+	$opts = Array('admin_email', 'siteurl', 'name', 'blogname',
+		'blogdescription', 'blogtype', 'etablissement_ENT', 'display_name',
+		'type_de_blog', 'classe_ENT', 'groupe_ENT', 'groupelibre_ENT');
+
+	foreach ($opts as $opt) {
+		$val = get_blog_option($blogWp->blog_id, $opt);
+		$val = html_entity_decode($val, ENT_QUOTES);
+		if ($val != false) {
+			$result->$opt = $val;
+		}
+	}
+
+	$result->id = intval($result->blog_id);
 	unset($result->blog_id);
 	$result->name = $result->blogname;
 	unset($result->blogname);
 	$result->description = $result->blogdescription;
 	unset($result->blogdescription);
-	$result->type = $result->type_de_blog;
+	if (isset($result->type_de_blog))
+		$result->type = $result->type_de_blog;
+	else
+		$result->type = 'ENV';
 	unset($result->type_de_blog);
 	$result->url = $result->siteurl;
 	unset($result->siteurl);
@@ -45,10 +62,36 @@ function blog_data($data) {
 	return $result;
 }
 
+// Return the list of all blogs
+function get_blogs() {
+	$blogs = get_sites(array("number" => 100000));
+	$result = [];
+	foreach ($blogs as $blog) {
+		if ($blog->blog_id == 1)
+			continue;
+		$blog_data = blog_data($blog);
+		array_push($result, $blog_data);
+	}
+	return $result;
+}
+
+function get_blog($blog_id) {
+	$data = get_site($blog_id);
+	if ($data == null)
+		return null;
+	return blog_data($data);
+}
+
 function filter_fields($data, $params, $allowed_fields) {
 	foreach ($params as $key => $value) {
 		if (in_array($key, $allowed_fields)) {
-			if (!isset($data->$key) || ($value != $data->$key))
+			if (!isset($data->$key))
+				return false;
+			if (gettype($value) == 'array') {
+				if (!in_array($data->$key, $value))
+					return false;
+			}
+			else if ($value != $data->$key)
 				return false;
 		}
 	}
@@ -61,11 +104,12 @@ function filter_blog($blog, $params) {
 		'name', 'description', 'type', 'url', 'structure_id', 'group_id'));
 }
 
-function user_data($data) {
+// Convert WP_User to our own user object
+function user_data($userWp) {
 	$user = new stdClass();
-	$user->id = $data->ID;
-	if (isset($data->data)) {
-		$d = $data->data;
+	$user->id = $userWp->ID;
+	if (isset($userWp->data)) {
+		$d = $userWp->data;
 		if (isset($d->user_login))
 			$user->login = $d->user_login;
 		if (isset($d->user_email))
@@ -85,6 +129,14 @@ function user_data($data) {
 
 	return $user;
 }
+
+function get_user($userId) {
+	$userWp = get_user_by('id', $userId);
+	if ($userWp == false)
+		return null;
+	return user_data($userWp);
+}
+
 
 function filter_user($user, $params) {
 	return filter_fields($user, $params, array('id', 'login', 'email',
@@ -132,8 +184,40 @@ function create_wp_user_from_ent_user($userENT) {
 	return get_user_by('id', $user_email);
 }
 
+
+// Update the WP user roles on blogs with the given ENT user
+// and the type of each blog. Means auto register user to their blogs
+function update_roles_wp_user_from_ent_user($userWp, $userENT) {
+	$blogs = get_blogs();
+
+	$role_order['subscriber'] = 1;
+	$role_order['contributor'] = 2;
+	$role_order['author'] = 3;
+	$role_order['editor'] = 4;
+	$role_order['administrator'] = 5;
+
+	$user_blogs = get_blogs_of_user($userWp->ID);
+
+	foreach ($blogs as $blog) {
+		if (is_forced_blog($blog, $userENT)) {
+			// add rights on blog if needed
+			$default_role = get_user_blog_default_role($userENT, $blog);
+			$current_role = get_user_blog_role($userWp->ID, $blog->id);
+			// if the default role is better than the current upgrade/create it
+			if ($default_role != null && ($current_role == null || $role_order[$default_role] > $role_order[$current_role]))
+				add_user_to_blog($blog->id, $userWp->ID, $default_role);
+		}
+	}
+}
+
 // Update the WP user data with the given ENT ENT user data
 function update_wp_user_from_ent_user($userWp, $userENT) {
+
+	if ($userENT->super_admin && !is_super_admin($userWp->ID))
+		grant_super_admin($userWp->ID);
+	else if (!$userENT->super_admin && is_super_admin($userWp->ID))
+		revoke_super_admin($userWp->ID);
+
 	// update user data
 	update_user_meta($userWp->ID, 'uid_ENT', $userENT->id);
 
@@ -150,6 +234,7 @@ function update_wp_user_from_ent_user($userWp, $userENT) {
 		'display_name' => $userENT->lastname.' '.$userENT->firstname,
 		'user_email' => $user_email
 	));
+	update_roles_wp_user_from_ent_user($userWp, $userENT);
 }
 
 // Create a WP user from the ENT user data if needed
@@ -163,6 +248,38 @@ function sync_ent_user_to_wp_user($userENT) {
 	return $userWp;
 }
 
+// Get the ENT user definition or null if the user
+// doesn't exists in the ENT
+function get_ent_user($ent_user_id) {
+	if (empty($ent_user_id))
+		return null;
+
+	// get the user of the current session
+	$userENT = get_http(ANNUAIRE_URL . "api/users/" . $ent_user_id . "?expand=true", $error, $status);
+	if ($status != 200)
+		return null;
+
+	$userENT = json_decode($userENT);
+	// get details for each child
+    foreach ($userENT->children as $child)
+        $child->detail = $childDetail = json_decode(get_http(ANNUAIRE_URL . "api/users/$child->child_id?expand=true"));
+    return $userENT;
+}
+
+function get_ent_user_from_user($user) {
+	if (isset($user->ent_id))
+		return get_ent_user($user->ent_id);
+	return null;
+}
+
+function get_ent_user_from_user_id($userId) {
+	$user = get_user($userId);
+	if ($user == null)
+		return null;
+	return get_ent_user_from_user($user);
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // MAIN PROGRAM
 ////////////////////////////////////////////////////////////////////////////////
@@ -171,6 +288,8 @@ function laclasse_api_handle_request($method, $path) {
 	global $_COOKIE;
 	global $_REQUEST;
 	global $wpdb;
+
+	$result = null;
 
 	if (!array_key_exists("LACLASSE_AUTH", $_COOKIE)) {
 		http_response_code(401);
@@ -189,14 +308,13 @@ function laclasse_api_handle_request($method, $path) {
 	$session = json_decode($session);
 
 	// get the user of the current session
-	$userENT = get_http(ANNUAIRE_URL . "api/users/" . $session->user, $error, $status);
 
-	if ($status != 200) {
+	$userENT = get_ent_user($session->user);
+	if ($userENT == null) {
 		http_response_code(401);
 		exit;
 	}
 
-	$userENT = json_decode($userENT);
 	// get/create and update the corresponding WP user
 	$userWp = sync_ent_user_to_wp_user($userENT);
 
@@ -213,37 +331,40 @@ function laclasse_api_handle_request($method, $path) {
 	// GET /setup
 	if ($method == 'GET' && count($tpath) == 1 && $tpath[0] == 'setup')
 	{
-		header('Content-Type: application/json; charset=utf-8');
 		$result = array("domain" => BLOGS_DOMAIN);
-		echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_NUMERIC_CHECK);
 	}
-	// GET /blogs
+	// GET /blogs[?seen_by={ent_id}]
 	else if ($method == 'GET' && count($tpath) == 1 && $tpath[0] == 'blogs')
 	{
-		header('Content-Type: application/json; charset=utf-8');
-		$blogs = get_sites(array("number" => 100000));
+		$blogs = get_blogs();
+
+		$seenBy = null;
+		if (isset($_REQUEST['seen_by'])) {
+			if ($_REQUEST['seen_by'] == $userENT->id)
+				$seenBy = $userENT;
+			else
+				$seenBy = get_ent_user($_REQUEST['seen_by']);
+		}
+
 		$result = [];
 		foreach ($blogs as $blog) {
-			if ($blog->blog_id == 1)
+			// if seen_by is set, filter by what the given ENT user can see
+			if (($seenBy != null) && !has_right($seenBy, $blog))
 				continue;
-			$blog_data = blog_data($blog);
-			if (filter_blog($blog_data, $_REQUEST))
-				array_push($result, $blog_data);
+
+			if (filter_blog($blog, $_REQUEST))
+				array_push($result, $blog);
 		}
-		echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_NUMERIC_CHECK);
 	}
 	// GET /blogs/{id}
 	else if ($method == 'GET' && count($tpath) == 2 && $tpath[0] == 'blogs')
 	{
 		$blog_id = intval($tpath[1]);
-		$data = get_site($blog_id);
+		$data = get_blog($blog_id);
 		if ($data == null)
 			http_response_code(404);
-		else {
-			$result = blog_data($data);
-			header('Content-Type: application/json; charset=utf-8');
-			echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_NUMERIC_CHECK);
-		}
+		else
+			$result = $data;
 	}
 	// POST /blogs
 	else if ($method == 'POST' && count($tpath) == 1 && $tpath[0] == 'blogs')
@@ -276,14 +397,11 @@ function laclasse_api_handle_request($method, $path) {
 			$userWp->ID, $json->type, $blog_structure_id, $blog_cls_id,
 			$blog_grp_id, $blog_gpl_id, $json->description);
 
-		$data = get_site($blog_id);
+		$data = get_blog($blog_id);
 		if ($data == null)
 			http_response_code(404);
-		else {
-			$result = blog_data($data);
-			header('Content-Type: application/json; charset=utf-8');
-			echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_NUMERIC_CHECK);
-		}
+		else
+			$result = $data;
 	}
 	// PUT /blogs/{id}
 	else if ($method == 'PUT' && count($tpath) == 2 && $tpath[0] == 'blogs')
@@ -319,10 +437,8 @@ function laclasse_api_handle_request($method, $path) {
 					update_blog_option($blog_id, 'groupelibre_ENT', $json->group_id);
 			}
 
-			$data = get_site($blog_id);
-			$result = blog_data($data);
-			header('Content-Type: application/json; charset=utf-8');
-			echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_NUMERIC_CHECK);
+			$data = get_blog($blog_id);
+			$result = $data;
 		}
 	}
 	// DELETE /blogs/{id}
@@ -367,8 +483,6 @@ function laclasse_api_handle_request($method, $path) {
 				array_push($result, $data);
 			}
 			restore_current_blog();
-			header('Content-Type: application/json; charset=utf-8');
-			echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_NUMERIC_CHECK);
 		}
 	}
 	// POST /blogs/{id}/users
@@ -377,25 +491,30 @@ function laclasse_api_handle_request($method, $path) {
 		$json = json_decode(file_get_contents('php://input'));
 
 		$blog_id = intval($tpath[1]);
-		$data = get_site($blog_id);
-		if ($data == null)
+		$blog = get_blog($blog_id);
+		if ($blog == null)
 			http_response_code(404);
 		else {
-			//$blogData = getBlogData($blog_id);
 			$user_id = $json->user_id;
-			$user_role = $json->role;
-
-			// Déterminer le role WordPress de l'utilisateur en fonction de son role ENT.
-			//$user_role = getUserWpRole($user, $blogData);
-
-			add_user_to_blog($blog_id, $user_id, $user_role);
-			header('Content-Type: application/json; charset=utf-8');
-			$result = new stdClass();
-			$result->id = $user_id;
-			$result->user_id = $user_id;
-			$result->blog_id = $blog_id;
-			$result->role = $user_role;
-			echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_NUMERIC_CHECK);
+			if (isset($json->role)) {
+				$user_role = $json->role;
+			}
+			// find the default role
+			else {
+				$userENT = get_ent_user_from_user_id($user_id);
+				if ($userENT != null)
+					$user_role = get_user_blog_default_role($userENT, $blog);
+			}
+			if (isset($user_role)) {
+				add_user_to_blog($blog_id, $user_id, $user_role);
+				$result = new stdClass();
+				$result->id = $user_id;
+				$result->user_id = $user_id;
+				$result->blog_id = $blog_id;
+				$result->role = $user_role;
+			}
+			else
+				http_response_code(404);
 		}
 	}
 	// DELETE /blogs/{id}/users/{user_id}
@@ -417,13 +536,18 @@ function laclasse_api_handle_request($method, $path) {
 	else if ($method == 'GET' && count($tpath) == 3 && $tpath[0] == 'users' && $tpath[2] == 'blogs')
 	{
 		$user_id = intval($tpath[1]);
-		$user = get_user_by('id', $user_id);
-		if ($user == false)
+		$user = get_user($user_id);
+		if ($user == null)
 			http_response_code(404);
 		else {
+			$userENT = get_ent_user_from_user($user);
 			$user_blogs = get_blogs_of_user($user_id);
 			$result = [];
 			foreach ($user_blogs as $user_blog) {
+				$blog = get_blog($user_blog->userblog_id);
+				if ($blog == null)
+					continue;
+
 				$data = new stdClass();
 				$data->id = $user_blog->userblog_id;
 				$data->blog_id = $user_blog->userblog_id;
@@ -437,10 +561,10 @@ function laclasse_api_handle_request($method, $path) {
 				);
 				if (count($users_search) > 0 && count($users_search[0]->roles) > 0)
 					$data->role = $users_search[0]->roles[0];
+				$data->forced = ($userENT != null && is_forced_blog($blog, $userENT));
+
 				array_push($result, $data);
 			}
-			header('Content-Type: application/json; charset=utf-8');
-			echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_NUMERIC_CHECK);
 		}
 	}
 	// POST /users/{id}/blogs
@@ -450,20 +574,29 @@ function laclasse_api_handle_request($method, $path) {
 
 		$user_id = intval($tpath[1]);
 		$blog_id = $json->blog_id;
-		$data = get_site($blog_id);
-		if ($data == null)
+		$blog = get_blog($blog_id);
+		if ($blog == null)
 			http_response_code(404);
 		else {
-			$blogData = getBlogData($blog_id);
-			$user_role = $json->role;
-			add_user_to_blog($blog_id, $user_id, $user_role);
-			header('Content-Type: application/json; charset=utf-8');
-			$result = new stdClass();
-			$result->id = $blog_id;
-			$result->user_id = $user_id;
-			$result->blog_id = $blog_id;
-			$result->role = $user_role;
-			echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_NUMERIC_CHECK);
+			if (isset($json->role)) {
+				$user_role = $json->role;
+			}
+			// find the default role
+			else {
+				$userENT = get_ent_user_from_user_id($user_id);
+				if ($userENT != null)
+					$user_role = get_user_blog_default_role($userENT, $blog);
+			}
+			if (isset($user_role)) {
+				add_user_to_blog($blog_id, $user_id, $user_role);
+				$result = new stdClass();
+				$result->id = $blog_id;
+				$result->user_id = $user_id;
+				$result->blog_id = $blog_id;
+				$result->role = $user_role;
+			}
+			else
+				http_response_code(404);
 		}
 	}
 	// DELETE /users/{user_id}/blogs/{blog_id}
@@ -484,7 +617,6 @@ function laclasse_api_handle_request($method, $path) {
 	// GET /users
 	else if ($method == 'GET' && count($tpath) == 1 && $tpath[0] == 'users')
 	{
-		header('Content-Type: application/json; charset=utf-8');
 		$users = get_users(array('blog_id' => ''));
 		$result = [];
 		foreach ($users as $user) {
@@ -492,7 +624,12 @@ function laclasse_api_handle_request($method, $path) {
 			if (filter_user($data, $_REQUEST))
 				array_push($result, $data);
 		}
-		echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_NUMERIC_CHECK);
+	}
+	// GET /users/current
+	else if ($method == 'GET' && count($tpath) == 2 && $tpath[0] == 'users' && $tpath[1] == 'current')
+	{
+		http_response_code(302);
+		header('Location: ' . $userWp->ID);
 	}
 	// GET /users/{id}
 	else if ($method == 'GET' && count($tpath) == 2 && $tpath[0] == 'users')
@@ -508,8 +645,6 @@ function laclasse_api_handle_request($method, $path) {
 			http_response_code(404);
 		else {
 			$result = user_data($user);
-			header('Content-Type: application/json; charset=utf-8');
-			echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_NUMERIC_CHECK);
 		}
 	}
 	// DELETE /users/{id}
@@ -531,52 +666,14 @@ function laclasse_api_handle_request($method, $path) {
 		http_response_code(404);
 	}
 
-	exit;
-
-/*
-	switch($_REQUEST['action']) {
-		case 'user':
-		    header('Content-Type: application/json; charset=utf-8');
-		    $user = get_user_by('login', $_REQUEST['login']);
-			if ($user)
-				echo json_encode($user, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-			else
-				header('HTTP/1.0 404 Not Found');
-			break;
-		case 'user_blogs':
-			$result = userBlogList($_REQUEST['login']);
-			header('Content-Type: application/json; charset=utf-8');
-			echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-			break;
-		// get all user of a given blog
-		case 'blog_users':
-			$blogusers = get_users('blog_id=' . $_REQUEST['blog_id']);
-			header('Content-Type: application/json; charset=utf-8');
-			echo json_encode($blogusers, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-			break;
-		case 'blogs':
-		    header('Content-Type: application/json; charset=utf-8');
-			$blogs = wp_get_sites(array("limit" => 100000));
-			$result = [];
-			foreach ($blogs as $blog) {
-				$details = getBlogData($blog['blog_id']);
-				$blog['details'] = $details;
-				error_log('BLOG NAME: ' . $details['blogname']);
-				array_push($result, $blog);
-			}
-			echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-			break;
-		case 'create':
-		    header('Content-Type: application/json; charset=utf-8');
-			break;
-		case 'delete':
-		    header('Content-Type: application/json; charset=utf-8');
-			break;
-	}*/
+	return $result;
 }
  
 function wp_rest_laclasse_api_handle_request($request) {
-	laclasse_api_handle_request($request->get_method(), $request->get_url_params()['path']);
+	// dont return the object because WP dont encode numeric as numeric
+	echo json_encode(laclasse_api_handle_request($request->get_method(), $request->get_url_params()['path']),
+		JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_NUMERIC_CHECK);
+	exit;
 }
 
 

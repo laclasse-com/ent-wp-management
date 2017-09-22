@@ -16,7 +16,6 @@
 
   <link href="<?= APP_PATH ?>/app/vendor/bootstrap/dist/css/bootstrap.min.css?v=<?=APP_VERSION?>" rel="stylesheet" />
   <link href="<?= APP_PATH ?>/app/vendor/laclasse-common-client/css/damier.css?v=<?=APP_VERSION?>" rel="stylesheet" />
-  <link href="<?= APP_PATH ?>/app/vendor/laclasse-common-client/css/flippable.css?v=<?=APP_VERSION?>" rel="stylesheet" />
   <link href="<?= APP_PATH ?>/app/vendor/laclasse-common-client/css/floating-buttons.css?v=<?=APP_VERSION?>" rel="stylesheet" />
   <link href="<?= APP_PATH ?>/app/vendor/laclasse-common-client/css/main.css?v=<?=APP_VERSION?>" rel="stylesheet" />
   <link href="<?= APP_PATH ?>/app/styles/aside.css?v=<?=APP_VERSION?>" rel="stylesheet" />
@@ -74,14 +73,9 @@
         angular.module('blogsApp')
           .constant('APP_PATH', '<?=APP_PATH?>')
           .constant('BLOGS_DOMAIN', '<?=BLOGS_DOMAIN?>')
+          .constant('BLOGS_API_URL', '<?=BLOGS_API_URL?>')
           .constant('WP_PATH', '<?=$BLOGS_WORDPRESS['host']?>')
-          .constant('WP_SUBSCRIBE', '<?=$BLOGS_WORDPRESS['subscribe']?>')
-          .constant('WP_UNSUBSCRIBE', '<?=$BLOGS_WORDPRESS['unsubscribe']?>')
           .constant('WP_BLOG_EXISTS', '<?=$BLOGS_WORDPRESS['exists']?>')
-          .constant('WP_BLOG_LIST', '<?=$BLOGS_WORDPRESS['get_all']?>')
-          .constant('WP_USER_BLOG_LIST', '<?=$BLOGS_WORDPRESS['get']?>')
-          .constant('WP_CREATE_BLOG', '<?=$BLOGS_WORDPRESS['create']?>')
-          .constant('WP_CURRENT_USER', '<?=$BLOGS_WORDPRESS['getcurrentuser']?>')
           ;  
         </script>
     </body>
