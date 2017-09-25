@@ -279,6 +279,20 @@ function get_ent_user_from_user_id($userId) {
 	return get_ent_user_from_user($user);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// MIGRATION ONLY
+////////////////////////////////////////////////////////////////////////////////
+
+// Get the ENT user definition or null if the user
+// doesn't exists in the ENT
+function get_ent_user_by_login($login) {
+	// get the user of the current session
+	$userENT = get_http(ANNUAIRE_URL . "api/users?login=" . $login . "&expand=false", $error, $status);
+	if ($status != 200)
+		return null;
+	$userENT = json_decode($userENT);
+	return (count($userENT) > 0) ? $userENT[0] : null;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // MAIN PROGRAM
@@ -683,6 +697,24 @@ function laclasse_api_handle_request($method, $path) {
 			// TODO: reasign its work to a special user "deleted"
 			wpmu_delete_user($user_id);
 		}
+	}
+	else if ($method == 'GET' && count($tpath) == 1 && $tpath[0] == 'migration')
+	{
+		$users = get_users(array('blog_id' => ''));
+		foreach ($users as $user) {
+			$data = user_data($user);
+			if (!isset($data->ent_id)) {
+				$userENT = get_ent_user_by_login($data->login);
+				if ($userENT != null) {
+					update_user_meta($user->ID, 'uid_ENT', $userENT->id);
+					echo "ent_id NOT FOUND FOR ".$data->login.", UPDATE DONE\n";
+				}
+				else {
+					echo "ent_id NOT FOUND FOR ".$data->login.", ENT NOT FOUND\n";
+				}
+			}
+		}
+		
 	}
 	// default 404
 	else
