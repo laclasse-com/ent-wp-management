@@ -662,8 +662,6 @@ function laclasse_api_handle_request($method, $path) {
 		
 			$user_data = array('ID' => $userWp->ID);
 
-			if (isset($json->login))
-				$user_data['login'] = $json->login;
 			if (isset($json->display_name))
 				$user_data['display_name'] = $json->display_name;
 			if (isset($json->email))
