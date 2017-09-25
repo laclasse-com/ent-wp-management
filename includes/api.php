@@ -647,6 +647,30 @@ function laclasse_api_handle_request($method, $path) {
 			$result = user_data($user);
 		}
 	}
+	// PUT /users/{id}
+	else if ($method == 'PUT' && count($tpath) == 2 && $tpath[0] == 'users')
+	{
+		$json = json_decode(file_get_contents('php://input'));
+
+		$user_id = intval($tpath[1]);
+		$userWp = get_user_by('id', $user_id);
+		if ($userWp == false)
+			http_response_code(404);
+		else {
+			if (isset($json->ent_id))
+				update_user_meta($userWp->ID, 'uid_ENT', $json->id);
+		
+			$user_data = array('ID' => $userWp->ID);
+
+			if (isset($json->login))
+				$user_data['login'] = $json->login;
+			if (isset($json->display_name))
+				$user_data['display_name'] = $json->display_name;
+			if (isset($json->email))
+				$user_data['user_email'] = $json->email;
+			wp_update_user($user_data);
+		}
+	}
 	// DELETE /users/{id}
 	else if ($method == 'DELETE' && count($tpath) == 2 && $tpath[0] == 'users')
 	{
