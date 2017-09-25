@@ -658,7 +658,7 @@ function laclasse_api_handle_request($method, $path) {
 			http_response_code(404);
 		else {
 			if (isset($json->ent_id))
-				update_user_meta($userWp->ID, 'uid_ENT', $json->id);
+				update_user_meta($userWp->ID, 'uid_ENT', $json->ent_id);
 		
 			$user_data = array('ID' => $userWp->ID);
 
@@ -669,6 +669,8 @@ function laclasse_api_handle_request($method, $path) {
 			if (isset($json->email))
 				$user_data['user_email'] = $json->email;
 			wp_update_user($user_data);
+			$userWp = get_user_by('id', $user_id);
+			$result = user_data($userWp);
 		}
 	}
 	// DELETE /users/{id}
