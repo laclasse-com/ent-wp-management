@@ -109,6 +109,24 @@ function filter_blog($blog, $params) {
 		'name', 'description', 'type', 'url', 'structure_id', 'group_id'));
 }
 
+function delete_blog($blog_id) {
+	$data = get_site($blog_id);
+	if ($data == null)
+		return false;
+	else {
+		// get the blog upload dir
+		switch_to_blog($blog_id);
+		$upload_base = wp_get_upload_dir()['basedir'];
+		restore_current_blog();
+		// remove the blog (DB tables + files)
+		wpmu_delete_blog ($blog_id, true);
+		// remove the blog upload dir
+		if (is_dir($upload_base))
+			rmdir($upload_base);
+		return true;
+	}
+}
+
 // Convert WP_User to our own user object
 function user_data($userWp) {
 	$user = new stdClass();
@@ -288,6 +306,19 @@ function get_ent_user_from_user_id($userId) {
 	return get_ent_user_from_user($user);
 }
 
+function get_special_delete_user_id() {
+	$user_id = '';
+	$userWp = get_user_by('login', 'wp_deleted_user');
+	if ($userWp == false) {
+		$password= substr(md5(microtime()), rand(0,26), 20);		
+		$user_id = wp_create_user('wp_deleted_user', $password);
+	}
+	else {
+		$user_id = $userWp->ID;
+	}
+	return $user_id;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // MIGRATION ONLY
 ////////////////////////////////////////////////////////////////////////////////
@@ -451,19 +482,20 @@ function laclasse_api_handle_request($method, $path) {
 	else if ($method == 'DELETE' && count($tpath) == 2 && $tpath[0] == 'blogs')
 	{
 		$blog_id = intval($tpath[1]);
-		$data = get_site($blog_id);
-		if ($data == null)
+		if (delete_blog($blog_id))
+			http_response_code(200);
+		else 
 			http_response_code(404);
-		else {
-			// get the blog upload dir
-			switch_to_blog($blog_id);
-			$upload_base = wp_get_upload_dir()['basedir'];
-			restore_current_blog();
-			// remove the blog (DB tables + files)
-			wpmu_delete_blog ($blog_id, true);
-			// remove the blog upload dir
-			if (is_dir($upload_base))
-				rmdir($upload_base);
+	}
+	// DELETE /blogs
+	else if ($method == 'DELETE' && count($tpath) == 1 && $tpath[0] == 'blogs')
+	{
+		$json = json_decode(file_get_contents('php://input'));
+		if (is_array($json)) {
+			foreach($json as $blog_id) {
+				if (is_numeric($blog_id))
+					delete_blog($blog_id);
+			}
 		}
 	}
 
@@ -684,8 +716,18 @@ function laclasse_api_handle_request($method, $path) {
 		if ($user == false)
 			http_response_code(404);
 		else {
+			// get the special deleted user to reasign the posts
+			$delete_user_id = get_special_delete_user_id();
+			$user_blogs = get_blogs_of_user($user_id);
+			foreach ($user_blogs as $user_blog) {
+				// ensure the deleted user has a role on the blog
+				add_user_to_blog($user_blog->userblog_id, $delete_user_id, 'contributor');
+				// delete the user from the blog and reasign its posts
+				switch_to_blog($user_blog->userblog_id);
+				wp_delete_user($user_id, $delete_user_id);
+				restore_current_blog();
+			}
 			// remove the user and all its work
-			// TODO: reasign its work to a special user "deleted"
 			wpmu_delete_user($user_id);
 		}
 	}

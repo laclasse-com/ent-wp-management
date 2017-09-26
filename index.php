@@ -44,7 +44,7 @@ require_once('includes/api.php');
 require_once(ABSPATH . WPINC . '/pluggable.php');
 //require_once(ABSPATH . "wp-admin" . '/includes/image.php');
 //require_once(ABSPATH . WPINC . '/capabilities.php');
-//require_once(ABSPATH . '/wp-admin/includes/user.php');
+require_once(ABSPATH . '/wp-admin/includes/user.php');
 // fonctions MU
 require_once(ABSPATH . '/wp-admin/includes/ms.php');
 
