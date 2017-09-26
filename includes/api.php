@@ -319,6 +319,29 @@ function get_special_delete_user_id() {
 	return $user_id;
 }
 
+function delete_user($user_id) {
+	$user = get_user_by('id', $user_id);
+	if ($user == false)
+		return false;
+	else {
+		// get the special deleted user to reasign the posts
+		$delete_user_id = get_special_delete_user_id();
+		$user_blogs = get_blogs_of_user($user_id);
+		foreach ($user_blogs as $user_blog) {
+			// ensure the deleted user has a role on the blog
+			add_user_to_blog($user_blog->userblog_id, $delete_user_id, 'contributor');
+			// delete the user from the blog and reasign its posts
+			switch_to_blog($user_blog->userblog_id);
+			wp_delete_user($user_id, $delete_user_id);
+			restore_current_blog();
+		}
+		// remove the user and all its work
+		wpmu_delete_user($user_id);
+		return true;
+	}
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // MIGRATION ONLY
 ////////////////////////////////////////////////////////////////////////////////
@@ -712,25 +735,23 @@ function laclasse_api_handle_request($method, $path) {
 	else if ($method == 'DELETE' && count($tpath) == 2 && $tpath[0] == 'users')
 	{
 		$user_id = intval($tpath[1]);
-		$user = get_user_by('id', $user_id);
-		if ($user == false)
+		if (delete_user($user_id))
+			http_response_code(200);
+		else
 			http_response_code(404);
-		else {
-			// get the special deleted user to reasign the posts
-			$delete_user_id = get_special_delete_user_id();
-			$user_blogs = get_blogs_of_user($user_id);
-			foreach ($user_blogs as $user_blog) {
-				// ensure the deleted user has a role on the blog
-				add_user_to_blog($user_blog->userblog_id, $delete_user_id, 'contributor');
-				// delete the user from the blog and reasign its posts
-				switch_to_blog($user_blog->userblog_id);
-				wp_delete_user($user_id, $delete_user_id);
-				restore_current_blog();
+	}
+	// DELETE /users
+	else if ($method == 'DELETE' && count($tpath) == 1 && $tpath[0] == 'users')
+	{
+		$json = json_decode(file_get_contents('php://input'));
+		if (is_array($json)) {
+			foreach($json as $user_id) {
+				if (is_numeric($user_id))
+					delete_user($user_id);
 			}
-			// remove the user and all its work
-			wpmu_delete_user($user_id);
 		}
 	}
+
 	// GET /migration
 	else if ($method == 'GET' && count($tpath) == 1 && $tpath[0] == 'migration')
 	{
