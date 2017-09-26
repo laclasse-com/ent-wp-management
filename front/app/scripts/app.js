@@ -11,8 +11,8 @@ angular.module('blogsApp', [
   'growlNotifications',
   'ngSanitize'
 ])
-.run(['$rootScope', '$location', 'COLOR_DAMIER', 'Blogs', 'CurrentUser', 'Notifications',
-  function($rootScope, $location, COLOR_DAMIER, Blogs, CurrentUser, Notifications) {
+.run(['$q', '$rootScope', '$location', 'COLOR_DAMIER', 'Blogs', 'CurrentUser', 'Notifications', 'WPApi',
+  function($q, $rootScope, $location, COLOR_DAMIER, Blogs, CurrentUser, Notifications, WPApi) {
   Notifications.clear();
   //chargement de l'utilisateur courant pour l'ihm
   CurrentUser.getOfAnnuaire();
@@ -24,9 +24,19 @@ angular.module('blogsApp', [
   // all user visible blogs  
   $rootScope.allBlogs = [];
   // the user subscribed blogs  
-  $rootScope.blogs = [];  
+  $rootScope.blogs = [];
   // the blogs the user can register (= allBlogs - blogs)
-  $rootScope.proposedBlogs = [];     
+  $rootScope.proposedBlogs = [];
+  
+  // promise resolved when the WP and the ENT user are known  
+  var ready = $q.defer();
+  $rootScope.ready = ready.promise;
     
-  window.scope = $rootScope;
+  WPApi.getCurrentUser().then(function (userWp) {
+    CurrentUser.get().$promise.then(function (userENT) {
+      ready.resolve({ userWp: userWp, userENT: userENT });
+    });
+  });
+    
+  window.scope = $rootScope;  
 }]);

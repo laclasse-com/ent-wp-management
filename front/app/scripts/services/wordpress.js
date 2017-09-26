@@ -4,10 +4,11 @@ angular.module('blogsApp')
     .factory('WPApi',
     ['$http', '$q', 'BLOGS_API_URL', 'CurrentUser',
         function ($http, $q, BLOGS_API_URL, CurrentUser) {
+            var cacheCurrentUser = undefined;
             return {
                 // get the WordPress current user
                 getCurrentUser: function () {
-                    return $http.get(BLOGS_API_URL + 'users/current')
+                    cacheCurrentUser = $http.get(BLOGS_API_URL + 'users/current')
                         .then(function (response) {
                             if (typeof response.data === 'object') {
                                 return response.data;
@@ -19,6 +20,11 @@ angular.module('blogsApp')
                             // something went wrong
                             return $q.reject(response.data);
                         });
+                    return cacheCurrentUser;
+                },
+
+                getCacheCurrentUser: function () {
+                    return (cacheCurrentUser != undefined) ? cacheCurrentUser : this.getCurrentUser();
                 },
 
                 isDomainAvailable: function (domain) {
@@ -55,7 +61,7 @@ angular.module('blogsApp')
                 // Return all the blogs subscribed (or forced) by the current user
                 getSubscribedBlogs: function () {
                     var self = this;
-                    return this.getCurrentUser().then(function (user) {
+                    return this.getCacheCurrentUser().then(function (user) {
                         return $http.get(BLOGS_API_URL + 'users/' + user.id + '/blogs')
                             .then(function (response) {
                                 if (typeof response.data === 'object') {
@@ -91,14 +97,14 @@ angular.module('blogsApp')
 
                 // un-subscribe the current user from the given blog
                 unsubscribeBlog: function (blog) {
-                    return this.getCurrentUser().then(function (user) {
+                    return this.getCacheCurrentUser().then(function (user) {
                         return $http.delete(BLOGS_API_URL + 'blogs/' + blog.id + '/users/' + user.id);
                     });
                 },
 
                 // subscribe the current user from the given blog
                 subscribeBlog: function (blog) {
-                    return this.getCurrentUser().then(function (user) {
+                    return this.getCacheCurrentUser().then(function (user) {
                         return $http.post(BLOGS_API_URL + 'blogs/' + blog.id + '/users', { user_id: user.id });
                     });
                 },

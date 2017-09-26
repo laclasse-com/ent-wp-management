@@ -65,8 +65,10 @@ require_once(ABSPATH  . '/wp-admin/includes/template.php');
   	$choixAnonymat = get_blog_option($blog_id, 'student-privacy', 0);
   	
   	// Voir si on est en back-office ou en front-office.
-  	if (!defined('WP_ADMIN')) $BackOffice = 0;
-  	else  $BackOffice = 1;
+	if (!defined('WP_ADMIN'))
+	  $BackOffice = 0;
+	else
+	  $BackOffice = 1;
   	
   	// si l'anonymat a été paramètré on affiche un nom anonymisé
   	if ($profil == 'ELEVE' && $choixAnonymat == 1 ) {

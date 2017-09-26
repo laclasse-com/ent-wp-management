@@ -32,6 +32,9 @@ class wpCAS {
 					// the CAS user has a WP account
 					wp_set_auth_cookie($user->ID);
 					wp_set_current_user($user->ID);
+
+					// redirect to the /, we dont want to end on the wp-login.php page
+					wp_redirect('/');
 				}
 			}
 		}

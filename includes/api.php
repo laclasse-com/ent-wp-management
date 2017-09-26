@@ -11,7 +11,7 @@ function blog_data($blogWp) {
 
 	$opts = Array('admin_email', 'siteurl', 'name', 'blogname',
 		'blogdescription', 'blogtype', 'etablissement_ENT', 'display_name',
-		'type_de_blog', 'classe_ENT', 'groupe_ENT', 'groupelibre_ENT');
+		'type_de_blog', 'classe_ENT', 'groupe_ENT', 'groupelibre_ENT', 'group_id_ENT');
 
 	foreach ($opts as $opt) {
 		$val = get_blog_option($blogWp->blog_id, $opt);
@@ -47,6 +47,11 @@ function blog_data($blogWp) {
 	unset($result->groupe_ENT);
 	unset($result->classe_ENT);
 	unset($result->groupelibre_ENT);
+
+	if (isset($result->group_id_ENT))
+		$result->group_id = $result->group_id_ENT;
+	unset($result->group_id_ENT);
+
 	$result->public = $result->public == 1;
 	$result->archived = $result->archived == 1;
 	$result->mature = $result->mature == 1;
@@ -181,7 +186,10 @@ function create_wp_user_from_ent_user($userENT) {
 	}
 	$password= substr(md5(microtime()), rand(0,26), 20);
 	$user_id = wp_create_user($userENT->login, $password, $user_email);
-	return get_user_by('id', $user_email);
+	// remove the user for blog 1
+	remove_user_from_blog($user_id, 1);
+
+	return get_user_by('id', $user_id);
 }
 
 
@@ -242,6 +250,7 @@ function update_wp_user_from_ent_user($userWp, $userENT) {
 // Return: the WP user
 function sync_ent_user_to_wp_user($userENT) {
 	$userWp = get_wp_user_from_ent_user($userENT);
+
 	if ($userWp == null)
 		$userWp = create_wp_user_from_ent_user($userENT);
 	update_wp_user_from_ent_user($userWp, $userENT);
@@ -392,24 +401,13 @@ function laclasse_api_handle_request($method, $path) {
 		if (isset($json->structure_id)) {
 			$blog_structure_id = $json->structure_id;
 		}
-		$blog_cls_id = '';
-		$blog_grp_id = '';
-		$blog_gpl_id = '';
-		if ($blog_type == 'CLS') {
-			$blog_cls_id = $json->group_id;
-		}
-		else if ($blog_type == 'GRP') { 
-			$blog_grp_id = $json->group_id;
-		}
-		else if ($blog_type == 'GPL') { 
-			$blog_gpl_id = $json->group_id;
-		}
+		$blog_group_id = isset($json->group_id) ? $json->group_id : '';
 
 		// create the blog and add the WP user as administrator
 		$blog_id = creerNouveauBlog(
 			$json->domain, '/', $json->name, $userENT->login, $user_email, 1,
-			$userWp->ID, $json->type, $blog_structure_id, $blog_cls_id,
-			$blog_grp_id, $blog_gpl_id, $json->description);
+			$userWp->ID, $json->type, $blog_structure_id, $blog_group_id,
+			$json->description);
 
 		$data = get_blog($blog_id);
 		if ($data == null)
@@ -442,14 +440,8 @@ function laclasse_api_handle_request($method, $path) {
 
 			if (isset($json->structure_id))
 				update_blog_option($blog_id, 'etablissement_ENT', $json->structure_id);
-			if (isset($json->group_id)) {
-				if ($data->type == 'CLS')
-					update_blog_option($blog_id, 'classe_ENT', $json->group_id);
-				else if ($data->type == 'GRP')
-					update_blog_option($blog_id, 'groupe_ENT', $json->group_id);
-				else if ($data->type == 'GPL')
-					update_blog_option($blog_id, 'groupelibre_ENT', $json->group_id);
-			}
+			if (isset($json->group_id))
+				update_blog_option($blog_id, 'group_id_ENT', $json->group_id);
 
 			$data = get_blog($blog_id);
 			$result = $data;
@@ -487,7 +479,6 @@ function laclasse_api_handle_request($method, $path) {
 			$blog_users = get_users();
 			$result = [];
 			foreach ($blog_users as $blog_user) {
-				error_log(print_r($blog_user, true));
 				$data = new stdClass();
 				$data->id = $blog_user->ID;
 				$data->user_id = $blog_user->ID;
@@ -698,6 +689,7 @@ function laclasse_api_handle_request($method, $path) {
 			wpmu_delete_user($user_id);
 		}
 	}
+	// GET /migration
 	else if ($method == 'GET' && count($tpath) == 1 && $tpath[0] == 'migration')
 	{
 		$users = get_users(array('blog_id' => ''));
@@ -714,7 +706,14 @@ function laclasse_api_handle_request($method, $path) {
 				}
 			}
 		}
-		
+		$blogs = get_blogs();
+		foreach ($blogs as $blog) {
+			if (($blog->type == 'CLS' || $blog->type == 'GRP' || $blog->type == 'GPL') && !empty($blog->group_id))
+				update_blog_option($blog->id, 'group_id_ENT', $blog->group_id);
+			delete_blog_option($blog->id, 'classe_ENT');
+			delete_blog_option($blog->id, 'groupe_ENT');
+			delete_blog_option($blog->id, 'groupelibre_ENT');
+		}
 	}
 	// default 404
 	else

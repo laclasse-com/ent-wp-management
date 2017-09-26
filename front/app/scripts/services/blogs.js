@@ -52,8 +52,8 @@ angular.module('blogsApp')
     if (type == "none") {
       return "Type de blogs"; 
     }
-    for (var i=0; i<TYPES_BLOG.length; i++) {
-      if (type  == TYPES_BLOG[i].code) {
+    for (var i = 0; i < TYPES_BLOG.length; i++) {
+      if (type == TYPES_BLOG[i].code) {
         return TYPES_BLOG[i].name;
       }
     } 
@@ -70,53 +70,35 @@ angular.module('blogsApp')
       //
       // Etablissements
       //
-      case TYPES_BLOG[0].code:
-        listDetailed = _.uniq(user.user_structures, function(etab) {
-          return etab.id;
-        });
-        _.each(listDetailed, function(etab){
-          regroupements.push({id: etab.id, name: etab.name});
-        });
-        break;
-      //
-      // Classes
-      //
-      case TYPES_BLOG[1].code:
-        listDetailed = _.uniq(user.user_groups, function(cls){
-          return cls.id;
-        });
-        _.each(listDetailed, function(cls){
-          if (cls.type == "CLS") {
-            var struct = user.user_structures.filter(function(s) { if (s.id == cls.structure_id) return true; })[0];
-            regroupements.push({ uai: cls.structure_id, id: cls.id, name: cls.name + " " + struct.name });
-          }
+      case 'ETB':
+        _.each(user.profiles, function (user_profile) {
+          // only allow ADM or DIR to create a structure's blog
+          if (_.indexOf(['ADM', 'DIR'], user_profile.type) == -1)
+            return;
+          var struct_name = user_profile.structure_id;
+          if (user.user_structures[user_profile.structure_id] != undefined)
+            struct_name = user.user_structures[user_profile.structure_id].name;
+          if (_.findIndex(regroupements, function (struc) { return struc.id == user_profile.structure_id; }) == -1)
+            regroupements.push({ id: user_profile.structure_id, name: struct_name, structure_id: user_profile.structure_id })
         });
         break;
       //
-      // Groupes d'élèves
+      // Groupes libres, Groupes d'élèves et Classes
       //
-      case TYPES_BLOG[2].code:
-        listDetailed = _.uniq(user.user_groups, function(grp){
-          return grp.id;
-        });
-        _.each(listDetailed, function(grp){
-          if (grp.type == "GRP") {
-            var struct = user.user_structures.filter(function(s) { if (s.id == grp.structure_id) return true; })[0];
-            regroupements.push({ uai: grp.structure_id, id: grp.id, name: grp.name + " " + struct.name });
-          }
-        });
-        break;
-      //
-      // Groupes libres
-      //
-      case TYPES_BLOG[3].code:
-        listDetailed = _.uniq(user.user_groups, function(gpl){
-          return gpl.id;
-        });
-        _.each(listDetailed, function(gpl){
-          if (gpl.type == "GPL") {
-            regroupements.push({id: gpl.id, name: gpl.name });
-          }
+      case 'GPL':
+      case 'GRP':
+      case 'CLS':
+        _.each(user.groups, function (user_group) {
+          if (_.indexOf(['ADM', 'PRI', 'ENS', 'MBR'], user_group.type) == -1)  
+            return;
+          if (user.user_groups[user_group.group_id] == undefined)
+            return;
+          if (user.user_groups[user_group.group_id].type != type)
+            return;  
+          var group_name = user.user_groups[user_group.group_id].name;
+          var structure_id = user.user_groups[user_group.group_id].structure_id;
+          if (_.findIndex(regroupements, function (group) { return group.id == user_group.group_id; }) == -1)
+            regroupements.push({ id: user_group.group_id, name: group_name, group_id: user_group.group_id, structure_id: structure_id });
         });
         break;
     }

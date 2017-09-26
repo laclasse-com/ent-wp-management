@@ -89,14 +89,14 @@ function remove_frame_options_header() {
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
 /*************************************************************************************
-fonction getUserCols : modifier l'ent�te des colonnes de la liste des utilisateurs
-					   pour ajouter des donn�es issues de l'ENT.
+fonction getUserCols : modifier l'entête des colonnes de la liste des utilisateurs
+					   pour ajouter des données issues de l'ENT.
 filter : wpmu_users_columns
 *************************************************************************************/
 function getUserCols($userCols){
 	$customCols = array(
 		'profil_ENT'  		=> __( 'profil ENT' ),
-		'classe_ENT'  		=> __( 'classe'),
+		'group_id_ENT'  		=> __( 'classe'),
 		'etablissement_ENT' => __( '&eacute;tablissement')
 	);
 	return array_merge($userCols, $customCols);

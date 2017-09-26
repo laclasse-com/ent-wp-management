@@ -10,7 +10,7 @@ angular.module('blogsApp')
 	// fonction permettant d'ouvrir un blog dans un nouvel onglet
 	//
 	$scope.goBlog = function(blog) {
-		$window.open(blog.url, '_blank');
+		$window.open(blog.url + '/wp-login.php', '_blank');
 	};
 
 	//
@@ -43,9 +43,5 @@ angular.module('blogsApp')
 		Modal.open($scope.confirmUnsubscribeModalCtrl, APP_PATH+'/app/views/modals/confirm.html', 'md');
 	};
 
-	var connectedUser;
-
-	connectedUser = CurrentUser.get();
-
-	connectedUser.$promise.then(Blogs.loadSubscribeBlogs());
+	$rootScope.ready.then(Blogs.loadSubscribeBlogs);
 }]);

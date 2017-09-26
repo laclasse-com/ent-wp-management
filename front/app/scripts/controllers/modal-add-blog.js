@@ -15,7 +15,7 @@ angular.module('blogsApp')
 	//différents model des champs
 	$scope.titleBlog = "";
 	$scope.subDomain = "";	
-	$scope.currentType = {name:"Type de blogs", code: null};
+	$scope.currentType = { name: "Type de blog", code: null, title: "" };
 	$scope.currentRegroupement = {id: null, name: null};
 	$scope.regroupements = [];
 
@@ -66,18 +66,22 @@ angular.module('blogsApp')
 		if ($scope.currentType.code == "CLS") {
 			$scope.currentRegroupement.name = "Choisissez une de vos classes";
 			$scope.blogdescription = "site de la classe ";
+			$scope.currentType.title = "Vos classes";
 		}
 		else if ($scope.currentType.code == "ETB") {
 			$scope.currentRegroupement.name = "Choisissez un de vos établissements";
 			$scope.blogdescription = "site de l'établissement ";
+			$scope.currentType.title = "Vos établissements";
 		}
 		else if ($scope.currentType.code == "GRP") {
 			$scope.currentRegroupement.name = "Choisissez un de vos groupes d'élèves";
 			$scope.blogdescription = "site du groupe d'élèves ";
+			$scope.currentType.title = "Vos groupes d'élèves";
 		}
 		else if ($scope.currentType.code == "GPL") {
 			$scope.currentRegroupement.name = "Choisissez un de vos groupes libres";
 			$scope.blogdescription = "site du groupe libre ";
+			$scope.currentType.title = "Vos groupes libres";
 		}
         else {
 			$scope.blogdescription = "site public";
@@ -89,7 +93,7 @@ angular.module('blogsApp')
 	// ---------------------------------------------------------------------------
 	// fonction de proposition de nom de domaine liée à la selectbox des classes/groupes/etab
 	// ---------------------------------------------------------------------------
-	$scope.changeTypeRegroupement = function(regroupement){
+	$scope.changeTypeRegroupement = function (regroupement) {
 		$scope.currentRegroupement = regroupement;
 		proposedSubDomain();
 	}
@@ -211,7 +215,6 @@ angular.module('blogsApp')
 		$scope.required.regroupement = !(($scope.currentType.code == 'ENV') || Blogs.checkField("regroupement", $scope.currentRegroupement.id, null));
 		$scope.errorMsgDomain = "Le sous-domaine est obligatoire et il doit être en miniscule !";
 		$scope.required.domain = !Blogs.checkField("subdomain", $scope.subDomain, "");
-        console.log($scope.required);
 		// pour pouvoir fermer la modal et créer le blogs, il faut que tous les champs soit correcte
 		// tester aussi l'existance dans WP
 		if ($scope.subDomain.length > 3) {
@@ -222,12 +225,14 @@ angular.module('blogsApp')
 				name: $scope.titleBlog,
 				description: $scope.blogdescription + (($scope.currentType.code == 'ENV')?'': $scope.currentRegroupement.name),
 				type: $scope.currentType.code,
-				structure_id: $scope.currentRegroupement.uai,
-				group_id: $scope.currentRegroupement.id,
 				user_id: CurrentUser.get().id,
 				url: "http://" + $scope.subDomain + "." + BLOGS_DOMAIN + "/",
 				domain: $scope.subDomain + "." + BLOGS_DOMAIN
 			};
+			if ($scope.currentRegroupement.structure_id != undefined)
+				blog.structure_id = $scope.currentRegroupement.structure_id;
+			if ($scope.currentRegroupement.group_id != undefined)
+				blog.group_id = $scope.currentRegroupement.group_id;
 			Blogs.create(blog);
 			$modalInstance.close();
 		};
