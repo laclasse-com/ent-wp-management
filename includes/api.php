@@ -516,7 +516,7 @@ function laclasse_api_handle_request($method, $path) {
 		}
 		$blog_group_id = isset($json->group_id) ? $json->group_id : '';
 
-		has_admin_right($userENT, $userWp->ID, $json);
+		ensure_admin_right($userENT, $userWp->ID, $json);
 		
 		// create the blog and add the WP user as administrator
 		$blog_id = creerNouveauBlog(
@@ -543,7 +543,7 @@ function laclasse_api_handle_request($method, $path) {
 		if ($data == null)
 			http_response_code(404);
 		else {
-			has_admin_right($userENT, $userWp->ID, $data);
+			ensure_admin_right($userENT, $userWp->ID, $data);
 
 			if (isset($json->name))
 				update_blog_option($blog_id, 'blogname', $json->name);
@@ -574,7 +574,7 @@ function laclasse_api_handle_request($method, $path) {
 		if ($blog == null)
 			http_response_code(404);
 		else {
-			has_admin_right($userENT, $userWp->ID, $blog);
+			ensure_admin_right($userENT, $userWp->ID, $blog);
 			delete_blog($blog_id);
 		}	
 	}
@@ -586,7 +586,7 @@ function laclasse_api_handle_request($method, $path) {
 			foreach($json as $blog_id) {
 				if (is_numeric($blog_id)) {
 					$blog = get_blog($blog_id);
-					has_admin_right($userENT, $userWp->ID, $blog);
+					ensure_admin_right($userENT, $userWp->ID, $blog);
 					if ($blog != null)
 						delete_blog($blog_id);
 				}
