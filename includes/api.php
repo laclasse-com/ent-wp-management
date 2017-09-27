@@ -847,7 +847,7 @@ function laclasse_api_handle_request($method, $path) {
 		$users = get_users(array('blog_id' => ''));
 		foreach ($users as $user) {
 			$data = user_data($user);
-			$userENT;
+			unset($userENT);
 			if (!isset($data->ent_id)) {
 				$userENT = get_ent_user_by_login($data->login);
 				if ($userENT != null) {
@@ -860,11 +860,14 @@ function laclasse_api_handle_request($method, $path) {
 				}
 			}
 			// update the user ENT profile if needed
-			if (empty($data->ent_profile) && isset($data->ent_id)) {
+			if (/*empty($data->ent_profile) &&*/ isset($data->ent_id)) {
 				if (!isset($userENT))
 					$userENT = get_ent_user($data->ent_id);
-				if ($userENT != null)
-					update_user_meta($data->id, 'profile_ENT', get_user_best_profile($userENT));
+				if ($userENT != null) {
+					$ent_profile = get_user_best_profile($userENT);
+					if (isset($ent_profile))
+						update_user_meta($data->id, 'profile_ENT', $ent_profile);
+				}
 			}
 		}
 		$blogs = get_blogs();
