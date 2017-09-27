@@ -39,17 +39,17 @@ function blog_data($blogWp) {
 	}
 	unset($result->etablissement_ENT);
 	if ($result->type == 'CLS' && isset($result->classe_ENT))
-		$result->group_id = $result->classe_ENT;
+		$result->group_id = intval($result->classe_ENT);
 	if ($result->type == 'GRP' && isset($result->groupe_ENT))
-		$result->group_id = $result->groupe_ENT;
+		$result->group_id = intval($result->groupe_ENT);
 	if ($result->type == 'GPL' && isset($result->groupelibre_ENT))
-		$result->group_id = $result->groupelibre_ENT;
+		$result->group_id = intval($result->groupelibre_ENT);
 	unset($result->groupe_ENT);
 	unset($result->classe_ENT);
 	unset($result->groupelibre_ENT);
 
 	if (isset($result->group_id_ENT))
-		$result->group_id = $result->group_id_ENT;
+		$result->group_id = intval($result->group_id_ENT);
 	unset($result->group_id_ENT);
 
 	$result->public = $result->public == 1;
@@ -966,10 +966,7 @@ function laclasse_api_handle_request($method, $path) {
 }
  
 function wp_rest_laclasse_api_handle_request($request) {
-	// dont return the object because WP dont encode numeric as numeric
-	echo json_encode(laclasse_api_handle_request($request->get_method(), $request->get_url_params()['path']),
-		JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_NUMERIC_CHECK);
-	exit;
+	return laclasse_api_handle_request($request->get_method(), $request->get_url_params()['path']);
 }
 
 

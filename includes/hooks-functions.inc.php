@@ -68,7 +68,7 @@ function addEntName () {
 }
 
 // --------------------------------------------------------------------------------
-// Quelques filtres pour le back-office utilis� dans la connexion avec CAS
+// Quelques filtres pour le back-office utilisé dans la connexion avec CAS
 // --------------------------------------------------------------------------------
 function disableThisFunc() {
 	return false;
@@ -95,7 +95,7 @@ filter : wpmu_users_columns
 *************************************************************************************/
 function getUserCols($userCols){
 	$customCols = array(
-		'profil_ENT'  		=> __( 'profil ENT' ),
+		'profile_ENT'  		=> __( 'profil ENT' ),
 		'group_id_ENT'  		=> __( 'classe'),
 		'etablissement_ENT' => __( '&eacute;tablissement')
 	);
