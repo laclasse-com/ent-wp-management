@@ -861,7 +861,7 @@ function laclasse_api_handle_request($method, $path) {
 			}
 			// update the user ENT profile if needed
 			if (empty($data->ent_profile) && isset($data->ent_id)) {
-				if (!isset($data->ent_id))
+				if (!isset($userENT))
 					$userENT = get_ent_user($data->ent_id);
 				if ($userENT != null)
 					update_user_meta($data->id, 'profile_ENT', get_user_best_profile($userENT));
