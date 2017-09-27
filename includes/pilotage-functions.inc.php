@@ -145,6 +145,42 @@ function has_right($userENT, $blog) {
     return false;
 }
 
+function has_admin_right($userENT, $user_id, $blog = null) {
+    // if the user if a super admin
+    if($userENT->super_admin)
+        return true;
+
+    if ($blog != null) {
+        // check rights on the structure
+        if (isset($blog->structure_id) && has_profile($userENT, $blog->structure_id, ['DIR','ADM']))
+            return true;
+
+        // check rights on the group
+        if (isset($blog->group_id) && has_group_profile($userENT, $blog->group_id, ['PRI','ADM','ENS']))
+            return true;
+
+        // check WP rights on the blog
+        if (get_user_blog_role($user_id, $blog->id) == 'administrator')
+            return true;
+    }    
+    return false;
+}
+
+function ensure_admin_right($userENT, $user_id, $blog = null) {
+    if (!has_admin_right($userENT, $user_id, $blog)) {
+        http_response_code(403);
+        exit;
+    }
+}
+
+function ensure_read_right($userENT, $blog) {
+    if (!has_right($userENT, $blog)) {
+        http_response_code(403);
+        exit;
+    }
+}
+
+
 // --------------------------------------------------------------------------------
 // Return true if a given blog MUST be displayed without choice for a given user
 // --------------------------------------------------------------------------------

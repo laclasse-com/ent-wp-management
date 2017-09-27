@@ -484,8 +484,10 @@ function laclasse_api_handle_request($method, $path) {
 			if (($seenBy != null) && !has_right($seenBy, $blog))
 				continue;
 
-			if (filter_blog($blog, $_REQUEST))
+			if (filter_blog($blog, $_REQUEST)) {
+				ensure_read_right($userENT, $blog);
 				array_push($result, $blog);
+			}
 		}
 	}
 	// GET /blogs/{id}
@@ -495,8 +497,10 @@ function laclasse_api_handle_request($method, $path) {
 		$data = get_blog($blog_id);
 		if ($data == null)
 			http_response_code(404);
-		else
+		else {
+			ensure_read_right($userENT, $data);
 			$result = $data;
+		}
 	}
 	// POST /blogs
 	else if ($method == 'POST' && count($tpath) == 1 && $tpath[0] == 'blogs')
@@ -512,6 +516,8 @@ function laclasse_api_handle_request($method, $path) {
 		}
 		$blog_group_id = isset($json->group_id) ? $json->group_id : '';
 
+		has_admin_right($userENT, $userWp->ID, $json);
+		
 		// create the blog and add the WP user as administrator
 		$blog_id = creerNouveauBlog(
 			$json->domain, '/', $json->name, $userENT->login, $user_email, 1,
@@ -533,10 +539,12 @@ function laclasse_api_handle_request($method, $path) {
 		$blog_id = intval($tpath[1]);
 		$json = json_decode(file_get_contents('php://input'));
 
-		$data = get_site($blog_id);
+		$data = get_blog($blog_id);
 		if ($data == null)
 			http_response_code(404);
 		else {
+			has_admin_right($userENT, $userWp->ID, $data);
+
 			if (isset($json->name))
 				update_blog_option($blog_id, 'blogname', $json->name);
 			if (isset($json->description))
@@ -547,9 +555,6 @@ function laclasse_api_handle_request($method, $path) {
 				update_blog_status($blog_id, 'archived', $json->archived ? '1' : '0');
 			if (isset($json->deleted))
 				update_blog_status($blog_id, 'deleted', $json->deleted ? '1' : '0');
-
-			$data = blog_data($data);
-
 			if (isset($json->structure_id))
 				update_blog_option($blog_id, 'etablissement_ENT', $json->structure_id);
 			if (isset($json->group_id))
@@ -565,10 +570,13 @@ function laclasse_api_handle_request($method, $path) {
 	else if ($method == 'DELETE' && count($tpath) == 2 && $tpath[0] == 'blogs')
 	{
 		$blog_id = intval($tpath[1]);
-		if (delete_blog($blog_id))
-			http_response_code(200);
-		else 
+		$blog = get_blog($blog_id);
+		if ($blog == null)
 			http_response_code(404);
+		else {
+			has_admin_right($userENT, $userWp->ID, $blog);
+			delete_blog($blog_id);
+		}	
 	}
 	// DELETE /blogs
 	else if ($method == 'DELETE' && count($tpath) == 1 && $tpath[0] == 'blogs')
@@ -576,8 +584,12 @@ function laclasse_api_handle_request($method, $path) {
 		$json = json_decode(file_get_contents('php://input'));
 		if (is_array($json)) {
 			foreach($json as $blog_id) {
-				if (is_numeric($blog_id))
-					delete_blog($blog_id);
+				if (is_numeric($blog_id)) {
+					$blog = get_blog($blog_id);
+					has_admin_right($userENT, $userWp->ID, $blog);
+					if ($blog != null)
+						delete_blog($blog_id);
+				}
 			}
 		}
 	}
@@ -586,10 +598,11 @@ function laclasse_api_handle_request($method, $path) {
 	else if ($method == 'GET' && count($tpath) == 3 && $tpath[0] == 'blogs' && $tpath[2] == 'users')
 	{
 		$blog_id = intval($tpath[1]);
-		$data = get_site($blog_id);
+		$data = get_blog($blog_id);
 		if ($data == null)
 			http_response_code(404);
 		else {
+			ensure_read_right($userENT, $data);
 			switch_to_blog($blog_id);
 			$blog_users = get_users();
 			$result = [];
@@ -615,6 +628,15 @@ function laclasse_api_handle_request($method, $path) {
 		if ($blog == null)
 			http_response_code(404);
 		else {
+			// check rights
+			if (!has_admin_right($userENT, $userWp->ID, $blog)) {
+				unset($json->role);
+				if ($userWp->ID != $json->user_id || !has_read_right($userENT, $blog)) {
+					http_response_code(403);
+					exit;
+				}
+			}
+			
 			$user_id = $json->user_id;
 			if (isset($json->role)) {
 				$user_role = $json->role;
@@ -643,10 +665,18 @@ function laclasse_api_handle_request($method, $path) {
 		$blog_id = intval($tpath[1]);
 		$user_id = intval($tpath[3]);
 
-		$data = get_site($blog_id);
+		$data = get_blog($blog_id);
 		if ($data == null)
 			http_response_code(404);
 		else {
+			// check rights
+			if (!has_admin_right($userENT, $userWp->ID, $blog)) {
+				if ($userWp->ID != $user_id || !has_read_right($userENT, $blog)) {
+					http_response_code(403);
+					exit;
+				}
+			}
+
 			remove_user_from_blog($user_id, $blog_id);
 			http_response_code(200);
 		}
@@ -660,6 +690,14 @@ function laclasse_api_handle_request($method, $path) {
 		if ($user == null)
 			http_response_code(404);
 		else {
+			// check rights
+			if (!has_admin_right($userENT, $userWp->ID)) {
+				if ($userWp->ID != $user_id) {
+					http_response_code(403);
+					exit;
+				}
+			}
+
 			$userENT = get_ent_user_from_user($user);
 			$user_blogs = get_blogs_of_user($user_id);
 			$result = [];
@@ -698,6 +736,15 @@ function laclasse_api_handle_request($method, $path) {
 		if ($blog == null)
 			http_response_code(404);
 		else {
+			// check rights
+			if (!has_admin_right($userENT, $userWp->ID, $blog)) {
+				unset($json->role);
+				if ($userWp->ID != $user_id || !has_read_right($userENT, $blog)) {
+					http_response_code(403);
+					exit;
+				}
+			}
+
 			if (isset($json->role)) {
 				$user_role = $json->role;
 			}
@@ -725,10 +772,18 @@ function laclasse_api_handle_request($method, $path) {
 		$user_id = intval($tpath[1]);
 		$blog_id = intval($tpath[3]);
 		
-		$data = get_site($blog_id);
+		$data = get_blog($blog_id);
 		if ($data == null)
 			http_response_code(404);
 		else {
+			// check rights
+			if (!has_admin_right($userENT, $userWp->ID, $blog)) {
+				if ($userWp->ID != $user_id) {
+					http_response_code(403);
+					exit;
+				}
+			}
+
 			remove_user_from_blog($user_id, $blog_id);
 			http_response_code(200);
 		}
@@ -765,6 +820,9 @@ function laclasse_api_handle_request($method, $path) {
 	// POST /users
 	else if ($method == 'POST' && count($tpath) == 1 && $tpath[0] == 'users')
 	{
+		// check rights
+		ensure_admin_right($userENT, $userWp->ID);
+
 		$json = json_decode(file_get_contents('php://input'));
 
 		if (is_object($json) && isset($json->login)) {
@@ -792,6 +850,9 @@ function laclasse_api_handle_request($method, $path) {
 	// PUT /users/{id}
 	else if ($method == 'PUT' && count($tpath) == 2 && $tpath[0] == 'users')
 	{
+		// check rights
+		ensure_admin_right($userENT, $userWp->ID);
+
 		$json = json_decode(file_get_contents('php://input'));
 
 		$user_id = intval($tpath[1]);
@@ -818,6 +879,9 @@ function laclasse_api_handle_request($method, $path) {
 	// DELETE /users/{id}
 	else if ($method == 'DELETE' && count($tpath) == 2 && $tpath[0] == 'users')
 	{
+		// check rights
+		ensure_admin_right($userENT, $userWp->ID);
+
 		$user_id = intval($tpath[1]);
 		if (delete_user($user_id))
 			http_response_code(200);
@@ -827,6 +891,9 @@ function laclasse_api_handle_request($method, $path) {
 	// DELETE /users
 	else if ($method == 'DELETE' && count($tpath) == 1 && $tpath[0] == 'users')
 	{
+		// check rights
+		ensure_admin_right($userENT, $userWp->ID);
+
 		$json = json_decode(file_get_contents('php://input'));
 		if (is_array($json)) {
 			foreach($json as $user_id) {
@@ -851,6 +918,9 @@ function laclasse_api_handle_request($method, $path) {
 	// GET /migration
 	else if ($method == 'GET' && count($tpath) == 1 && $tpath[0] == 'migration')
 	{
+		// check rights
+		ensure_admin_right($userENT, $userWp->ID);
+
 		$users = get_users(array('blog_id' => ''));
 		foreach ($users as $user) {
 			$data = user_data($user);
