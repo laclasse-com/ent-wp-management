@@ -754,13 +754,8 @@ function laclasse_api_handle_request($method, $path) {
 	// GET /users/{id}
 	else if ($method == 'GET' && count($tpath) == 2 && $tpath[0] == 'users')
 	{
-		if ($tpath[1] == 'current') {
-			$user = get_user_by('login', $userENT->login);
-		}
-		else {
-			$user_id = intval($tpath[1]);
-			$user = get_user_by('id', $user_id);
-		}
+		$user_id = intval($tpath[1]);
+		$user = get_user_by('id', $user_id);
 		if ($user == false)
 			http_response_code(404);
 		else {
@@ -840,6 +835,18 @@ function laclasse_api_handle_request($method, $path) {
 			}
 		}
 	}
+	// GET /user_by_ent_id/{id}
+	else if ($method == 'GET' && count($tpath) == 2 && $tpath[0] == 'user_by_ent_id')
+	{
+		$user_ent_id = $tpath[1];
+		$userENT = get_ent_user($user_ent_id);
+		if ($userENT == null)
+			http_response_code(404);
+		else {
+			$userWp = sync_ent_user_to_wp_user($userENT);
+			$result = user_data($userWp);
+		}
+	}
 
 	// GET /migration
 	else if ($method == 'GET' && count($tpath) == 1 && $tpath[0] == 'migration')
@@ -860,7 +867,7 @@ function laclasse_api_handle_request($method, $path) {
 				}
 			}
 			// update the user ENT profile if needed
-			if (/*empty($data->ent_profile) &&*/ isset($data->ent_id)) {
+			if (empty($data->ent_profile) && isset($data->ent_id)) {
 				if (!isset($userENT))
 					$userENT = get_ent_user($data->ent_id);
 				if ($userENT != null) {
