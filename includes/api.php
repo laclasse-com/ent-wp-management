@@ -64,6 +64,12 @@ function blog_data($blogWp) {
 	if ($result->type == 'ETB') {
 		unset($result->group_id);
 	}
+
+	switch_to_blog($result->id);
+	$result->quota_max = intval(get_space_allowed() * 1024 * 1024);
+	$result->quota_used = intval(get_space_used() * 1024 * 1024);
+	restore_current_blog();
+
 	return $result;
 }
 
@@ -149,6 +155,10 @@ function user_data($userWp) {
 	$uid_ENT = get_user_meta($user->id, 'uid_ENT', true);
 	if ($uid_ENT)
 		$user->ent_id = $uid_ENT;
+
+	$profile_ENT = get_user_meta($user->id, 'profile_ENT', true);
+	if (isset($profile_ENT))
+		$user->ent_profile = $profile_ENT;
 
 	return $user;
 }
@@ -236,8 +246,49 @@ function update_roles_wp_user_from_ent_user($userWp, $userENT) {
 	}
 }
 
+function get_user_best_profile($userENT) {
+	$profiles_order = array(
+		'ADM' => 9,
+		'ACA' => 8,
+		'DIR' => 7,
+		'DOC' => 6,
+		'ENS' => 5,
+		'ETA' => 4,
+		'EVS' => 3,
+		'ELV' => 2,
+		'TUT' => 1
+	);
+
+	$profile;
+	if (count($userENT->profiles) == 1)
+		$profile = $userENT->profiles[0]->type;
+	else if (count($userENT->profiles) > 1) {
+		foreach($userENT->profiles as $user_profile) {
+			if (!isset($profiles_order[$user_profile->type]))
+				continue;
+			if (!isset($profile))
+				$profile = $user_profile->type;
+			else if($profiles_order[$user_profile->type] > $profiles_order[$profile])
+				$profile = $user_profile->type;
+		}
+	}
+	return $profile;
+}
+
 // Update the WP user data with the given ENT ENT user data
 function update_wp_user_from_ent_user($userWp, $userENT) {
+
+	$profiles_order = array(
+		'ADM' => 9,
+		'ACA' => 8,
+		'DIR' => 7,
+		'DOC' => 6,
+		'ENS' => 5,
+		'ETA' => 4,
+		'EVS' => 3,
+		'ELV' => 2,
+		'TUT' => 1
+	);
 
 	if ($userENT->super_admin && !is_super_admin($userWp->ID))
 		grant_super_admin($userWp->ID);
@@ -246,6 +297,10 @@ function update_wp_user_from_ent_user($userWp, $userENT) {
 
 	// update user data
 	update_user_meta($userWp->ID, 'uid_ENT', $userENT->id);
+
+	$profile = get_user_best_profile($userENT);
+	if (isset($profile))
+		update_user_meta($userWp->ID, 'profile_ENT', $profile);
 
 	$user_email = $userENT->id . '@noemail.lan';
 	foreach($userENT->emails as $email) {
@@ -463,6 +518,9 @@ function laclasse_api_handle_request($method, $path) {
 			$userWp->ID, $json->type, $blog_structure_id, $blog_group_id,
 			$json->description);
 
+		if (isset($json->quota_max))
+			update_blog_option($blog_id, 'blog_upload_space', ceil($json->quota_max / (1024 * 1024)));
+
 		$data = get_blog($blog_id);
 		if ($data == null)
 			http_response_code(404);
@@ -496,6 +554,8 @@ function laclasse_api_handle_request($method, $path) {
 				update_blog_option($blog_id, 'etablissement_ENT', $json->structure_id);
 			if (isset($json->group_id))
 				update_blog_option($blog_id, 'group_id_ENT', $json->group_id);
+			if (isset($json->quota_max))
+				update_blog_option($blog_id, 'blog_upload_space', ceil($json->quota_max / (1024 * 1024)));
 
 			$data = get_blog($blog_id);
 			$result = $data;
@@ -720,6 +780,8 @@ function laclasse_api_handle_request($method, $path) {
 	
 			if (isset($json->ent_id))
 				update_user_meta($user_id, 'uid_ENT', $json->ent_id);
+			if (isset($json->ent_profile))
+				update_user_meta($user_id, 'profile_ENT', $json->ent_profile);
 
 			$user_data = array('ID' => $user_id);
 			if (isset($json->display_name))
@@ -744,6 +806,8 @@ function laclasse_api_handle_request($method, $path) {
 		else {
 			if (isset($json->ent_id))
 				update_user_meta($userWp->ID, 'uid_ENT', $json->ent_id);
+			if (isset($json->ent_profile))
+				update_user_meta($userWp->ID, 'profile_ENT', $json->profile);
 		
 			$user_data = array('ID' => $userWp->ID);
 
@@ -783,15 +847,24 @@ function laclasse_api_handle_request($method, $path) {
 		$users = get_users(array('blog_id' => ''));
 		foreach ($users as $user) {
 			$data = user_data($user);
+			$userENT;
 			if (!isset($data->ent_id)) {
 				$userENT = get_ent_user_by_login($data->login);
 				if ($userENT != null) {
 					update_user_meta($user->ID, 'uid_ENT', $userENT->id);
+					$data->ent_id = $userENT->id;
 					echo "ent_id NOT FOUND FOR ".$data->login.", UPDATE DONE\n";
 				}
 				else {
 					echo "ent_id NOT FOUND FOR ".$data->login.", ENT NOT FOUND\n";
 				}
+			}
+			// update the user ENT profile if needed
+			if (empty($data->ent_profile) && isset($data->ent_id)) {
+				if (!isset($data->ent_id))
+					$userENT = get_ent_user($data->ent_id);
+				if ($userENT != null)
+					update_user_meta($data->id, 'profile_ENT', get_user_best_profile($userENT));
 			}
 		}
 		$blogs = get_blogs();

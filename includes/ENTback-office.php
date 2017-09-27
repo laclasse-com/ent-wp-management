@@ -63,7 +63,7 @@ require_once(ABSPATH  . '/wp-admin/includes/template.php');
   	global $blog_id;
   	// Récupérer la valeur de l'option d'anonymat
   	$choixAnonymat = get_blog_option($blog_id, 'student-privacy', 0);
-  	
+
   	// Voir si on est en back-office ou en front-office.
 	if (!defined('WP_ADMIN'))
 	  $BackOffice = 0;
@@ -71,14 +71,13 @@ require_once(ABSPATH  . '/wp-admin/includes/template.php');
 	  $BackOffice = 1;
   	
   	// si l'anonymat a été paramètré on affiche un nom anonymisé
-  	if ($profil == 'ELEVE' && $choixAnonymat == 1 ) {
-  		$uidAnonyme = get_usermeta( $userId, 'uid_ENT');
-  		if ($BackOffice == 1) return strtolower($uidAnonyme)." <br/><small>(".$signature.")</small>";
-  		return strtolower($uidAnonyme);
+  	if ($profil == 'ELV' && $choixAnonymat == 1 ) {
+  		$uidAnonyme = get_user_meta( $userId, 'uid_ENT');
+		if ($BackOffice == 1)
+		  return $signature;
+  		return "Un Élève";
   	}
-  	// Ici FO ou BO oun s'en fout on affiche la signature
   	return $signature;
-  
   }
 
  // ------------------------------------------------------------------
@@ -86,7 +85,7 @@ require_once(ABSPATH  . '/wp-admin/includes/template.php');
  // ------------------------------------------------------------------
   function gereAnonymatArticle($post_author){
   	global $post;
-  	$profil = get_user_meta( $post->post_author, 'profil_ENT');
+	$profil = get_user_meta($post->post_author, 'profile_ENT', true);
   	return getSignature($post_author, $post->post_author, $profil);
   }
 
@@ -94,7 +93,7 @@ require_once(ABSPATH  . '/wp-admin/includes/template.php');
  // Fonction d'affichage de la signature anonymisée sur les commentaires
  // ------------------------------------------------------------------
   function gereAnonymatCommentaire($comment_author, $comment_id, $comment){
-  	$profil = get_user_meta( $comment->user_id, 'profil_ENT');
+  	$profil = get_user_meta($comment->user_id, 'profile_ENT', true);
   	return getSignature($comment_author, $comment->user_id, $profil);
   }
 
