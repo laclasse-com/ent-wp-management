@@ -667,8 +667,8 @@ function laclasse_api_handle_request($method, $path) {
 		$blog_id = intval($tpath[1]);
 		$user_id = intval($tpath[3]);
 
-		$data = get_blog($blog_id);
-		if ($data == null)
+		$blog = get_blog($blog_id);
+		if ($blog == null)
 			http_response_code(404);
 		else {
 			// check rights
