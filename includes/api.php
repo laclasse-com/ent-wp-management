@@ -865,7 +865,7 @@ function laclasse_api_handle_request($method, $path) {
 			if (isset($json->ent_id))
 				update_user_meta($userWp->ID, 'uid_ENT', $json->ent_id);
 			if (isset($json->ent_profile))
-				update_user_meta($userWp->ID, 'profile_ENT', $json->profile);
+				update_user_meta($userWp->ID, 'profile_ENT', $json->ent_profile);
 		
 			$user_data = array('ID' => $userWp->ID);
 
