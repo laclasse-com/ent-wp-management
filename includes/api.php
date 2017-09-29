@@ -216,7 +216,9 @@ function create_wp_user_from_ent_user($userENT) {
 	$user_id = wp_create_user($userENT->login, $password, $user_email);
 	// remove the user for blog 1
 	remove_user_from_blog($user_id, 1);
-
+	// remove automatic role create on the current blog
+	remove_user_from_blog($user_id, get_current_blog_id());
+	
 	return get_user_by('id', $user_id);
 }
 
