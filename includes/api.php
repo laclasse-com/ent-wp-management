@@ -807,6 +807,7 @@ function laclasse_api_handle_request($method, $path) {
 	{
 		http_response_code(302);
 		header('Location: ' . $userWp->ID);
+		exit;
 	}
 	// GET /users/{id}
 	else if ($method == 'GET' && count($tpath) == 2 && $tpath[0] == 'users')
