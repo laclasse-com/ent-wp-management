@@ -173,8 +173,8 @@ function ensure_admin_right($userENT, $user_id, $blog = null) {
     }
 }
 
-function ensure_read_right($userENT, $blog) {
-    if (!has_right($userENT, $blog)) {
+function ensure_read_right($userENT, $user_id, $blog) {
+    if ((get_user_blog_role($user_id, $blog->id) == null) && !has_right($userENT, $blog)) {
         http_response_code(403);
         exit;
     }

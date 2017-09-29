@@ -487,7 +487,7 @@ function laclasse_api_handle_request($method, $path) {
 				continue;
 
 			if (filter_blog($blog, $_REQUEST)) {
-				ensure_read_right($userENT, $blog);
+				ensure_read_right($userENT, $userWp->ID, $blog);
 				array_push($result, $blog);
 			}
 		}
@@ -500,7 +500,7 @@ function laclasse_api_handle_request($method, $path) {
 		if ($data == null)
 			http_response_code(404);
 		else {
-			ensure_read_right($userENT, $data);
+			ensure_read_right($userENT, $userWp->ID, $data);
 			$result = $data;
 		}
 	}
@@ -604,7 +604,7 @@ function laclasse_api_handle_request($method, $path) {
 		if ($data == null)
 			http_response_code(404);
 		else {
-			ensure_read_right($userENT, $data);
+			ensure_read_right($userENT, $userWp->ID, $data);
 			switch_to_blog($blog_id);
 			$blog_users = get_users();
 			$result = [];
