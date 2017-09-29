@@ -143,7 +143,7 @@ angular.module('blogsApp')
         return a.forced ? -1 : 1;
       if (a.type != b.type)
         return typePriorities[a.type] - typePriorities[b.type];
-      return a.name == b.name ? 0 : ( a.name > b.name ? -1 : 1 );
+      return a.name == b.name ? 0 : ( a.name < b.name ? -1 : 1 );
     });
   };
   
