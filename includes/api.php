@@ -19,7 +19,6 @@ function get_blog_options($blogId, $options) {
 
 	switch_to_blog($blogId);
 	$rows = $wpdb->get_results($wpdb->prepare("SELECT option_name,option_value FROM $wpdb->options WHERE option_name IN $options_string AND 1=%d", 1));
-	error_log(print_r($rows, true));
 	foreach($rows as $row) {
 		$option_name = $row->option_name;
 		$result->$option_name = html_entity_decode($row->option_value, ENT_QUOTES);
@@ -91,6 +90,8 @@ function blog_data($blogWp) {
 
 // Return the list of all blogs
 function get_blogs() {
+	//error_log("get_blogs");
+
 	$blogs = get_sites(array("number" => 100000));
 	$result = [];
 	foreach ($blogs as $blog) {
