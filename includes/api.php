@@ -4,22 +4,38 @@
 // HELPERS FUNCTIONS
 ////////////////////////////////////////////////////////////////////////////////
 
+// get multiples options of a blog. get_blog_option is too slow
+function get_blog_options($blogId, $options) {
+	global $wpdb;
+
+	$result = new stdClass();
+	$options_string = '';
+	foreach($options as $option) {
+		if ($options_string != '')
+			$options_string .= ',';
+		$options_string .= "'" . $option . "'";
+	}
+	$options_string = '(' . $options_string . ')';
+
+	switch_to_blog($blogId);
+	$rows = $wpdb->get_results($wpdb->prepare("SELECT option_name,option_value FROM $wpdb->options WHERE option_name IN $options_string AND 1=%d", 1));
+	error_log(print_r($rows, true));
+	foreach($rows as $row) {
+		$option_name = $row->option_name;
+		$result->$option_name = html_entity_decode($row->option_value, ENT_QUOTES);
+	}
+	restore_current_blog();
+	return $result;
+}
+
 // Convert WP_Site to our own blog object
 function blog_data($blogWp) {
-	$result = new stdClass();
-	foreach($blogWp as $k => $v) { $result->$k = $v; }
-
 	$opts = Array('admin_email', 'siteurl', 'name', 'blogname',
 		'blogdescription', 'blogtype', 'etablissement_ENT', 'display_name',
-		'type_de_blog', 'classe_ENT', 'groupe_ENT', 'groupelibre_ENT', 'group_id_ENT');
+		'type_de_blog', 'group_id_ENT');
 
-	foreach ($opts as $opt) {
-		$val = get_blog_option($blogWp->blog_id, $opt);
-		$val = html_entity_decode($val, ENT_QUOTES);
-		if ($val != false) {
-			$result->$opt = $val;
-		}
-	}
+	$result = get_blog_options($blogWp->blog_id, $opts);
+	foreach($blogWp as $k => $v) { $result->$k = $v; }
 
 	$result->id = intval($result->blog_id);
 	unset($result->blog_id);
@@ -633,7 +649,7 @@ function laclasse_api_handle_request($method, $path) {
 			// check rights
 			if (!has_admin_right($userENT, $userWp->ID, $blog)) {
 				unset($json->role);
-				if ($userWp->ID != $json->user_id || !has_read_right($userENT, $blog)) {
+				if ($userWp->ID != $json->user_id || !has_read_right($userENT, $userWp->ID, $blog)) {
 					http_response_code(403);
 					exit;
 				}
@@ -673,7 +689,7 @@ function laclasse_api_handle_request($method, $path) {
 		else {
 			// check rights
 			if (!has_admin_right($userENT, $userWp->ID, $blog)) {
-				if ($userWp->ID != $user_id || !has_read_right($userENT, $blog)) {
+				if ($userWp->ID != $user_id || !has_read_right($userENT, $userWp->ID, $blog)) {
 					http_response_code(403);
 					exit;
 				}
@@ -741,7 +757,7 @@ function laclasse_api_handle_request($method, $path) {
 			// check rights
 			if (!has_admin_right($userENT, $userWp->ID, $blog)) {
 				unset($json->role);
-				if ($userWp->ID != $user_id || !has_read_right($userENT, $blog)) {
+				if ($userWp->ID != $user_id || !has_read_right($userENT, $userWp->ID, $blog)) {
 					http_response_code(403);
 					exit;
 				}
