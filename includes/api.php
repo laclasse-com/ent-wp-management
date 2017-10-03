@@ -90,8 +90,6 @@ function blog_data($blogWp) {
 
 // Return the list of all blogs
 function get_blogs() {
-	error_log("get_blogs");
-
 	$blogs = get_sites(array("number" => 100000));
 	$result = [];
 	foreach ($blogs as $blog) {
@@ -101,6 +99,13 @@ function get_blogs() {
 		array_push($result, $blog_data);
 	}
 	return $result;
+}
+
+function get_cached_blogs() {
+	global $_cached_blogs;
+	if (!isset($_cached_blogs))
+		$_cached_blogs = get_blogs();
+	return $_cached_blogs;
 }
 
 function get_blog($blog_id) {
@@ -250,7 +255,7 @@ function create_wp_user_from_ent_user($userENT) {
 // Update the WP user roles on blogs with the given ENT user
 // and the type of each blog. Means auto register user to their blogs
 function update_roles_wp_user_from_ent_user($userWp, $userENT) {
-	$blogs = get_blogs();
+	$blogs = get_cached_blogs();
 
 	$role_order['subscriber'] = 1;
 	$role_order['contributor'] = 2;
@@ -494,7 +499,7 @@ function laclasse_api_handle_request($method, $path) {
 	// GET /blogs[?seen_by={ent_id}]
 	else if ($method == 'GET' && count($tpath) == 1 && $tpath[0] == 'blogs')
 	{
-		$blogs = get_blogs();
+		$blogs = get_cached_blogs();
 
 		$seenBy = null;
 		if (isset($_REQUEST['seen_by'])) {
@@ -974,7 +979,7 @@ function laclasse_api_handle_request($method, $path) {
 				}
 			}
 		}
-		$blogs = get_blogs();
+		$blogs = get_cached_blogs();
 		foreach ($blogs as $blog) {
 			if (($blog->type == 'CLS' || $blog->type == 'GRP' || $blog->type == 'GPL') && !empty($blog->group_id))
 				update_blog_option($blog->id, 'group_id_ENT', $blog->group_id);
