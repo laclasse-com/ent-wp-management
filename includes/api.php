@@ -90,7 +90,7 @@ function blog_data($blogWp) {
 
 // Return the list of all blogs
 function get_blogs() {
-	//error_log("get_blogs");
+	error_log("get_blogs");
 
 	$blogs = get_sites(array("number" => 100000));
 	$result = [];
@@ -144,8 +144,15 @@ function delete_blog($blog_id) {
 		// remove the blog (DB tables + files)
 		wpmu_delete_blog ($blog_id, true);
 		// remove the blog upload dir
-		if (is_dir($upload_base))
+		if (is_dir($upload_base)) {
 			rmdir($upload_base);
+			if (basename($upload_base) == 'files') {
+				$dirname = dirname($upload_base);
+				if (is_dir($dirname)) {
+					rmdir($dirname);
+				}
+			}
+		}
 		return true;
 	}
 }
@@ -986,6 +993,7 @@ function laclasse_api_handle_request($method, $path) {
 }
  
 function wp_rest_laclasse_api_handle_request($request) {
+	header('cache-control: no-cache, must-revalidate');
 	return laclasse_api_handle_request($request->get_method(), $request->get_url_params()['path']);
 }
 
