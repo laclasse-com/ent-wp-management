@@ -834,9 +834,7 @@ function laclasse_api_handle_request($method, $path) {
 	// GET /users/current
 	else if ($method == 'GET' && count($tpath) == 2 && $tpath[0] == 'users' && $tpath[1] == 'current')
 	{
-		http_response_code(302);
-		header('Location: ' . $userWp->ID);
-		exit;
+		$result = user_data($userWp);
 	}
 	// GET /users/{id}
 	else if ($method == 'GET' && count($tpath) == 2 && $tpath[0] == 'users')
@@ -845,9 +843,8 @@ function laclasse_api_handle_request($method, $path) {
 		$user = get_user_by('id', $user_id);
 		if ($user == false)
 			http_response_code(404);
-		else {
+		else
 			$result = user_data($user);
-		}
 	}
 	// POST /users
 	else if ($method == 'POST' && count($tpath) == 1 && $tpath[0] == 'users')
