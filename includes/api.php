@@ -712,6 +712,28 @@ function laclasse_api_handle_request($method, $path) {
 			http_response_code(200);
 		}
 	}
+	// DELETE /blogs/{id}/users
+	else if ($method == 'DELETE' && count($tpath) == 3 && $tpath[0] == 'blogs' && $tpath[2] == 'users')
+	{
+		$blog_id = intval($tpath[1]);
+
+		$blog = get_blog($blog_id);
+		if ($blog == null)
+			http_response_code(404);
+		else {
+			$json = json_decode(file_get_contents('php://input'));
+			if (is_array($json)) {
+				foreach($json as $user_id) {
+					if (is_numeric($user_id)) {
+						if (has_admin_right($userENT, $userWp->ID, $blog) || 
+							($userWp->ID == $user_id && has_read_right($userENT, $userWp->ID, $blog))) {
+							remove_user_from_blog($user_id, $blog_id);
+						}
+					}
+				}
+			}
+		}
+	}
 
 	// GET /users/{id}/blogs
 	else if ($method == 'GET' && count($tpath) == 3 && $tpath[0] == 'users' && $tpath[2] == 'blogs')
