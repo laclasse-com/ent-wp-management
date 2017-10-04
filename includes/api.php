@@ -352,12 +352,13 @@ function update_wp_user_from_ent_user($userWp, $userENT) {
 // Create a WP user from the ENT user data if needed
 // and sync its data with the ENT user data
 // Return: the WP user
-function sync_ent_user_to_wp_user($userENT) {
+function sync_ent_user_to_wp_user($userENT, $sync_role = true) {
 	$userWp = get_wp_user_from_ent_user($userENT);
 
 	if ($userWp == null)
 		$userWp = create_wp_user_from_ent_user($userENT);
-	update_wp_user_from_ent_user($userWp, $userENT);
+	if ($sync_role)
+		update_wp_user_from_ent_user($userWp, $userENT);
 	return $userWp;
 }
 
@@ -479,7 +480,7 @@ function laclasse_api_handle_request($method, $path) {
 	}
 
 	// get/create and update the corresponding WP user
-	$userWp = sync_ent_user_to_wp_user($userENT);
+	$userWp = sync_ent_user_to_wp_user($userENT, false);
 
 	$user_email;
 	foreach($userENT->emails as $email) {
@@ -750,6 +751,10 @@ function laclasse_api_handle_request($method, $path) {
 					exit;
 				}
 			}
+			// if the current user is asking for its own blogs
+			// sync its roles on blogs
+			if ($userWp->ID == $user_id)
+				update_wp_user_from_ent_user($userWp, $userENT);
 
 			$userENT = get_ent_user_from_user($user);
 			$user_blogs = get_blogs_of_user($user_id);
