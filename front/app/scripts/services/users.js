@@ -43,16 +43,17 @@ angular.module('blogsApp')
 					user_structures[struc.id] = struc;
 				});
 				userENT.user_structures = user_structures;
-
-				return GroupsApi.search({ expand: false, 'id[]': groups_ids }).$promise.then(function (groups) {
-					var user_groups = {};
-					_.each(groups, function (group) {
-						user_groups[group.id] = group;
-					});
-					userENT.user_groups = user_groups;
-					console.log(userENT);
+				if (groups_ids.length == 0)
 					return userENT;
-				});
+				else
+					return GroupsApi.search({ expand: false, 'id[]': groups_ids }).$promise.then(function (groups) {
+						var user_groups = {};
+						_.each(groups, function (group) {
+							user_groups[group.id] = group;
+						});
+						userENT.user_groups = user_groups;
+						return userENT;
+					});
 			});
 		});
 		return currentUser;
