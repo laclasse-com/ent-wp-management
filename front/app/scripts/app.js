@@ -23,6 +23,8 @@ angular.module('blogsApp', [
   
   // all user visible blogs  
   $rootScope.allBlogs = [];
+  // the user blogs relations
+  $rootScope.userBlogs = [];
   // the user subscribed blogs  
   $rootScope.blogs = [];
   // the blogs the user can register (= allBlogs - blogs)

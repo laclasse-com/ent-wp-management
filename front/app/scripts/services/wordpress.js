@@ -59,8 +59,7 @@ angular.module('blogsApp')
                 },
 
                 // Return all the blogs subscribed (or forced) by the current user
-                getSubscribedBlogs: function () {
-                    var self = this;
+                getCurrentUserBlogs: function () {
                     return this.getCacheCurrentUser().then(function (user) {
                         return $http.get(BLOGS_API_URL + 'users/' + user.id + '/blogs')
                             .then(function (response) {
@@ -74,7 +73,13 @@ angular.module('blogsApp')
                                 // something went wrong
                                 return $q.reject(response.data);
                             });
-                    }).then(function (user_blogs) {
+                    });
+                },
+
+                // Return all the blogs subscribed (or forced) by the current user
+                getSubscribedBlogs: function () {
+                    var self = this;
+                    return this.getCurrentUserBlogs().then(function (user_blogs) {
                         var ids = [];
                         var user_blogs_by_id = {};
                         for (var i = 0; i < user_blogs.length; i++) {

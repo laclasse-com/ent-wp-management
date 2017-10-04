@@ -162,12 +162,31 @@ angular.module('blogsApp')
     $rootScope.proposedBlogs = self.sortBlogs(proposedBlogs);
   };
   
+  this.updateUserBlogs = function () {
+    var userBlogs = [];
+    for (var i = 0; i < $rootScope.userBlogs.length; i++) {
+      var user_blog = $rootScope.userBlogs[i];
+      for (var i2 = 0; i2 < $rootScope.allBlogs.length; i2++) {
+        var blog = $rootScope.allBlogs[i2];
+        if (user_blog.blog_id == blog.id) {
+          blog.forced = user_blog.forced;
+          blog.role = user_blog.role;
+          userBlogs.push(blog);
+          break;
+        }
+      }
+    }
+    // Chargement de la liste
+    $rootScope.blogs = self.attune(self.sortBlogs(userBlogs), false);
+  };
+  
   // Load all user visible blogs list  
   this.loadAllBlogs = function () {
     return WPApi.getBlogs()
       // then() called when son gets back
       .then(function (data) {
         $rootScope.allBlogs = self.sortBlogs(data);
+        self.updateUserBlogs();
         self.updateProposedBlogs();
       }, function (error) {
         // promise rejected, could log the error with: console.log('error', error);
@@ -177,16 +196,12 @@ angular.module('blogsApp')
   };
   
   // Load the user subscribed blogs list  
-	this.loadSubscribeBlogs = function () {
-		return WPApi.getSubscribedBlogs()
-      .then(function(data) {
-       	// Chargement de la liste
-			  $rootScope.blogs = self.attune(self.sortBlogs(data), false);
-			  self.updateProposedBlogs();
-      }, function(error) {
-        Notifications.add( "une erreur s'est produite sur le chargement de la liste des blogs pouvant vous intéresser.'" 
-      	  + data.statusText, "error");
-      });
+  this.loadSubscribeBlogs = function () {
+    return WPApi.getCurrentUserBlogs().then(function (user_blogs) {
+      $rootScope.userBlogs = user_blogs;
+      self.updateUserBlogs();
+      self.updateProposedBlogs();
+    });
   };
 
 }]);
