@@ -49,7 +49,7 @@ function blog_data($blogWp) {
 	unset($result->type_de_blog);
 	$result->url = $result->siteurl;
 	unset($result->siteurl);
-	if (isset($result->etablissement_ENT)) {
+	if (isset($result->etablissement_ENT) && !empty($result->etablissement_ENT)) {
 		$result->structure_id = $result->etablissement_ENT;
 	}
 	unset($result->etablissement_ENT);
