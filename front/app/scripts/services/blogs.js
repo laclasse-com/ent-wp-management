@@ -11,15 +11,11 @@ angular.module('blogsApp')
   // crée un nouveau blog
   // ------------------------------------------------------------------------
   this.create = function (blog) {
-    WPApi.createBlog(blog).then(self.loadSubscribeBlogs);
+    WPApi.createBlog(blog).then(function () {
+      self.loadSubscribeBlogs();
+      self.loadAllBlogs();
+    });
   };
-
-  // ------------------------------------------------------------------------
-  // fonction qui supprime un blog
-  // ------------------------------------------------------------------------
-  this.delete = function(blog) {
-    $rootScope.blogs = _.reject($rootScope.blogs, function (b) { return b.id == blog.id});
-  }
 
   // ------------------------------------------------------------------------
   // harmonise la liste des blogs sur 15 cases puisqu'une est fixe.
