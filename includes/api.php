@@ -425,6 +425,10 @@ function delete_user($user_id) {
 			wp_delete_user($user_id, $delete_user_id);
 			restore_current_blog();
 		}
+		// if the user is a super admin, revoke super admin right because
+		// wpmu_delete_user prevent delete of super admin
+		if (is_super_admin($user_id))
+			revoke_super_admin($user_id);
 		// remove the user and all its work
 		wpmu_delete_user($user_id);
 		return true;
