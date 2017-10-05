@@ -241,7 +241,9 @@ function create_wp_user_from_ent_user($userENT) {
 		if (!isset($user_email) || $email->primary)
 			$user_email = $email->address;
 	}
-	$password= substr(md5(microtime()), rand(0,26), 20);
+	if (!isset($user_email))
+		$user_email = $userENT->id . '@noemail.lan';
+	$password = substr(md5(microtime()), rand(0,26), 20);
 	$user_id = wp_create_user($userENT->login, $password, $user_email);
 	// remove the user for blog 1
 	remove_user_from_blog($user_id, 1);
@@ -307,7 +309,7 @@ function get_user_best_profile($userENT) {
 }
 
 // Update the WP user data with the given ENT ENT user data
-function update_wp_user_from_ent_user($userWp, $userENT) {
+function update_wp_user_from_ent_user($userWp, $userENT, $sync_role = true) {
 
 	$profiles_order = array(
 		'ADM' => 9,
@@ -346,7 +348,8 @@ function update_wp_user_from_ent_user($userWp, $userENT) {
 		'display_name' => $userENT->lastname.' '.$userENT->firstname,
 		'user_email' => $user_email
 	));
-	update_roles_wp_user_from_ent_user($userWp, $userENT);
+	if ($sync_role)
+		update_roles_wp_user_from_ent_user($userWp, $userENT);
 }
 
 // Create a WP user from the ENT user data if needed
@@ -357,8 +360,8 @@ function sync_ent_user_to_wp_user($userENT, $sync_role = true) {
 
 	if ($userWp == null)
 		$userWp = create_wp_user_from_ent_user($userENT);
-	if ($sync_role)
-		update_wp_user_from_ent_user($userWp, $userENT);
+	
+	update_wp_user_from_ent_user($userWp, $userENT, $sync_role);
 	return $userWp;
 }
 
@@ -754,7 +757,7 @@ function laclasse_api_handle_request($method, $path) {
 			// if the current user is asking for its own blogs
 			// sync its roles on blogs
 			if ($userWp->ID == $user_id)
-				update_wp_user_from_ent_user($userWp, $userENT);
+				update_roles_wp_user_from_ent_user($userWp, $userENT);
 
 			$userENT = get_ent_user_from_user($user);
 			$user_blogs = get_blogs_of_user($user_id);
