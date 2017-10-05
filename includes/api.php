@@ -292,14 +292,14 @@ function get_user_best_profile($userENT) {
 		'TUT' => 1
 	);
 
-	$profile;
+	$profile = null;
 	if (count($userENT->profiles) == 1)
 		$profile = $userENT->profiles[0]->type;
 	else if (count($userENT->profiles) > 1) {
 		foreach($userENT->profiles as $user_profile) {
 			if (!isset($profiles_order[$user_profile->type]))
 				continue;
-			if (!isset($profile))
+			if ($profile == null)
 				$profile = $user_profile->type;
 			else if($profiles_order[$user_profile->type] > $profiles_order[$profile])
 				$profile = $user_profile->type;
@@ -332,7 +332,7 @@ function update_wp_user_from_ent_user($userWp, $userENT, $sync_role = true) {
 	update_user_meta($userWp->ID, 'uid_ENT', $userENT->id);
 
 	$profile = get_user_best_profile($userENT);
-	if (isset($profile))
+	if ($profile != null)
 		update_user_meta($userWp->ID, 'profile_ENT', $profile);
 
 	$user_email = $userENT->id . '@noemail.lan';
@@ -1001,7 +1001,7 @@ function laclasse_api_handle_request($method, $path) {
 					$userENT = get_ent_user($data->ent_id);
 				if ($userENT != null) {
 					$ent_profile = get_user_best_profile($userENT);
-					if (isset($ent_profile))
+					if ($ent_profile != null)
 						update_user_meta($data->id, 'profile_ENT', $ent_profile);
 				}
 			}
