@@ -119,21 +119,24 @@ function has_right($userENT, $blog) {
             return true;
         }
         elseif($blog->type == 'CLS') {
-           if(has_group($userENT->groups, $blog->group_id)) {
+           if(has_group($userENT->groups, $blog->group_id))
                return true;
-           }
+            if (isset($blog->structure_id) && has_profile($userENT, $blog->structure_id, ['DIR','ADM']))
+               return true;
         }
         elseif($blog->type == 'GRP') {
-           if(has_group($userENT->groups, $blog->group_id)) {
+           if(has_group($userENT->groups, $blog->group_id))
                return true;
-           }
+            if (isset($blog->structure_id) && has_profile($userENT, $blog->structure_id, ['DIR','ADM']))
+               return true;
         }
     }
 
     if($blog->type == 'GPL') {
-       if(has_group($userENT->groups, $blog->group_id)) {
+       if(has_group($userENT->groups, $blog->group_id))
            return true;
-       }
+        if (isset($blog->structure_id) && has_profile($userENT, $blog->structure_id, ['DIR','ADM']))
+           return true;
     }
 
     // test for children rights
