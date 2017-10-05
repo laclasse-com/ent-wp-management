@@ -857,13 +857,24 @@ function laclasse_api_handle_request($method, $path) {
 	// GET /users
 	else if ($method == 'GET' && count($tpath) == 1 && $tpath[0] == 'users')
 	{
-		$users = get_users(array('blog_id' => ''));
 		$result = [];
-		foreach ($users as $user) {
-			$data = user_data($user);
-			if (filter_user($data, $_REQUEST))
-				array_push($result, $data);
+		if (isset($_REQUEST['id']) && is_array($_REQUEST['id'])) {
+			foreach ($_REQUEST['id'] as $user_id) {
+				if (is_numeric($user_id)) {
+					$user = get_user($user_id);
+					if (filter_user($user, $_REQUEST))
+						array_push($result, $user);
+				}
+			}
 		}
+		else {
+			$users = get_users(array('blog_id' => ''));
+			foreach ($users as $user) {
+				$data = user_data($user);
+				if (filter_user($data, $_REQUEST))
+					array_push($result, $data);
+			}	
+		}		
 	}
 	// GET /users/current
 	else if ($method == 'GET' && count($tpath) == 2 && $tpath[0] == 'users' && $tpath[1] == 'current')
