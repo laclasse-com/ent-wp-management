@@ -510,23 +510,31 @@ function laclasse_api_handle_request($method, $path) {
 		$blogs = get_cached_blogs();
 
 		$seenBy = null;
+		$seenByWp = null;
 		if (isset($_REQUEST['seen_by'])) {
-			if ($_REQUEST['seen_by'] == $userENT->id)
+			if ($_REQUEST['seen_by'] == $userENT->id) {
 				$seenBy = $userENT;
-			else
+				$seenByWp = $userWp;
+			}
+			else {
 				$seenBy = get_ent_user($_REQUEST['seen_by']);
+				if ($seenBy != null)
+					$seenByWp = get_wp_user_from_ent_user($seenBy);
+			}
 		}
 
 		$result = [];
 		foreach ($blogs as $blog) {
+			if (!filter_blog($blog, $_REQUEST))
+				continue;
 			// if seen_by is set, filter by what the given ENT user can see
-			if (($seenBy != null) && !has_right($seenBy, $blog))
+			if (($seenByWp != null) && !has_read_right($seenBy, $seenByWp->ID, $blog))
+				continue;
+			if (($seenByWp == null) && ($seenBy != null) && !has_right($seenBy, $blog))
 				continue;
 
-			if (filter_blog($blog, $_REQUEST)) {
-				ensure_read_right($userENT, $userWp->ID, $blog);
-				array_push($result, $blog);
-			}
+			ensure_read_right($userENT, $userWp->ID, $blog);
+			array_push($result, $blog);
 		}
 	}
 	// GET /blogs/{id}

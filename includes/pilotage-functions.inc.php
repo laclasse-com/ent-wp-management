@@ -177,11 +177,11 @@ function ensure_admin_right($userENT, $user_id, $blog = null) {
 }
 
 function has_read_right($userENT, $user_id, $blog) {
-    return ((get_user_blog_role($user_id, $blog->id) != null) || has_right($userENT, $blog));
+    return (has_right($userENT, $blog) || (get_user_blog_role($user_id, $blog->id) != null));
 }
 
 function ensure_read_right($userENT, $user_id, $blog) {
-    if ((get_user_blog_role($user_id, $blog->id) == null) && !has_right($userENT, $blog)) {
+    if (!has_read_right($userENT, $user_id, $blog)) {
         http_response_code(403);
         exit;
     }
