@@ -563,7 +563,10 @@ function laclasse_api_handle_request($method, $path) {
 		}
 		$blog_group_id = isset($json->group_id) ? $json->group_id : '';
 
-		ensure_admin_right($userENT, $userWp->ID, $json);
+		// allow everybody authenticated to create a public blog.
+		// TODO: restrict this
+		if ($blog_type != 'ENV')
+			ensure_admin_right($userENT, $userWp->ID, $json);
 		
 		// create the blog and add the WP user as administrator
 		$blog_id = creerNouveauBlog(
