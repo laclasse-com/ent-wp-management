@@ -163,7 +163,7 @@ function has_admin_right($userENT, $user_id, $blog = null) {
             return true;
 
         // check WP rights on the blog
-        if (get_user_blog_role($user_id, $blog->id) == 'administrator')
+        if (isset($blog->id) && get_user_blog_role($user_id, $blog->id) == 'administrator')
             return true;
     }    
     return false;
