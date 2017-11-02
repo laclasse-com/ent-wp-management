@@ -11,7 +11,7 @@ function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $si
 	if ($EtbUAI)
 		$meta->etablissement_ENT = $EtbUAI;
 
-	if ($TypeDeBlog == 'CLS' && $group_id)
+	if (isset($group_id) && $group_id != '')
 		$meta->group_id_ENT = $group_id;
 
 	$meta->admin_email = $user_email;
