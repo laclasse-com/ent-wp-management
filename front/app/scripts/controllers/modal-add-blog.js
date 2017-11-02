@@ -14,6 +14,7 @@ angular.module('blogsApp')
 	$scope.domain = BLOGS_DOMAIN;
 	//différents model des champs
 	$scope.titleBlog = "";
+	$scope.descBlog = "";	
 	$scope.subDomain = "";	
 	$scope.currentType = { name: "Type de blog", code: null, title: "" };
 	$scope.currentRegroupement = {id: null, name: null};
@@ -221,9 +222,13 @@ angular.module('blogsApp')
 			checkSubDomainExistance($scope.subDomain);
 		}
 		if (!$scope.required.title && !$scope.required.type && !$scope.required.regroupement && !$scope.required.domain) {
+			var description = $scope.blogdescription + (($scope.currentType.code == 'ENV') ? '' : $scope.currentRegroupement.name);
+			if ($scope.descBlog != '')
+				description = $scope.descBlog;	
+
 			var blog = {
 				name: $scope.titleBlog,
-				description: $scope.blogdescription + (($scope.currentType.code == 'ENV')?'': $scope.currentRegroupement.name),
+				description: description,
 				type: $scope.currentType.code,
 				user_id: CurrentUser.get().id,
 				url: "http://" + $scope.subDomain + "." + BLOGS_DOMAIN + "/",
