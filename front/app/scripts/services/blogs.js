@@ -85,7 +85,7 @@ angular.module('blogsApp')
       case 'GRP':
       case 'CLS':
         _.each(user.groups, function (user_group) {
-          if (_.indexOf(['ADM', 'PRI', 'ENS', 'MBR'], user_group.type) == -1)  
+          if (_.indexOf(['ADM', 'PRI', 'ENS'], user_group.type) == -1)  
             return;
           if (user.user_groups[user_group.group_id] == undefined)
             return;
