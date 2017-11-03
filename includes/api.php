@@ -677,36 +677,52 @@ function laclasse_api_handle_request($method, $path) {
 		$blog = get_blog($blog_id);
 		if ($blog == null)
 			http_response_code(404);
-		else {
-			// check rights
-			if (!has_admin_right($userENT, $userWp->ID, $blog)) {
-				unset($json->role);
-				if ($userWp->ID != $json->user_id || !has_read_right($userENT, $userWp->ID, $blog)) {
-					http_response_code(403);
-					exit;
+		else {		
+			$has_admin_right = has_admin_right($userENT, $userWp->ID, $blog);
+			$json_array = $json;
+			$is_array = true;
+			if (!is_array($json)) {
+				$is_array = false;
+				$json_array = [ $json ];
+			}
+			$result = [];
+			
+			foreach ($json_array as $json) {
+				// check rights
+				if (!$has_admin_right) {
+					unset($json->role);
+					if ($userWp->ID != $json->user_id || !has_read_right($userENT, $userWp->ID, $blog)) {
+						http_response_code(403);
+						exit;
+					}
+				}
+
+				$user_id = $json->user_id;
+				if (isset($json->role)) {
+					$user_role = $json->role;
+				}
+				// find the default role
+				else {
+					$userENT = get_ent_user_from_user_id($user_id);
+					if ($userENT != null)
+						$user_role = get_user_blog_default_role($userENT, $blog);
+				}
+				if (isset($user_role)) {
+					add_user_to_blog($blog_id, $user_id, $user_role);
+					$blog_result = new stdClass();
+					$blog_result->id = $user_id;
+					$blog_result->user_id = $user_id;
+					$blog_result->blog_id = $blog_id;
+					$blog_result->role = $user_role;
+					array_push($result, $blog_result);
 				}
 			}
-			
-			$user_id = $json->user_id;
-			if (isset($json->role)) {
-				$user_role = $json->role;
+			if ($is_array) {
+				if (count($result) > 0)
+					$result = $result[0];
+				else
+					$result = null;
 			}
-			// find the default role
-			else {
-				$userENT = get_ent_user_from_user_id($user_id);
-				if ($userENT != null)
-					$user_role = get_user_blog_default_role($userENT, $blog);
-			}
-			if (isset($user_role)) {
-				add_user_to_blog($blog_id, $user_id, $user_role);
-				$result = new stdClass();
-				$result->id = $user_id;
-				$result->user_id = $user_id;
-				$result->blog_id = $blog_id;
-				$result->role = $user_role;
-			}
-			else
-				http_response_code(404);
 		}
 	}
 	// DELETE /blogs/{id}/users/{user_id}
