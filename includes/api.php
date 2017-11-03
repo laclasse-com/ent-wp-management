@@ -717,7 +717,7 @@ function laclasse_api_handle_request($method, $path) {
 					array_push($result, $blog_result);
 				}
 			}
-			if ($is_array) {
+			if (!$is_array) {
 				if (count($result) > 0)
 					$result = $result[0];
 				else
