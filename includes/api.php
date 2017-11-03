@@ -1015,6 +1015,18 @@ function laclasse_api_handle_request($method, $path) {
 			$result = user_data($userWp);
 		}
 	}
+	// GET /user_by_ent_id?id[]={id}&id[]={id}...
+	else if ($method == 'GET' && count($tpath) == 1 && $tpath[0] == 'user_by_ent_id' && isset($_REQUEST['id']) && is_array($_REQUEST['id']))
+	{
+		$result = [];
+		foreach ($_REQUEST['id'] as $user_ent_id) {
+			$userENT = get_ent_user($user_ent_id);
+			if ($userENT != null) {
+				$userWp = sync_ent_user_to_wp_user($userENT);
+				array_push($result, user_data($userWp));
+			}
+		}
+	}
 
 	// GET /migration
 	else if ($method == 'GET' && count($tpath) == 1 && $tpath[0] == 'migration')
