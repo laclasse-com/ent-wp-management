@@ -44,7 +44,11 @@ function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $si
 	// Add new widget for Posts (Pages)
 	$laclasseTheme = wp_get_theme('wordpress-theme-laclasse');
 	if($laclasseTheme->exists()) {
-		update_blog_option($wpBlogId,'stylesheet','wordpress-theme-laclasse'); 	
+		// update_blog_option($wpBlogId,'stylesheet','wordpress-theme-laclasse'); 	
+		switch_to_blog($wpBlogId);
+		switch_theme('wordpress-theme-laclasse');
+		restore_current_blog();
+
 		insert_widget_in_blog_sidebar('pages',array('sortby' => 'menu_order'), $wpBlogId,'sidebar-1');
 	}
 	
