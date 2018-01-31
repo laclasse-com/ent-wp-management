@@ -562,6 +562,7 @@ function laclasse_api_handle_request($method, $path) {
 			$blog_structure_id = $json->structure_id;
 		}
 		$blog_group_id = isset($json->group_id) ? $json->group_id : '';
+		$blog_description = isset($json->description) ? $json->description : '';
 
 		// allow everybody authenticated to create a public blog.
 		// TODO: restrict this
@@ -572,7 +573,7 @@ function laclasse_api_handle_request($method, $path) {
 		$blog_id = creerNouveauBlog(
 			$json->domain, '/', $json->name, $userENT->login, $user_email, 1,
 			$userWp->ID, $json->type, $blog_structure_id, $blog_group_id,
-			$json->description);
+			$blog_description);
 
 		if (isset($json->quota_max))
 			update_blog_option($blog_id, 'blog_upload_space', ceil($json->quota_max / (1024 * 1024)));
