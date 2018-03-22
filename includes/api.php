@@ -503,26 +503,7 @@ function laclasse_api_handle_request($method, $path) {
 	if ($method == 'GET' && count($tpath) == 1 && $tpath[0] == 'setup')
 	{
 		$result = array("domain" => BLOGS_DOMAIN);
-	} 
-	// GET /blogs[?domain_exists={url}]
-	else if ($method == 'GET' && count($tpath) == 1 && $tpath[0] == 'blogs' && isset($_REQUEST['domain_exists'])){
-		$blogs = get_cached_blogs();
-		
-		$filters = ['domain' => $_REQUEST['domain_exists']];
-		
-		$result = [];
-		foreach ($blogs as $blog) {
-			if (!filter_blog($blog, $filters))
-				continue;
-			// Depending on rôle if not super_admin return just return the domain
-			if($userENT->super_admin) {
-				array_push($result, $blog);
-			} else {
-				array_push($result, (object)
-				["domain" => $blog->domain]);
-			}
-		}
-	} 
+	}
 	// GET /blogs[?seen_by={ent_id}]
 	else if ($method == 'GET' && count($tpath) == 1 && $tpath[0] == 'blogs')
 	{
