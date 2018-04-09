@@ -502,7 +502,7 @@ function laclasse_api_handle_request($method, $path) {
 	// GET /setup
 	if ($method == 'GET' && count($tpath) == 1 && $tpath[0] == 'setup')
 	{
-		$result = array("domain" => BLOGS_DOMAIN);
+		$result = array("domain" => DOMAIN_CURRENT_SITE);
 	}
 	// GET /blogs[?seen_by={ent_id}]
 	else if ($method == 'GET' && count($tpath) == 1 && $tpath[0] == 'blogs')
