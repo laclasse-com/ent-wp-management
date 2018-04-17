@@ -859,6 +859,62 @@ function laclasse_api_handle_request($method, $path) {
 				http_response_code(404);
 		}
 	}
+	// GET  /users/{user_id}/blogs/{blog_id}
+	else if ($method == 'GET' && count($tpath) == 4 && $tpath[0] == 'users' && $tpath[2] == 'blogs')
+	{
+		$user_id = intval($tpath[1]);
+		$blog_id = intval($tpath[3]);
+		
+		$data = get_blog($blog_id);
+		if ($data == null) {
+			http_response_code(404);
+			exit;
+		} else {
+			// check rights
+			if (!has_admin_right($userENT, $userWp->ID)) {
+				if ($userWp->ID != $user_id) {
+					http_response_code(403);
+					exit;
+				}
+			}
+		}
+		// if the current user is asking for its own blogs
+		// sync its roles on blogs
+		if ($userWp->ID == $user_id)
+			update_roles_wp_user_from_ent_user($userWp, $userENT);
+
+		if(!is_user_member_of_blog($user_id,$blog_id)) {
+			http_response_code(404);
+			exit;
+		}
+
+		$user_blogs = get_blogs_of_user($user_id);
+		$result = [];
+		
+		$user_blogs = array_filter($user_blogs,function($user_blog) use ($blog_id) {return $user_blog->userblog_id == $blog_id;});
+		foreach ($user_blogs as $user_blog) {
+			$blog = get_blog($user_blog->userblog_id);
+			if ($blog == null)
+				continue;
+				$data = new stdClass();
+			$data->id = $user_blog->userblog_id;
+			$data->blog_id = $user_blog->userblog_id;
+			$data->user_id = $user_id;
+			// try to find the user role
+			$users_search = get_users(
+				array(
+					'blog_id' => $user_blog->userblog_id,
+					'search'  => $user_id
+				)
+			);
+			if (count($users_search) > 0 && count($users_search[0]->roles) > 0)
+				$data->role = $users_search[0]->roles[0];
+			$data->forced = ($userENT != null && is_forced_blog($blog, $userENT));
+			
+			$result = $data;
+			break;
+		}
+	}
 	// DELETE /users/{user_id}/blogs/{blog_id}
 	else if ($method == 'DELETE' && count($tpath) == 4 && $tpath[0] == 'users' && $tpath[2] == 'blogs')
 	{
