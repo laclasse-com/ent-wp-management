@@ -38,8 +38,10 @@ require_once('includes/cas-functions.inc.php');
 require_once('includes/ENTback-office.php'); 
 // API JSON d'administration
 require_once('includes/api.php'); 
+require_once('includes/laclasse-rest-controller.php');
 require_once('includes/profiles-rest-controller.php');
 require_once('includes/users-rest-controller.php');
+require_once('includes/blogs-rest-controller.php');
 
 //require_once(ABSPATH . WPINC . '/formatting.php');
 //require_once(ABSPATH . WPINC . '/wp-db.php');
@@ -146,6 +148,7 @@ add_action( 'rest_api_init', function () {
 
 	(new Users_Controller())->register_routes();
 	(new Profiles_Controller())->register_routes();
+	(new Blogs_Controller())->register_routes();
 } );
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

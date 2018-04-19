@@ -1,24 +1,10 @@
 <?php
-class Users_Controller extends WP_REST_Controller {
-  /**
-   * Wordpress user
-   *
-   * @var WP_User
-   */
-  protected $wp_user;
-  /**
-   * ENT user
-   *
-   * @var mixed
-   */
-  protected $ent_user;
-
-
+class Users_Controller extends Laclasse_Controller {
   /**
   * Constructor
   */
   public function __construct() {
-    $this->namespace = 'laclasse/v1';
+    parent::__construct();
     $this->rest_base = 'users';
   }
   /**
@@ -29,16 +15,20 @@ class Users_Controller extends WP_REST_Controller {
     register_rest_route( $this->namespace, '/' . $this->rest_base, array(
       array(
         'methods'         => WP_REST_Server::READABLE,
-        'callback'        => array( $this, 'get_items' ),
-        'permission_callback' => array( $this, 'get_items_permissions_check' ),
-        'args'            => array(),
+        'callback'        => array( $this, 'get_users' ),
+        'permission_callback' => array( $this, 'get_users_permissions_check' ),
       ),
       // array(
       //   'methods'         => WP_REST_Server::CREATABLE,
-      //   'callback'        => array( $this, 'create_item' ),
-      //   'permission_callback' => array( $this, 'create_item_permissions_check' ),
-      //   'args'            => $this->get_endpoint_args_for_item_schema( true ),
+      //   'callback'        => array( $this, 'create_user' ),
+      //   'permission_callback' => array( $this, 'create_user_permissions_check' ),
+      //   'args'            => $this->get_endpoint_args_for_user_schema( true ),
       // ),
+      array(
+        'methods'         => WP_REST_Server::DELETABLE,
+        'callback'        => array( $this, 'delete_users' ),
+        'permission_callback' => array( $this, 'delete_user_permissions_check' ),
+      ),
       ) 
     );
 
@@ -46,25 +36,18 @@ class Users_Controller extends WP_REST_Controller {
     register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<id>[A-Za-z0-9]+)', array(
       array(
         'methods'         => WP_REST_Server::READABLE,
-        'callback'        => array( $this, 'get_item' ),
-        'permission_callback' => array( $this, 'get_item_permissions_check' ),
-        'args'            => array(),
+        'callback'        => array( $this, 'get_user' ),
+        'permission_callback' => array( $this, 'get_user_permissions_check' ),
       ),
       array(
         'methods'         => WP_REST_Server::EDITABLE,
-        'callback'        => array( $this, 'update_item' ),
-        'permission_callback' => array( $this, 'update_item_permissions_check' ),
-        'args'            => $this->get_endpoint_args_for_item_schema( false ),
+        'callback'        => array( $this, 'update_user' ),
+        'permission_callback' => array( $this, 'update_user_permissions_check' ),
       ),
       array(
         'methods'  => WP_REST_Server::DELETABLE,
-        'callback' => array( $this, 'delete_item' ),
-        'permission_callback' => array( $this, 'delete_item_permissions_check' ),
-        'args'     => array(
-          'force'    => array(
-            'default'      => false,
-          ),
-        ),
+        'callback' => array( $this, 'delete_user' ),
+        'permission_callback' => array( $this, 'delete_user_permissions_check' ),
       ),
       )
     ); 
@@ -73,88 +56,98 @@ class Users_Controller extends WP_REST_Controller {
       array(
         'methods'         => WP_REST_Server::READABLE,
         'callback'        => array( $this, 'get_current' ),
-        'permission_callback' => array( $this, 'get_item_permissions_check' ),
-        'args'            => array(),
+        'permission_callback' => array( $this, 'get_user_permissions_check' ),
       ),
       ) );
 
       register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<id>[A-Za-z0-9]+)' . '/blogs', array(
         array(
           'methods'         => WP_REST_Server::READABLE,
-          'callback'        => array( $this, 'get_item_profile' ),
-          'permission_callback' => array( $this, 'get_item_permissions_check' ),
+          'callback'        => array( $this, 'get_user_profile' ),
+          'permission_callback' => array( $this, 'get_user_permissions_check' ),
           'args'            => array(),
         ),
         ) );
+        // TODO Move it
+        register_rest_route( $this->namespace, '/setup' , array(
+          array(
+            'methods'         => WP_REST_Server::READABLE,
+            'callback'        => array( $this, 'get_setup' ),
+            'permission_callback' => array( $this, 'get_user_permissions_check' ),
+            'args'            => array(),
+          ),
+          ) 
+        );
   }
       
+  public function get_setup($request) { return new WP_REST_Response( array("domain" => DOMAIN_CURRENT_SITE), 200 ); }
   /**
-  * Get a collection of items
+  * Get a collection of users
   *
   * @param WP_REST_Request $request Full data about the request.
   * @return WP_Error|WP_REST_Response
   */
-  public function get_items( $request ) {
-    $url_params = $request->get_query_params();
+  public function get_users( $request ) {
+    $query_params = $request->get_query_params();
     
-    if ( array_key_exists('id',$url_params) ) {
-      $url_params['include'] = $url_params['id'];
-      unset($url_params['id']);
+    if ( array_key_exists('id',$query_params) ) {
+      $query_params['include'] = $query_params['id'];
+      unset($query_params['id']);
     }
-    if ( !array_key_exists('blog_id',$url_params) ) 
-      $url_params['blog_id'] = '';
-    if ( array_key_exists('limit',$url_params) ) {
-      $url_params['number'] = $url_params['limit'];
-      unset($url_params['limit']);
+    if ( !array_key_exists('blog_id',$query_params) ) 
+      $query_params['blog_id'] = '';
+    if ( array_key_exists('limit',$query_params) ) {
+      $query_params['number'] = $query_params['limit'];
+      unset($query_params['limit']);
     }
-    if ( array_key_exists('page',$url_params) ) {
-      $url_params['paged'] = $url_params['page'];
-      unset($url_params['page']);
+    if ( array_key_exists('page',$query_params) ) {
+      $query_params['paged'] = $query_params['page'];
+      unset($query_params['page']);
     }
-    if ( array_key_exists('sort_dir',$url_params) 
-      && ( strcasecmp($url_params['sort_dir'], 'ASC') || strcasecmp($url_params['sort_dir'], 'DESC') ) ) {
-      $url_params['order'] = $url_params['sort_dir'];
-      unset($url_params['sort_dir']);
+    if ( array_key_exists('sort_dir',$query_params) 
+      && ( strcasecmp($query_params['sort_dir'], 'ASC') || strcasecmp($query_params['sort_dir'], 'DESC') ) ) {
+      $query_params['order'] = $query_params['sort_dir'];
+      unset($query_params['sort_dir']);
     }
-    if ( array_key_exists('sort_col',$url_params) ) {
+    if ( array_key_exists('sort_col',$query_params) ) {
       $avaliable_order_cols = ['id', 'login', 'nicename', 'email', 'url', 'registered', 'display_name', 'post_count', 'include','ent_id','ent_profile'];
-      if( in_array($url_params['sort_col'], $avaliable_order_cols) ) {
-        switch ($url_params['sort_col']) {
+      if( in_array($query_params['sort_col'], $avaliable_order_cols) ) {
+        switch ($query_params['sort_col']) {
           case 'ent_id':
-            $url_params['orderby'] = 'meta_value';
-            $url_params['meta_key'] = 'uid_ENT';
+            $query_params['orderby'] = 'meta_value';
+            $query_params['meta_key'] = 'uid_ENT';
             break;
           case 'ent_profile':
-            $url_params['orderby'] = 'meta_value';
-            $url_params['meta_key'] = 'profile_ENT';
+            $query_params['orderby'] = 'meta_value';
+            $query_params['meta_key'] = 'profile_ENT';
             break;
           default:
-            $url_params['orderby'] = $url_params['sort_col'];
+            $query_params['orderby'] = $query_params['sort_col'];
             break;
         }
-        unset($url_params['sort_col']);
+        unset($query_params['sort_col']);
       }
     }
-    if ( array_key_exists('query', $url_params)) {
+    if ( array_key_exists('query', $query_params)) {
       // Search only works for these params : email address, URL, ID, username or display_name
       // Does't work on meta_query cause you'd need several requests
-      $url_params['search'] = '*'.esc_attr( $url_params['query'] ).'*';
-      unset($url_params['query']);
+      $query_params['search'] = '*'.esc_attr( $query_params['query'] ).'*';
+      unset($query_params['query']);
     }
-    $users = get_users($url_params);
+    $users = get_users($query_params);
     $data = array();
     foreach( $users as $user ) {
-      $userData = $this->prepare_item_for_response( $user, $request );
+      $userData = $this->prepare_user_for_response( $user, $request );
       $data[] = $this->prepare_response_for_collection( $userData );
     }
-    if( array_key_exists('number', $url_params) )  {
-      $limit = $url_params['number'];
-      unset($url_params['number']);
-      $url_params['count_total'] = true;
-      $total = (new WP_User_Query($url_params))->get_total();
+    if( array_key_exists('number', $query_params) )  {
+      $limit = $query_params['number'];
+      unset($query_params['number']);
+      $query_params['count_total'] = true;
+      $total = (new WP_User_Query($query_params))->get_total();
       $data = (object) [
         'data' => $data,
-        'page' => array_key_exists('paged', $url_params) ? $url_params['paged'] : 1, 
+        'page' => array_key_exists('paged', $query_params) ? $query_params['paged'] : 1, 
         'total' => ceil($total / $limit)
       ];
     }
@@ -162,17 +155,17 @@ class Users_Controller extends WP_REST_Controller {
   }
   
   /**
-  * Get one item from the collection
+  * Get one user from the collection
   *
   * @param WP_REST_Request $request Full data about the request.
   * @return WP_Error|WP_REST_Response
   */
-  public function get_item( $request ) {
+  public function get_user( $request ) {
     $params = $request->get_params();
-    $item = $this->get_user_by( $params['id'] );
+    $user = $this->get_user_by( $params['id'] );
     
-    if ( $item ) {
-      $data = $this->prepare_item_for_response( $item, $request );
+    if ( $user ) {
+      $data = $this->prepare_user_for_response( $user, $request );
       return new WP_REST_Response( $data , 200 );
     } else {
       return new WP_Error( 'code', __( 'message', 'text-domain' ) );
@@ -180,14 +173,14 @@ class Users_Controller extends WP_REST_Controller {
   }
   
   /**
-  * Get current item from the collection
+  * Get current user from the collection
   *
   * @param WP_REST_Request $request Full data about the request.
   * @return WP_Error|WP_REST_Response
   */
   public function get_current( $request ) {
     if ( $this->wp_user ) {
-      $data = $this->prepare_item_for_response( $this->wp_user, $request );
+      $data = $this->prepare_user_for_response( $this->wp_user, $request );
       return new WP_REST_Response( $data , 200 );
     } else {
       return new WP_Error( 'code', __( 'message', 'text-domain' ) );
@@ -195,17 +188,17 @@ class Users_Controller extends WP_REST_Controller {
   }
 
   /**
-  * Get item blogs from the collection
+  * Get user blogs from the collection
   *
   * @param WP_REST_Request $request Full data about the request.
   * @return WP_Error|WP_REST_Response
   */
-  public function get_item_profile( $request ) {
+  public function get_user_profile( $request ) {
     $params = $request->get_params();
-    $item = $this->get_user_by( $params['id'] );
+    $user = $this->get_user_by( $params['id'] );
     
-    if ( $item ) {
-      $data = $this->get_user_blogs($item->id);
+    if ( $user ) {
+      $data = $this->get_user_blogs($user->id);
       return new WP_REST_Response( $data , 200 );
     } else {
       return new WP_Error( 'code', __( 'message', 'text-domain' ) );
@@ -214,12 +207,12 @@ class Users_Controller extends WP_REST_Controller {
   
 
   /**
-  * Create one item from the collection
+  * Create one user from the collection
   *
   * @param WP_REST_Request $request Full data about the request.
   * @return WP_Error|WP_REST_Request
   */
-  public function create_item( $request ) {
+  public function create_user( $request ) {
     /*
     // check rights
 		ensure_admin_right($userENT, $userWp->ID);
@@ -248,10 +241,10 @@ class Users_Controller extends WP_REST_Controller {
 			$result = user_data($userWp);
 		}
     */
-    // $item = $this->prepare_item_for_database( $request );
+    // $user = $this->prepare_user_for_database( $request );
     
-    // if ( function_exists( 'slug_some_function_to_create_item')  ) {
-    //   $data = slug_some_function_to_create_item( $item );
+    // if ( function_exists( 'slug_some_function_to_create_user')  ) {
+    //   $data = slug_some_function_to_create_user( $user );
     //   if ( is_array( $data ) ) {
     //     return new WP_REST_Response( $data, 200 );
     //   }
@@ -261,16 +254,16 @@ class Users_Controller extends WP_REST_Controller {
   }
   
   /**
-  * Update one item from the collection
+  * Update one user from the collection
   *
   * @param WP_REST_Request $request Full data about the request.
   * @return WP_Error|WP_REST_Request
   */
-  public function update_item( $request ) {
-    // $item = $this->prepare_item_for_database( $request );
+  public function update_user( $request ) {
+    // $user = $this->prepare_user_for_database( $request );
     
-    // if ( function_exists( 'slug_some_function_to_update_item')  ) {
-    //   $data = slug_some_function_to_update_item( $item );
+    // if ( function_exists( 'slug_some_function_to_update_user')  ) {
+    //   $data = slug_some_function_to_update_user( $user );
     //   if ( is_array( $data ) ) {
     //     return new WP_REST_Response( $data, 200 );
     //   }
@@ -303,15 +296,15 @@ class Users_Controller extends WP_REST_Controller {
   }
   
   /**
-  * Delete one item from the collection
+  * Delete one user from the collection
   *
   * @param WP_REST_Request $request Full data about the request.
   * @return WP_Error|WP_REST_Request
   */
-  public function delete_item( $request ) {
-    $item = $this->prepare_item_for_database( $request );
+  public function delete_user( $request ) {
+    $user = $this->prepare_user_for_database( $request );
     
-    $user = $this->get_user_by( $item );
+    $user = $this->get_user_by( $user );
     if ( $user ) {
       $deleted = delete_user( $user->id );
       if (  $deleted  ) {
@@ -322,6 +315,26 @@ class Users_Controller extends WP_REST_Controller {
     return new WP_Error( 'cant-delete', __( 'message', 'text-domain'), array( 'status' => 404 ) );
   }
   
+  /**
+  * Delete several users from the collection
+  *
+  * @param WP_REST_Request $request Full data about the request.
+  * @return WP_Error|WP_REST_Request
+  */
+  public function delete_users( $request ) {
+    $users = $this->prepare_user_for_database( $request );
+    if($users instanceof WP_Error)
+      return  new WP_REST_Response( null, 400 );
+    foreach ($users as $user_id) {
+      $user = $this->get_user_by( $user_id );
+      if ( $user )
+        $deleted = $deleted && delete_user( $user->id );
+    }
+    if ( $deleted )
+      return new WP_REST_Response( true, 200 );
+
+    return new WP_REST_Response( null, 404 );
+  }
    /**
    * Retrieves the Wordpress user if it exists 
    *
@@ -329,115 +342,83 @@ class Users_Controller extends WP_REST_Controller {
    * @return WP_User|null
    */
   public function get_user_by($some_id) {
-    if(is_int($some_id) || ctype_digit($some_id))
+    if( Laclasse_Controller::valid_number($some_id) )
       return get_user_by( 'id', $some_id );
     return reset( get_users( array( 'meta_key' => 'uid_ENT', 'meta_value' => $some_id ) ) );
   }
 
   /**
-   * Retrieves the Wordpress user from the ENT using the cookie
-   *
-   * @param WP_REST_Request $request Full data about the request.
-   * @return WP_User|null
-   */
-  public function get_wp_user_from_ent($request) {
-    if (!array_key_exists("LACLASSE_AUTH", $_COOKIE)) 
-      return null;
-    
-  
-    // get the current session
-    $error; $status;
-    $session = get_http(ANNUAIRE_URL . "api/sessions/" . $_COOKIE["LACLASSE_AUTH"], $error, $status);
-  
-    if ($status != 200) 
-      return null;
-    
-  
-    $session = json_decode($session);
-  
-    // get the user of the current session
-    $this->ent_user = get_ent_user($session->user);
-    if ( !$this->ent_user ) 
-      return null;  
-  
-    // get/create and update the corresponding WP user
-    return sync_ent_user_to_wp_user($this->ent_user, false);
-  }
-  /**
-  * Check if a given request has access to get items
+  * Check if a given request has access to get users
   *
   * @param WP_REST_Request $request Full data about the request.
   * @return WP_Error|bool
   */
-  public function get_items_permissions_check( $request ) {
-    if(!$this->wp_user)
-      $this->wp_user = $this->get_wp_user_from_ent($request);
-    return $this->wp_user ? true : false;
+  public function get_users_permissions_check( $request ) {
+    return $this->is_user_logged_in($request);
   }
         
   /**
-  * Check if a given request has access to get a specific item
+  * Check if a given request has access to get a specific user
   *
   * @param WP_REST_Request $request Full data about the request.
   * @return WP_Error|bool
   */
-  public function get_item_permissions_check( $request ) {
-    return $this->get_items_permissions_check( $request );
+  public function get_user_permissions_check( $request ) {
+    return $this->get_users_permissions_check( $request );
   }
   
   /**
-  * Check if a given request has access to create items
+  * Check if a given request has access to create users
   *
   * @param WP_REST_Request $request Full data about the request.
   * @return WP_Error|bool
   */
-  public function create_item_permissions_check( $request ) { 
-    if(!$this->wp_user)
-      $this->wp_user = $this->get_wp_user_from_ent($request);
-    return $this->wp_user && has_admin_right( $this->ent_user, $this->wp_user->ID );
+  public function create_user_permissions_check( $request ) { 
+    return $this->is_user_logged_in($request) && has_admin_right( $this->ent_user, $this->wp_user->ID );
   }
   
   /**
-  * Check if a given request has access to update a specific item
+  * Check if a given request has access to update a specific user
   *
   * @param WP_REST_Request $request Full data about the request.
   * @return WP_Error|bool
   */
-  public function update_item_permissions_check( $request ) {
-    if(!$this->wp_user)
-      $this->wp_user = $this->get_wp_user_from_ent($request);
-    return $this->wp_user && has_admin_right( $this->ent_user, $this->wp_user->ID );
+  public function update_user_permissions_check( $request ) {
+    return $this->is_user_logged_in($request) && has_admin_right( $this->ent_user, $this->wp_user->ID );
   }
   
   /**
-  * Check if a given request has access to delete a specific item
+  * Check if a given request has access to delete a specific user
   *
   * @param WP_REST_Request $request Full data about the request.
   * @return WP_Error|bool
   */
-  public function delete_item_permissions_check( $request ) {
-    if(!$this->wp_user)
-      $this->wp_user = $this->get_wp_user_from_ent($request);
-    return $this->wp_user && has_admin_right( $this->ent_user, $this->wp_user->ID );
+  public function delete_user_permissions_check( $request ) {
+    return $this->is_user_logged_in($request) && has_admin_right( $this->ent_user, $this->wp_user->ID );
   }
   
   /**
-  * Prepare the item for create or update operation
+  * Prepare the user for create or update operation
   *
   * @param WP_REST_Request $request Request object
-  * @return WP_Error|object $prepared_item
+  * @return WP_Error|object $prepared_user
   */
-  protected function prepare_item_for_database( $request ) {
+  protected function prepare_user_for_database( $request ) {
+    $url_params = $request->get_url_params();
+    $json_params = $request->get_json_params();
     switch ($request->get_method()) {
       case 'DELETE':
-        return $request->get_url_params()['id'];
+        if( array_key_exists( 'id', $url_params ) && Laclasse_Controller::valid_number( $url_params['id'] ) )
+          return $url_params['id'];
+        if( is_array($json_params) )
+          return $json_params;
         break;
       
       default:
         # code...
         break;
     }
-    return array();
+    return new WP_Error( 'bad-request', __( 'message', 'text-domain'), array( 'status' => 400 ) );
   }
   
   /**
@@ -476,50 +457,43 @@ class Users_Controller extends WP_REST_Controller {
   }
 
   /**
-  * Prepare the item for the REST response
+  * Prepare the user for the REST response
   *
-  * @param WP_User $item WordPress representation of the item.
+  * @param WP_User $user WordPress representation of the user.
   * @param WP_REST_Request $request Request object.
   * @return mixed
   */
-  public function prepare_item_for_response( $item, $request ) {
-    $user = new stdClass();
-    $user->id = $item->ID;
-    if (isset($item->data)) {
-      $d = $item->data;
+  public function prepare_user_for_response( $user, $request ) {
+    $response = new stdClass();
+    $response->id = $user->ID;
+    if (isset($user->data)) {
+      $d = $user->data;
       if (isset($d->user_login))
-        $user->login = $d->user_login;
+        $response->login = $d->user_login;
       if (isset($d->user_email))
-        $user->email = $d->user_email;
+        $response->email = $d->user_email;
       if (isset($d->user_nicename))
-        $user->nicename = $d->user_nicename;
+        $response->nicename = $d->user_nicename;
       if (isset($d->display_name))
-        $user->display_name = $d->display_name;
+        $response->display_name = $d->display_name;
       if (isset($d->user_registered))
-        $user->ctime = $d->user_registered;
+        $response->ctime = $d->user_registered;
       if (isset($d->deleted))
-        $user->deleted = $d->deleted == 1;
+        $response->deleted = $d->deleted == 1;
     }
     $uid_ENT = get_user_meta($user->id, 'uid_ENT', true);
     if ($uid_ENT)
-      $user->ent_id = $uid_ENT;
+      $response->ent_id = $uid_ENT;
 
     $profile_ENT = get_user_meta($user->id, 'profile_ENT', true);
     if (isset($profile_ENT))
-      $user->ent_profile = $profile_ENT;
+      $response->ent_profile = $profile_ENT;
 
     $params = $request->get_params();
-    if( !array_key_exists('expand',$params) || ( array_key_exists('expand',$params) && filter_var( $params['expand'], FILTER_VALIDATE_BOOLEAN ) ) ) {
-      // $user_blogs = get_blogs_of_user($user->id);
-      // $user->blogs_users = $user_blogs;
-      // $user_blogs_id = array_column($user_blogs,'userblog_id');
-      // $user->sites = get_sites( array('site__in' => $user_blogs_id) ); 
+    if( !array_key_exists('expand',$params) || ( array_key_exists('expand',$params) && filter_var( $params['expand'], FILTER_VALIDATE_BOOLEAN ) ) ) 
+      $user->blogs = $this->get_user_blogs($response->id); //TODO See if there's a way to reduce sql querues
     
-      // $user->blogs = array_map(function($blog){ return get_blog($blog->userblog_id); }, $user_blogs );
-      
-      $user->blogs = $this->get_user_blogs($user->id); //TODO See if there's a way to reduce sql querues
-    }
-    return $user;
+    return $response;
   }
   
 }
