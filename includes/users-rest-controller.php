@@ -168,7 +168,7 @@ class Users_Controller extends Laclasse_Controller {
       $data = $this->prepare_user_for_response( $user, $request );
       return new WP_REST_Response( $data , 200 );
     } else {
-      return new WP_Error( 'code', __( 'message', 'text-domain' ) );
+      return new WP_REST_Response( null , 400 );
     }
   }
   
@@ -344,7 +344,7 @@ class Users_Controller extends Laclasse_Controller {
   public function get_user_by($some_id) {
     if( Laclasse_Controller::valid_number($some_id) )
       return get_user_by( 'id', $some_id );
-    return reset( get_users( array( 'meta_key' => 'uid_ENT', 'meta_value' => $some_id ) ) );
+    return reset( get_users( array( 'meta_key' => 'uid_ENT', 'meta_value' => $some_id, 'blog_id' => '' ) ) );
   }
 
   /**
@@ -432,25 +432,18 @@ class Users_Controller extends Laclasse_Controller {
     $ent_user = get_ent_user_from_user_id($wp_id);
     $blogs = [];
 		foreach ($user_blogs as $user_blog) {
-			$blog = get_blog($user_blog->userblog_id); // Switch get_blog to a get_sites approch in order to only do one request
-			if ($blog == null)
+      $user = new WP_User( $wp_id, $user_blog->userblog_id );
+      if( !$user ) 
         continue;
-        
+
 			$data = new stdClass();
 			$data->id = "$wp_id-$user_blog->userblog_id" ;
 			$data->blog_id = $user_blog->userblog_id;
-			$data->user_id = $wp_id;
-			// try to find the user role
-			$users_search = get_users(
-				array(
-					'blog_id' => $user_blog->userblog_id,
-					'search'  => $wp_id
-				)
-			);
-			if (count($users_search) > 0 && count($users_search[0]->roles) > 0)
-        $data->role = $users_search[0]->roles[0];
-  
-			$data->forced = ($ent_user != null && is_forced_blog($blog, $ent_user)); // Doesn't work; isn't for current 
+      $data->user_id = $wp_id;
+      if(count($user->roles))
+			  $data->role = $user->roles[0];
+		
+      $data->forced = ($ent_user != null && is_forced_blog($blog, $ent_user)); // Doesn't work; isn't for current 
 			array_push($blogs, $data);
     }
     return $blogs;
@@ -491,7 +484,7 @@ class Users_Controller extends Laclasse_Controller {
 
     $params = $request->get_params();
     if( !array_key_exists('expand',$params) || ( array_key_exists('expand',$params) && filter_var( $params['expand'], FILTER_VALIDATE_BOOLEAN ) ) ) 
-      $user->blogs = $this->get_user_blogs($response->id); //TODO See if there's a way to reduce sql querues
+      $response->blogs = $this->get_user_blogs($response->id); //TODO See if there's a way to reduce sql querues
     
     return $response;
   }

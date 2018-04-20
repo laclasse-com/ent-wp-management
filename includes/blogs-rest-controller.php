@@ -26,16 +26,15 @@ class Blogs_Controller extends Laclasse_Controller {
         'callback'        => array( $this, 'get_blogs' ),
         'permission_callback' => array( $this, 'get_blogs_permissions_check' ),
       ),
-      // array(
-      //   'methods'         => WP_REST_Server::CREATABLE,
-      //   'callback'        => array( $this, 'create_blog' ),
-      //   'permission_callback' => array( $this, 'create_blog_permissions_check' ),
-      //   'args'            => $this->get_endpoint_args_for_blog_schema( true ),
-      // ),
+      array(
+        'methods'         => WP_REST_Server::CREATABLE,
+        'callback'        => array( $this, 'create_blog' ),
+        'permission_callback' => array( $this, 'create_blog_permissions_check' ),
+      ),
       array(
         'methods'         => WP_REST_Server::DELETABLE,
         'callback'        => array( $this, 'delete_blogs' ),
-        'permission_callback' => array( $this, 'delete_blog_permissions_check' ),
+        'permission_callback' => array( $this, 'delete_blogs_permissions_check' ),
       ),
       ) 
     );
@@ -63,7 +62,7 @@ class Blogs_Controller extends Laclasse_Controller {
     register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<id>[A-Za-z0-9]+)' . '/users', array(
         array(
           'methods'         => WP_REST_Server::READABLE,
-          'callback'        => array( $this, 'get_blog_profile' ),
+          'callback'        => array( $this, 'get_blog_users' ),
           'permission_callback' => array( $this, 'get_blog_permissions_check' ),
         ),
         ) );
@@ -116,30 +115,31 @@ class Blogs_Controller extends Laclasse_Controller {
   * @return WP_Error|WP_REST_Response
   */
   public function get_blog( $request ) {
-    if ( $this->blog ) {
-      $data = $this->prepare_blog_for_response( $this->blog, $request );
-      return new WP_REST_Response( $data , 200 );
-    } else {
-      return new WP_Error( 'code', __( 'message', 'text-domain' ) );
-    }
+    $data = $this->prepare_blog_for_response( $this->blog, $request );
+    return new WP_REST_Response( $data , 200 );
   }
 
   /**
-  * Get blog blogs from the collection
+  * Get blog users from the collection
   *
   * @param WP_REST_Request $request Full data about the request.
   * @return WP_Error|WP_REST_Response
   */
-  public function get_blog_profile( $request ) {
-    $params = $request->get_params();
-    $blog = $this->get_user_by( $params['id'] );
+  public function get_blog_users( $request ) {
+    $blog_id = $this->blog->id;
+    $blog_users = get_users(array('blog_id' => $blog_id));
+		$data = [];
+		foreach ($blog_users as $blog_user) {
+			$user = new stdClass();
+			$user->id = "$blog_user->ID-$blog_id";
+			$user->user_id = $blog_user->ID;
+			$user->blog_id = $blog_id;
+			if (isset($blog_user->roles) && count($blog_user->roles) > 0)
+				$user->role = $blog_user->roles[0];
+			array_push($data, $user);
+		}
     
-    if ( $blog ) {
-      $data = $this->get_user_blogs($blog->id);
-      return new WP_REST_Response( $data , 200 );
-    } else {
-      return new WP_Error( 'code', __( 'message', 'text-domain' ) );
-    }
+    return new WP_REST_Response( $data, 200);
   }
   
 
@@ -150,44 +150,28 @@ class Blogs_Controller extends Laclasse_Controller {
   * @return WP_Error|WP_REST_Request
   */
   public function create_blog( $request ) {
-    /*
-    // check rights
-		ensure_admin_right($userENT, $userWp->ID);
+    $json = $this->prepare_blog_for_database($request);
 
-		$json = json_decode(file_get_contents('php://input'));
+    if( !isset($json->name) || !isset($json->domain) || !isset($json->type) )
+      return new WP_REST_Response( '1', 400 );
+    if( !isset($json->name) || !isset($json->domain) || !isset($json->type) 
+      || !in_array($json->type, ['ETB','CLS','GRP','GPL','ENV']) )
+      return new WP_REST_Response( null, 400 );
 
-		if (is_object($json) && isset($json->login)) {
-			$password = substr(md5(microtime()), rand(0,26), 20);
-			$user_id = wp_create_user($json->login, $password);
-			// remove the user for blog 1
-			remove_user_from_blog($user_id, 1);
-	
-			if (isset($json->ent_id))
-				update_user_meta($user_id, 'uid_ENT', $json->ent_id);
-			if (isset($json->ent_profile))
-				update_user_meta($user_id, 'profile_ENT', $json->ent_profile);
+		// create the blog and add the WP user as administrator
+		$blog_id = creerNouveauBlog(
+			$json->domain, '/', $json->name, $userENT->login, $this->get_user_email(), 1,
+			$userWp->ID, $json->type, $json->structure_id, $json->group_id,
+			$json->description);
 
-			$user_data = array('ID' => $user_id);
-			if (isset($json->display_name))
-				$user_data['display_name'] = $json->display_name;
-			if (isset($json->email))
-				$user_data['user_email'] = $json->email;
-			wp_update_user($user_data);
+		if (isset($json->quota_max))
+			update_blog_option($blog_id, 'blog_upload_space', ceil($json->quota_max / MB_IN_BYTES));
 
-			$userWp = get_user_by('id', $user_id);
-			$result = user_data($userWp);
-		}
-    */
-    // $blog = $this->prepare_blog_for_database( $request );
-    
-    // if ( function_exists( 'slug_some_function_to_create_blog')  ) {
-    //   $data = slug_some_function_to_create_blog( $blog );
-    //   if ( is_array( $data ) ) {
-    //     return new WP_REST_Response( $data, 200 );
-    //   }
-    // }
-    
-    return new WP_Error( 'cant-create', __( 'message', 'text-domain'), array( 'status' => 500 ) );
+		$data = get_blog($blog_id);
+		if ($data == null)
+      return new WP_REST_Response( null, 404 );
+		else
+      return new WP_REST_Response( $data, 200 );
   }
   
   /**
@@ -197,39 +181,28 @@ class Blogs_Controller extends Laclasse_Controller {
   * @return WP_Error|WP_REST_Request
   */
   public function update_blog( $request ) {
-    // $blog = $this->prepare_blog_for_database( $request );
-    
-    // if ( function_exists( 'slug_some_function_to_update_blog')  ) {
-    //   $data = slug_some_function_to_update_blog( $blog );
-    //   if ( is_array( $data ) ) {
-    //     return new WP_REST_Response( $data, 200 );
-    //   }
-    // }
-    /*
-    $json = json_decode(file_get_contents('php://input'));
+    $blog_id = $this->get_blog_id_from_request( $request );
+    $json = $this->prepare_blog_for_database( $request );
 
-		$user_id = intval($tpath[1]);
-		$userWp = get_user_by('id', $user_id);
-		if ($userWp == false)
-			http_response_code(404);
-		else {
-			if (isset($json->ent_id))
-				update_user_meta($userWp->ID, 'uid_ENT', $json->ent_id);
-			if (isset($json->ent_profile))
-				update_user_meta($userWp->ID, 'profile_ENT', $json->ent_profile);
-		
-			$user_data = array('ID' => $userWp->ID);
+		if (isset($json->name))
+			update_blog_option($blog_id, 'blogname', $json->name);
+		if (isset($json->description))
+			update_blog_option($blog_id, 'blogdescription', $json->description);
+		if (isset($json->type) && in_array($json->type, ['ETB','CLS','GRP','GPL','ENV']))
+			update_blog_option($blog_id, 'type_de_blog', $json->type);
+		if (isset($json->archived))
+			update_blog_status($blog_id, 'archived', $json->archived ? '1' : '0');
+		if (isset($json->deleted))
+			update_blog_status($blog_id, 'deleted', $json->deleted ? '1' : '0');
+		if (isset($json->structure_id))
+			update_blog_option($blog_id, 'etablissement_ENT', $json->structure_id);
+		if (isset($json->group_id))
+			update_blog_option($blog_id, 'group_id_ENT', $json->group_id);
+		if (isset($json->quota_max))
+			update_blog_option($blog_id, 'blog_upload_space', ceil($json->quota_max / (1024 * 1024)));
 
-			if (isset($json->display_name))
-				$user_data['display_name'] = $json->display_name;
-			if (isset($json->email))
-				$user_data['user_email'] = $json->email;
-			wp_update_user($user_data);
-			$userWp = get_user_by('id', $user_id);
-			$result = user_data($userWp);
-    }
-     */
-    return new WP_Error( 'cant-update', __( 'message', 'text-domain'), array( 'status' => 500 ) );
+		$data = get_blog($blog_id);
+		return new WP_REST_Response( $data, 200);
   }
   
   /**
@@ -239,17 +212,12 @@ class Blogs_Controller extends Laclasse_Controller {
   * @return WP_Error|WP_REST_Request
   */
   public function delete_blog( $request ) {
-    $blog = $this->prepare_blog_for_database( $request );
+    $blog_id = $this->get_blog_id_from_request( $request );
+    $deleted = delete_blog( $blog_id );
+    if ( $deleted )
+      return new WP_REST_Response( null, 200 );
     
-    $user = $this->get_user_by( $blog );
-    if ( $user ) {
-      $deleted = delete_user( $user->id );
-      if (  $deleted  ) {
-        return new WP_REST_Response( true, 200 );
-      }
-    }
-    
-    return new WP_Error( 'cant-delete', __( 'message', 'text-domain'), array( 'status' => 404 ) );
+    return new WP_REST_Response( null, 404 );
   }
   
   /**
@@ -259,13 +227,10 @@ class Blogs_Controller extends Laclasse_Controller {
   * @return WP_Error|WP_REST_Request
   */
   public function delete_blogs( $request ) {
-    $blogs = $this->prepare_blog_for_database( $request );
-    if($blogs instanceof WP_Error)
-      return  new WP_REST_Response( null, 400 );
-    foreach ($blogs as $user_id) {
-      $user = $this->get_user_by( $user_id );
-      if ( $user )
-        $deleted = $deleted && delete_user( $user->id );
+    $deleted = true;
+    $blog_ids = $this->prepare_blog_for_database( $request );
+    foreach ($blog_ids as $blog_id) {
+      $deleted = $deleted && delete_blog( $blog_id );
     }
     if ( $deleted )
       return new WP_REST_Response( true, 200 );
@@ -273,8 +238,14 @@ class Blogs_Controller extends Laclasse_Controller {
     return new WP_REST_Response( null, 404 );
   }
 
+  /**
+   * Retrieve a WP_Site object if it exists from the request
+   *
+   * @param WP_REST_Request $request
+   * @return Wp_Site|null 
+   */
   public function get_blog_from_request( $request ) {
-    $blog_id = $this->prepare_blog_for_database( $request );   
+    $blog_id = $this->get_blog_id_from_request( $request );   
     if(!( $blog_id instanceof WP_Error ) ) 
         return get_site($blog_id);
     return null;
@@ -288,7 +259,6 @@ class Blogs_Controller extends Laclasse_Controller {
   * @return WP_Error|bool
   */
   public function get_blogs_permissions_check( $request ) {
-    
     return $this->is_user_logged_in( $request );
   }
         
@@ -303,10 +273,11 @@ class Blogs_Controller extends Laclasse_Controller {
       $this->blog = $this->get_blog_from_request($request);
     if( ! $this->is_user_logged_in( $request ) ) 
       return new WP_Error( 'unauthorized', __( 'message', 'text-domain'), array( 'status' => 401 ) );
-    if( $this->blog && !has_read_right( $this->ent_user, $this->wp_user->id, $this->blog ))
+    if( !$this->blog )
+      return new WP_Error( 'not found', __( 'message', 'text-domain'), array( 'status' => 404 ) );
+    if( !has_read_right( $this->ent_user, $this->wp_user->id, $this->blog ))
       return new WP_Error( 'forbidden', __( 'message', 'text-domain'), array( 'status' => 403 ) );
-
-    return has_read_right( $this->ent_user, $this->wp_user->id, $this->blog );
+    return true;
   }
   
   /**
@@ -316,7 +287,23 @@ class Blogs_Controller extends Laclasse_Controller {
   * @return WP_Error|bool
   */
   public function create_blog_permissions_check( $request ) { 
-    return $this->is_user_logged_in( $request ) && has_admin_right( $this->ent_user, $this->wp_user->ID );
+    if( !$this->blog ) 
+      $this->blog = 'dummy'; // This is not used in this case but allows to check only once
+    else 
+      return true; // Already checked once no need to recheck
+    
+    if( !$this->is_user_logged_in( $request ) ) 
+      return new WP_Error( 'unauthorized', __( 'message', 'text-domain'), array( 'status' => 401 ) );
+    
+    $blog = $request->get_json_params() ? $request->get_json_params() : json_decode($request->get_body());
+    
+    // Find if user can create blog
+    if (in_array( get_user_best_profile($this->ent_user) , ['TUT','ELV']))
+      return new WP_Error( 'forbidden', __( 'message', 'text-domain'), array( 'status' => 403 ) );
+    if($blog->type != 'ENV' &&  !has_admin_right( $this->ent_user, $this->wp_user->ID, $blog ) )
+      return new WP_Error( 'forbidden', __( 'message', 'text-domain'), array( 'status' => 403 ) );
+
+    return true;
   }
   
   /**
@@ -326,9 +313,47 @@ class Blogs_Controller extends Laclasse_Controller {
   * @return WP_Error|bool
   */
   public function update_blog_permissions_check( $request ) {
-    return $this->is_user_logged_in( $request ) && has_admin_right( $this->ent_user, $this->wp_user->ID );
+    if( !$this->blog ) 
+      $this->blog = $this->get_blog_from_request($request);
+    else 
+      return true; // Already checked once no need to recheck
+
+    if( !$this->is_user_logged_in( $request ) ) 
+      return new WP_Error( 'unauthorized', __( 'message', 'text-domain'), array( 'status' => 401 ) );
+    if( !$this->blog )
+      return new WP_Error( 'not found', __( 'message', 'text-domain'), array( 'status' => 404 ) );
+    if( !has_admin_right($this->ent_user, $this->wp_user->ID, $this->blog) )
+      return new WP_Error( 'forbidden', __( 'message', 'text-domain'), array( 'status' => 403 ) );
+    return true;
   }
   
+  /**
+  * Check if a given request has access to delete blogs
+  *
+  * @param WP_REST_Request $request Full data about the request.
+  * @return WP_Error|bool
+  */
+  public function delete_blogs_permissions_check( $request ) {
+    if( !$this->blog ) 
+      $this->blog = 'dummy'; // Not used
+    else 
+      return true; // Already checked once no need to recheck
+
+    if( ! $this->is_user_logged_in( $request ) ) 
+      return new WP_Error( 'unauthorized', __( 'message', 'text-domain'), array( 'status' => 401 ) );
+
+    $json_ids = $this->prepare_blog_for_database( $request );
+    if($json_ids instanceof WP_Error)
+      return $json_ids;
+  
+    foreach($json_ids as $blog_id) {
+			$blog = get_blog($blog_id);
+			if( !has_admin_right($this->ent_user, $this->wp_user->ID, $blog) )
+        return new WP_Error( 'forbidden', __( 'message', 'text-domain'), array( 'status' => 403 ) );
+    }
+    return true;
+  }
+
   /**
   * Check if a given request has access to delete a specific blog
   *
@@ -336,9 +361,41 @@ class Blogs_Controller extends Laclasse_Controller {
   * @return WP_Error|bool
   */
   public function delete_blog_permissions_check( $request ) {
-    return $this->is_user_logged_in( $request ) && has_admin_right( $this->ent_user, $this->wp_user->ID );
+    if( !$this->blog ) 
+      $this->blog = $this->get_blog_from_request($request);
+    else 
+      return true; // Already checked once no need to recheck
+
+    if( ! $this->is_user_logged_in( $request ) ) 
+      return new WP_Error( 'unauthorized', __( 'message', 'text-domain'), array( 'status' => 401 ) );
+    if( !$this->blog )
+      return new WP_Error( 'not found', __( 'message', 'text-domain'), array( 'status' => 404 ) );
+    if( !has_admin_right($this->ent_user, $this->wp_user->ID, $this->blog) )
+      return new WP_Error( 'forbidden', __( 'message', 'text-domain'), array( 'status' => 403 ) );
+    return true;
   }
   
+  protected function get_blog_id_from_request( $request ) {
+    $url_params = $request->get_url_params();
+    switch ($request->get_method()) {
+      case 'DELETE':
+        if( array_key_exists( 'id', $url_params ) && Laclasse_Controller::valid_number( $url_params['id'] ) )
+          return $url_params['id'];
+        break;
+      case 'PUT':
+      case 'GET':
+        if( array_key_exists( 'id', $url_params ) && Laclasse_Controller::valid_number( $url_params['id'] ) )
+          return $url_params['id'];
+        break;
+      case 'POST':
+        break;
+      default:
+        # code...
+        break;
+    }
+    return null;
+  }
+
   /**
   * Prepare the blog for create or update operation
   *
@@ -348,36 +405,20 @@ class Blogs_Controller extends Laclasse_Controller {
   protected function prepare_blog_for_database( $request ) {
     $url_params = $request->get_url_params();
     $json_params = $request->get_json_params();
+    if( !$json_params )
+      $json_params = json_decode($request->get_body());
     switch ($request->get_method()) {
       case 'DELETE':
-        if( array_key_exists( 'id', $url_params ) && valid_number( $url_params['id'] ) )
-          return $url_params['id'];
-        if( is_array($json_params) && array_reduce($json_params, function($carry,$item) { return $carry && Users_Controller::valid_number($item);}, true))
+        if( is_array($json_params) && array_reduce($json_params, function($carry,$item) { return $carry && Laclasse_Controller::valid_number($item);}, true))
           return $json_params;
         break;
-      case 'GET':
-        if( array_key_exists( 'id', $url_params ) && Users_Controller::valid_number( $url_params['id'] ) )
-          return $url_params['id'];
-        break;
+      case 'POST':
+      case 'PUT':
+        return (object) $json_params;
       default:
-        # code...
         break;
     }
     return new WP_Error( 'bad-request', __( 'message', 'text-domain'), array( 'status' => 400 ) );
-  }
-
-  /**
-  * Retrieve the blog's users
-  *
-  * @param integer $blog_id Wordpress Blog ID
-  * @return WP_Error|object $blogs
-  */
-  public function get_user_blogs($blog_id) {
-		foreach ($user_blogs as $user_blog) {
-      $data = []; 
-			array_push($blogs, $data);
-    }
-    return $blogs;
   }
 
   /**
@@ -390,7 +431,8 @@ class Blogs_Controller extends Laclasse_Controller {
   public function prepare_blog_for_response( $blog, $request ) {
     $response = blog_data($blog);
     $url_params = $request->get_url_params();
-    if( array_key_exists( 'id', $url_params ) && Users_Controller::valid_number( $url_params['id'] ) ) {
+    if( array_key_exists( 'id', $url_params ) && Laclasse_Controller::valid_number( $url_params['id'] ) 
+     || ( $request->get_method() == 'POST' && $request->get_route() == 'laclasse/v1/blogs') ) {
       $args = [
         'blog_id' => $blog->id,
       ];

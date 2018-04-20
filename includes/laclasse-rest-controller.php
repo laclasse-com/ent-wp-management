@@ -61,7 +61,26 @@ class Laclasse_Controller extends WP_REST_Controller {
       $this->get_wp_user_from_ent($request);
     return $this->wp_user ? true : false;
   }
-  
+
+  /**
+   * User's email
+   *
+   * @return void
+   */
+  public function get_user_email() {
+    if(!$this->ent_user)
+      return null;
+    $user_email;
+    foreach($this->ent_user->emails as $email) {
+      if (!isset($user_email) || $email->primary)
+        $user_email = $email->address;
+    }
+    if (!isset($user_email))
+      $user_email = $userENT->id . '@noemail.lan';
+
+    return $user_email;
+  }
+
   /**
    * Determine if the value is a integer or a string that can be converted to an integer
    * TODO Move this to an utils class
