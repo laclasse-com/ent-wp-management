@@ -18,12 +18,11 @@ class Users_Controller extends Laclasse_Controller {
         'callback'        => array( $this, 'get_users' ),
         'permission_callback' => array( $this, 'get_users_permissions_check' ),
       ),
-      // array(
-      //   'methods'         => WP_REST_Server::CREATABLE,
-      //   'callback'        => array( $this, 'create_user' ),
-      //   'permission_callback' => array( $this, 'create_user_permissions_check' ),
-      //   'args'            => $this->get_endpoint_args_for_user_schema( true ),
-      // ),
+      array(
+        'methods'         => WP_REST_Server::CREATABLE,
+        'callback'        => array( $this, 'create_user' ),
+        'permission_callback' => array( $this, 'create_user_permissions_check' ),
+      ),
       array(
         'methods'         => WP_REST_Server::DELETABLE,
         'callback'        => array( $this, 'delete_users' ),
@@ -213,44 +212,30 @@ class Users_Controller extends Laclasse_Controller {
   * @return WP_Error|WP_REST_Request
   */
   public function create_user( $request ) {
-    /*
-    // check rights
-		ensure_admin_right($userENT, $userWp->ID);
-
-		$json = json_decode(file_get_contents('php://input'));
-
-		if (is_object($json) && isset($json->login)) {
-			$password = substr(md5(microtime()), rand(0,26), 20);
-			$user_id = wp_create_user($json->login, $password);
-			// remove the user for blog 1
-			remove_user_from_blog($user_id, 1);
-	
-			if (isset($json->ent_id))
-				update_user_meta($user_id, 'uid_ENT', $json->ent_id);
-			if (isset($json->ent_profile))
-				update_user_meta($user_id, 'profile_ENT', $json->ent_profile);
-
-			$user_data = array('ID' => $user_id);
-			if (isset($json->display_name))
-				$user_data['display_name'] = $json->display_name;
-			if (isset($json->email))
-				$user_data['user_email'] = $json->email;
-			wp_update_user($user_data);
-
-			$userWp = get_user_by('id', $user_id);
-			$result = user_data($userWp);
-		}
-    */
-    // $user = $this->prepare_user_for_database( $request );
+    $json = $this->get_json_from_request( $request );
+    if ($json instanceof WP_Error || !isset($json->login) 
+      || !isset($json->display_name) || !isset($json->login) || !isset($json->display_name) || !isset($json->email) )
+      return new WP_Response(null, 400);
     
-    // if ( function_exists( 'slug_some_function_to_create_user')  ) {
-    //   $data = slug_some_function_to_create_user( $user );
-    //   if ( is_array( $data ) ) {
-    //     return new WP_REST_Response( $data, 200 );
-    //   }
-    // }
+    $password = substr(md5(microtime()), rand(0,26), 20);
+		$user_id = wp_create_user($json->login, $password);
+		// remove the user for blog 1
+		remove_user_from_blog($user_id, 1);
     
-    return new WP_Error( 'cant-create', __( 'message', 'text-domain'), array( 'status' => 500 ) );
+    $user_data = array('ID' => $user_id);
+    $user_data['display_name'] = $json->display_name;
+    $user_data['user_email'] = $json->email;
+
+    update_user_meta($user_id, 'uid_ENT', $json->ent_id);
+		if (isset($json->ent_profile))
+			update_user_meta($user_id, 'profile_ENT', $json->ent_profile);
+
+		wp_update_user($user_data);
+
+		$user_wp = $this->get_user_by( $user_id );
+		$data = $this->prepare_user_for_response( $user_wp );
+    
+    return new WP_Response( $data, 200 );
   }
   
   /**
@@ -260,39 +245,31 @@ class Users_Controller extends Laclasse_Controller {
   * @return WP_Error|WP_REST_Request
   */
   public function update_user( $request ) {
-    // $user = $this->prepare_user_for_database( $request );
+    $user_id = $this->get_id_from_request( $request );
+    $json = $this->get_json_from_request( $request );
     
-    // if ( function_exists( 'slug_some_function_to_update_user')  ) {
-    //   $data = slug_some_function_to_update_user( $user );
-    //   if ( is_array( $data ) ) {
-    //     return new WP_REST_Response( $data, 200 );
-    //   }
-    // }
-    /*
-    $json = json_decode(file_get_contents('php://input'));
+    if ( $json instanceof WP_Error || $user_id instanceof WP_Error )
+      return new WP_REST_Response( null, 400 );
+      
+    $user_wp = $this->get_user_by($user_id);
+    if( $user_wp )
+      return new WP_REST_Response( null, 404 ); 
 
-		$user_id = intval($tpath[1]);
-		$userWp = get_user_by('id', $user_id);
-		if ($userWp == false)
-			http_response_code(404);
-		else {
-			if (isset($json->ent_id))
-				update_user_meta($userWp->ID, 'uid_ENT', $json->ent_id);
-			if (isset($json->ent_profile))
-				update_user_meta($userWp->ID, 'profile_ENT', $json->ent_profile);
-		
-			$user_data = array('ID' => $userWp->ID);
+    if (isset($json->ent_id))
+      update_user_meta($user_wp->ID, 'uid_ENT', $json->ent_id);
+    if (isset($json->ent_profile))
+      update_user_meta($user_wp->ID, 'profile_ENT', $json->ent_profile);
+  
+    $user_data = array('ID' => $user_wp->ID);
+    if (isset($json->display_name))
+      $user_data['display_name'] = $json->display_name;
+    if (isset($json->email))
+      $user_data['user_email'] = $json->email;
+    wp_update_user($user_data);
+    $user_wp = get_user_by('id', $user_id);
+    $data = $this->prepare_user_for_response($user_wp);
 
-			if (isset($json->display_name))
-				$user_data['display_name'] = $json->display_name;
-			if (isset($json->email))
-				$user_data['user_email'] = $json->email;
-			wp_update_user($user_data);
-			$userWp = get_user_by('id', $user_id);
-			$result = user_data($userWp);
-    }
-     */
-    return new WP_Error( 'cant-update', __( 'message', 'text-domain'), array( 'status' => 500 ) );
+    return new WP_REST_Response( $data, 200 ); 
   }
   
   /**
@@ -302,17 +279,12 @@ class Users_Controller extends Laclasse_Controller {
   * @return WP_Error|WP_REST_Request
   */
   public function delete_user( $request ) {
-    $user = $this->prepare_user_for_database( $request );
+    $user_id = $this->get_id_from_request( $request );
+    $deleted = delete_user( $user_id );
+    if ( $deleted )
+      return new WP_REST_Response( null, 200 );
     
-    $user = $this->get_user_by( $user );
-    if ( $user ) {
-      $deleted = delete_user( $user->id );
-      if (  $deleted  ) {
-        return new WP_REST_Response( true, 200 );
-      }
-    }
-    
-    return new WP_Error( 'cant-delete', __( 'message', 'text-domain'), array( 'status' => 404 ) );
+    return new WP_REST_Response( null, 404 );
   }
   
   /**
@@ -322,7 +294,7 @@ class Users_Controller extends Laclasse_Controller {
   * @return WP_Error|WP_REST_Request
   */
   public function delete_users( $request ) {
-    $users = $this->prepare_user_for_database( $request );
+    $users = $this->get_json_from_request( $request );
     if($users instanceof WP_Error)
       return  new WP_REST_Response( null, 400 );
     foreach ($users as $user_id) {
@@ -374,7 +346,11 @@ class Users_Controller extends Laclasse_Controller {
   * @return WP_Error|bool
   */
   public function create_user_permissions_check( $request ) { 
-    return $this->is_user_logged_in($request) && has_admin_right( $this->ent_user, $this->wp_user->ID );
+    if( !$this->is_user_logged_in($request) ) 
+      return new WP_Error( 'unauthorized', null, 401 );
+    if( !has_admin_right( $this->ent_user, $this->wp_user->ID ) )
+      return new WP_Error( 'forbidden', null, 403 );
+    return true;
   }
   
   /**
@@ -384,7 +360,7 @@ class Users_Controller extends Laclasse_Controller {
   * @return WP_Error|bool
   */
   public function update_user_permissions_check( $request ) {
-    return $this->is_user_logged_in($request) && has_admin_right( $this->ent_user, $this->wp_user->ID );
+    return $this->create_user_permissions_check( $request );
   }
   
   /**
@@ -394,31 +370,7 @@ class Users_Controller extends Laclasse_Controller {
   * @return WP_Error|bool
   */
   public function delete_user_permissions_check( $request ) {
-    return $this->is_user_logged_in($request) && has_admin_right( $this->ent_user, $this->wp_user->ID );
-  }
-  
-  /**
-  * Prepare the user for create or update operation
-  *
-  * @param WP_REST_Request $request Request object
-  * @return WP_Error|object $prepared_user
-  */
-  protected function prepare_user_for_database( $request ) {
-    $url_params = $request->get_url_params();
-    $json_params = $request->get_json_params();
-    switch ($request->get_method()) {
-      case 'DELETE':
-        if( array_key_exists( 'id', $url_params ) && Laclasse_Controller::valid_number( $url_params['id'] ) )
-          return $url_params['id'];
-        if( is_array($json_params) )
-          return $json_params;
-        break;
-      
-      default:
-        # code...
-        break;
-    }
-    return new WP_Error( 'bad-request', __( 'message', 'text-domain'), array( 'status' => 400 ) );
+    return $this->create_user_permissions_check( $request );
   }
   
   /**

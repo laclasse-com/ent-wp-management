@@ -40,7 +40,7 @@ class Blogs_Controller extends Laclasse_Controller {
     );
 
     // GET POST PUT PATCH DELETE laclasse/v1/blogs/{id}
-    register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<id>[A-Za-z0-9]+)', array(
+    register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<id>[0-9]+)', array(
       array(
         'methods'         => WP_REST_Server::READABLE,
         'callback'        => array( $this, 'get_blog' ),
@@ -150,7 +150,7 @@ class Blogs_Controller extends Laclasse_Controller {
   * @return WP_Error|WP_REST_Request
   */
   public function create_blog( $request ) {
-    $json = $this->prepare_blog_for_database($request);
+    $json = $this->get_json_from_request($request);
 
     if( !isset($json->name) || !isset($json->domain) || !isset($json->type) )
       return new WP_REST_Response( '1', 400 );
@@ -167,11 +167,12 @@ class Blogs_Controller extends Laclasse_Controller {
 		if (isset($json->quota_max))
 			update_blog_option($blog_id, 'blog_upload_space', ceil($json->quota_max / MB_IN_BYTES));
 
-		$data = get_blog($blog_id);
-		if ($data == null)
+		$blog = get_blog($blog_id);
+		if ($blog == null)
       return new WP_REST_Response( null, 404 );
-		else
-      return new WP_REST_Response( $data, 200 );
+    
+    $data = $this->prepare_blog_for_response( $blog, $request);
+    return new WP_REST_Response( $data, 200 );
   }
   
   /**
@@ -181,8 +182,8 @@ class Blogs_Controller extends Laclasse_Controller {
   * @return WP_Error|WP_REST_Request
   */
   public function update_blog( $request ) {
-    $blog_id = $this->get_blog_id_from_request( $request );
-    $json = $this->prepare_blog_for_database( $request );
+    $blog_id = $this->get_id_from_request( $request );
+    $json = $this->get_json_from_request( $request );
 
 		if (isset($json->name))
 			update_blog_option($blog_id, 'blogname', $json->name);
@@ -201,7 +202,8 @@ class Blogs_Controller extends Laclasse_Controller {
 		if (isset($json->quota_max))
 			update_blog_option($blog_id, 'blog_upload_space', ceil($json->quota_max / (1024 * 1024)));
 
-		$data = get_blog($blog_id);
+    $blog = get_blog($blog_id);
+    $data = $this->prepare_blog_for_response( $blog, $request);
 		return new WP_REST_Response( $data, 200);
   }
   
@@ -212,7 +214,7 @@ class Blogs_Controller extends Laclasse_Controller {
   * @return WP_Error|WP_REST_Request
   */
   public function delete_blog( $request ) {
-    $blog_id = $this->get_blog_id_from_request( $request );
+    $blog_id = $this->get_id_from_request( $request );
     $deleted = delete_blog( $blog_id );
     if ( $deleted )
       return new WP_REST_Response( null, 200 );
@@ -228,7 +230,7 @@ class Blogs_Controller extends Laclasse_Controller {
   */
   public function delete_blogs( $request ) {
     $deleted = true;
-    $blog_ids = $this->prepare_blog_for_database( $request );
+    $blog_ids = $this->get_json_from_request( $request );
     foreach ($blog_ids as $blog_id) {
       $deleted = $deleted && delete_blog( $blog_id );
     }
@@ -245,9 +247,9 @@ class Blogs_Controller extends Laclasse_Controller {
    * @return Wp_Site|null 
    */
   public function get_blog_from_request( $request ) {
-    $blog_id = $this->get_blog_id_from_request( $request );   
+    $blog_id = $this->get_id_from_request( $request );   
     if(!( $blog_id instanceof WP_Error ) ) 
-        return get_site($blog_id);
+      return get_site($blog_id);
     return null;
   }
 
@@ -342,7 +344,7 @@ class Blogs_Controller extends Laclasse_Controller {
     if( ! $this->is_user_logged_in( $request ) ) 
       return new WP_Error( 'unauthorized', __( 'message', 'text-domain'), array( 'status' => 401 ) );
 
-    $json_ids = $this->prepare_blog_for_database( $request );
+    $json_ids = $this->get_json_from_request( $request );
     if($json_ids instanceof WP_Error)
       return $json_ids;
   
@@ -373,53 +375,7 @@ class Blogs_Controller extends Laclasse_Controller {
     if( !has_admin_right($this->ent_user, $this->wp_user->ID, $this->blog) )
       return new WP_Error( 'forbidden', __( 'message', 'text-domain'), array( 'status' => 403 ) );
     return true;
-  }
-  
-  protected function get_blog_id_from_request( $request ) {
-    $url_params = $request->get_url_params();
-    switch ($request->get_method()) {
-      case 'DELETE':
-        if( array_key_exists( 'id', $url_params ) && Laclasse_Controller::valid_number( $url_params['id'] ) )
-          return $url_params['id'];
-        break;
-      case 'PUT':
-      case 'GET':
-        if( array_key_exists( 'id', $url_params ) && Laclasse_Controller::valid_number( $url_params['id'] ) )
-          return $url_params['id'];
-        break;
-      case 'POST':
-        break;
-      default:
-        # code...
-        break;
-    }
-    return null;
-  }
-
-  /**
-  * Prepare the blog for create or update operation
-  *
-  * @param WP_REST_Request $request Request object
-  * @return WP_Error|object $prepared_blog
-  */
-  protected function prepare_blog_for_database( $request ) {
-    $url_params = $request->get_url_params();
-    $json_params = $request->get_json_params();
-    if( !$json_params )
-      $json_params = json_decode($request->get_body());
-    switch ($request->get_method()) {
-      case 'DELETE':
-        if( is_array($json_params) && array_reduce($json_params, function($carry,$item) { return $carry && Laclasse_Controller::valid_number($item);}, true))
-          return $json_params;
-        break;
-      case 'POST':
-      case 'PUT':
-        return (object) $json_params;
-      default:
-        break;
-    }
-    return new WP_Error( 'bad-request', __( 'message', 'text-domain'), array( 'status' => 400 ) );
-  }
+  } 
 
   /**
   * Prepare the blog for the REST response

@@ -82,6 +82,53 @@ class Laclasse_Controller extends WP_REST_Controller {
   }
 
   /**
+  * Retrieve json for from the WP_REST_Request object
+  *
+  * @param WP_REST_Request $request Request object
+  * @return WP_Error|object $prepared_blog
+  */
+  protected function get_json_from_request( $request ) {
+    $url_params = $request->get_url_params();
+    $json_params = $request->get_json_params();
+    if( !$json_params )
+      $json_params = json_decode($request->get_body());
+    switch ($request->get_method()) {
+      case 'DELETE':
+        if( is_array($json_params) && array_reduce($json_params, function($carry,$item) { return $carry && Laclasse_Controller::valid_number($item);}, true))
+          return $json_params;
+        break;
+      case 'POST':
+      case 'PUT':
+        return (object) $json_params;
+      default:
+        break;
+    }
+    return new WP_Error( 'bad-request', __( 'message', 'text-domain'), array( 'status' => 400 ) );
+  }
+
+    
+  protected function get_id_from_request( $request ) {
+    $url_params = $request->get_url_params();
+    switch ($request->get_method()) {
+      case 'DELETE':
+        if( array_key_exists( 'id', $url_params ) )
+          return $url_params['id'];
+        break;
+      case 'PUT':
+      case 'GET':
+        if( array_key_exists( 'id', $url_params ) )
+          return $url_params['id'];
+        break;
+      case 'POST':
+        break;
+      default:
+        # code...
+        break;
+    }
+    return new WP_Error( 'bad-request', __( 'message', 'text-domain'), array( 'status' => 400 ) );
+  }
+
+  /**
    * Determine if the value is a integer or a string that can be converted to an integer
    * TODO Move this to an utils class
    * @param integer|string $value
