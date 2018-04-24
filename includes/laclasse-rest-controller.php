@@ -12,7 +12,17 @@ class Laclasse_Controller extends WP_REST_Controller {
    * @var mixed
    */
   protected $ent_user;
-
+  
+  /**
+   * Tells if permissions were checked, this variable exists
+   * because permission_callbacks can be called multiple times
+   * for one API call
+   * 
+   * If permissions were checked, you don't need to check it
+   *
+   * @var boolean
+   */
+  protected $permission_checked = false;
 
   /**
   * Constructor
@@ -109,28 +119,14 @@ class Laclasse_Controller extends WP_REST_Controller {
     
   protected function get_id_from_request( $request ) {
     $url_params = $request->get_url_params();
-    switch ($request->get_method()) {
-      case 'DELETE':
-        if( array_key_exists( 'id', $url_params ) )
+    if( array_key_exists( 'id', $url_params ) )
           return $url_params['id'];
-        break;
-      case 'PUT':
-      case 'GET':
-        if( array_key_exists( 'id', $url_params ) )
-          return $url_params['id'];
-        break;
-      case 'POST':
-        break;
-      default:
-        # code...
-        break;
-    }
     return new WP_Error( 'bad-request', __( 'message', 'text-domain'), array( 'status' => 400 ) );
   }
 
   /**
    * Determine if the value is a integer or a string that can be converted to an integer
-   * TODO Move this to an utils class
+   * 
    * @param integer|string $value
    * @return boolean valid number
    */
