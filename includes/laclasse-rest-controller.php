@@ -32,6 +32,22 @@ class Laclasse_Controller extends WP_REST_Controller {
   }
 
   /**
+  * Retrieves the Wordpress user if it exists 
+  *
+  * @param integer|string $some_id Can be the user's Wordpress ID or ent ID
+  * @param integer|null $blog_id 
+  * @return WP_User|null
+  */
+  public function get_user_by($some_id, $blog_id) {
+    if( !$blog_id )
+      $blog_id = '';
+
+    if( Laclasse_Controller::valid_number($some_id) )
+      return reset( get_users( array( 'include' => array($some_id), 'blog_id' => $blog_id ) ) );
+    return reset( get_users( array( 'meta_key' => 'uid_ENT', 'meta_value' => $some_id, 'blog_id' => $blog_id ) ) );
+  }
+  
+  /**
    * Retrieves the Wordpress user from the ENT using the cookie
    *
    * @param WP_REST_Request $request Full data about the request.
@@ -99,17 +115,21 @@ class Laclasse_Controller extends WP_REST_Controller {
   */
   protected function get_json_from_request( $request ) {
     $url_params = $request->get_url_params();
-    $json_params = $request->get_json_params();
+    $json_params = /*$request->get_json_params();
     if( !$json_params )
-      $json_params = json_decode($request->get_body());
+      $json_params =*/ json_decode($request->get_body());
     switch ($request->get_method()) {
       case 'DELETE':
         if( is_array($json_params) && array_reduce($json_params, function($carry,$item) { return $carry && Laclasse_Controller::valid_number($item);}, true))
           return $json_params;
         break;
       case 'POST':
+        // if( is_array( $json_params ) ) {
+        //   return array_map( function($json) { return (object) $json; }, $json_params );
+        // }
+        // return (object) $json_params;
       case 'PUT':
-        return (object) $json_params;
+        return /*(object)*/ $json_params;
       default:
         break;
     }

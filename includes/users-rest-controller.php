@@ -11,7 +11,7 @@ class Users_Controller extends Laclasse_Controller {
   * Register the routes for the objects of the controller.
   */
   public function register_routes() {
-    // GET POST laclasse/v1/users
+    // GET POST /users
     register_rest_route( $this->namespace, '/' . $this->rest_base, array(
       array(
         'methods'         => WP_REST_Server::READABLE,
@@ -31,7 +31,17 @@ class Users_Controller extends Laclasse_Controller {
       ) 
     );
 
-    // GET POST PUT DELETE laclasse/v1/users/{id}
+    // GET /users/current
+    register_rest_route( $this->namespace, '/' . $this->rest_base . '/current', array(
+      array(
+        'methods'         => WP_REST_Server::READABLE,
+        'callback'        => array( $this, 'get_current' ),
+        'permission_callback' => array( $this, 'get_user_permissions_check' ),
+      ),
+      ) 
+    );
+
+    // GET POST PUT DELETE /users/{id}
     register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<id>[A-Za-z0-9]+)', array(
       array(
         'methods'         => WP_REST_Server::READABLE,
@@ -50,18 +60,8 @@ class Users_Controller extends Laclasse_Controller {
       ),
       )
     ); 
-    
-    // GET laclasse/v1/users/current
-    register_rest_route( $this->namespace, '/' . $this->rest_base . '/current', array(
-      array(
-        'methods'         => WP_REST_Server::READABLE,
-        'callback'        => array( $this, 'get_current' ),
-        'permission_callback' => array( $this, 'get_user_permissions_check' ),
-      ),
-      ) 
-    );
 
-    // GET POST laclasse/v1/uesrs/{id}/blogs
+    // GET POST /uesrs/{id}/blogs
     register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<id>[A-Za-z0-9]+)' . '/blogs', array(
       array(
         'methods'         => WP_REST_Server::READABLE,
@@ -77,7 +77,7 @@ class Users_Controller extends Laclasse_Controller {
     );
 
 
-    // GET DELETE laclasse/v1/users/{id}/blogs/{blog_id}
+    // GET DELETE /users/{id}/blogs/{blog_id}
     register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<id>[A-Za-z0-9]+)' . '/blogs' . '/(?P<blog_id>[0-9]+)' , array(
       array(
         'methods'         => WP_REST_Server::READABLE,
@@ -148,16 +148,16 @@ class Users_Controller extends Laclasse_Controller {
       unset($query_params['query']);
     }
 
-    if( array_key_exists('ent_profile', $query_params) ) {
-      $query_params['meta_query'][] = array(
-        array(
-          'key'     => 'profile_ENT',
-          'value'   => $query_params['ent_profile'] ,
-          'compare' => 'IN'
-        ),
-      ); 
-      unset( $query_params['ent_profile'] );
-    }
+    // if( array_key_exists('ent_profile', $query_params) ) {
+    //   $query_params['meta_query'][] = array(
+    //     array(
+    //       'key'     => 'profile_ENT',
+    //       'value'   => $query_params['ent_profile'] ,
+    //       'compare' => 'IN'
+    //     ),
+    //   ); 
+    //   unset( $query_params['ent_profile'] );
+    // }
 
     if( array_key_exists('ent_id', $query_params) ) {
       $query_params['meta_query'][] = array(
@@ -436,7 +436,7 @@ class Users_Controller extends Laclasse_Controller {
       $ent_user = get_ent_user_from_user_id( $user->id );
       $blog = get_blog( $blog_id );
       $data = new stdClass();
-      $data->id = "$user->id-$blog_id";
+      // $data->id = "$user->id-$blog_id";
       $data->user_id = $user->id;
       $data->blog_id = intval( $blog_id );
       if( count( $user->roles ) )
@@ -457,21 +457,6 @@ class Users_Controller extends Laclasse_Controller {
     return new WP_REST_Response( $data , 200 );
   }
 
-  /**
-  * Retrieves the Wordpress user if it exists 
-  *
-  * @param integer|string $some_id Can be the user's Wordpress ID or ent ID
-  * @param integer|null $blog_id 
-  * @return WP_User|null
-  */
-  public function get_user_by($some_id, $blog_id) {
-    if( !$blog_id )
-      $blog_id = '';
-
-    if( Laclasse_Controller::valid_number($some_id) )
-      return reset( get_users( array( 'include' => array($some_id), 'blog_id' => $blog_id ) ) );
-    return reset( get_users( array( 'meta_key' => 'uid_ENT', 'meta_value' => $some_id, 'blog_id' => $blog_id ) ) );
-  }
 
   /**
   * Check if a given request has access to get users
@@ -636,7 +621,7 @@ class Users_Controller extends Laclasse_Controller {
           continue;
           
 			$data = new stdClass();
-			$data->id = "$wp_id-$user_blog->userblog_id";
+			// $data->id = "$wp_id-$user_blog->userblog_id";
 			$data->blog_id = $user_blog->userblog_id;
       $data->user_id = $wp_id;
       if(count($user->roles))
