@@ -118,8 +118,34 @@ class Blogs_Controller extends Laclasse_Controller {
   public function get_blogs( $request ) {
     // TODO Better use of WP_Site_Query or get_sites in order to not get all the blogs in one sitting
     $query_params = $request->get_query_params();
-    $blogs = get_cached_blogs();
+    //Exclude first blog of network
+    $query_params['site__not_in'] = [ 1 ];
+
+    if ( array_key_exists('id',$query_params) ) {
+      $query_params['site__in'] = $query_params['id'];
+      unset($query_params['id']);
+    }
     
+    if ( array_key_exists('limit',$query_params) ) {
+      $limit = $query_params['limit'];
+      unset($query_params['limit']);
+    }
+    if ( array_key_exists('page',$query_params) ) {
+      $page = $query_params['page']; 
+      unset($query_params['page']);
+    }
+    if ( array_key_exists('sort_dir',$query_params) 
+      && ( strcasecmp($query_params['sort_dir'], 'ASC') || strcasecmp($query_params['sort_dir'], 'DESC') ) ) {
+      $sort_dir = $query_params['sort_dir'];
+      unset($query_params['sort_dir']);
+    }
+    if ( array_key_exists('sort_col',$query_params) ) {
+      $sort_col = $query_params['sort_col'];
+      unset($query_params['sort_col']);
+    }
+
+    $blogs = get_sites( $query_params );
+    $blogs = array_map( function( $blog ) { return blog_data( $blog ); }, $blogs );
 		$seenBy = null;
 		$seenByWp = null;
 		if (isset($query_params['seen_by'])) {
@@ -146,6 +172,36 @@ class Blogs_Controller extends Laclasse_Controller {
 			ensure_read_right($this->ent_user, $this->wp_user->ID, $blog);
 			array_push($data, $blog);
     }
+
+    // Order and paginate response 
+    if(isset($sort_col)) {
+      // Available sort cols
+      if(in_array( $sort_col , ['admin_email', 'domain',
+      'registered', 'last_updated', 'public', 'archived', 'deleted', 'id',
+      'name', 'description', 'type', 'url', 'structure_id', 'group_id'] ) ) {
+        usort($data, function($blog_A,$blog_B) use ($sort_col, $sort_dir) {
+          return $sort_dir == 'DESC' ? strcasecmp( $blog_B->$sort_col ,$blog_A->$sort_col) : strcasecmp( $blog_A->$sort_col ,$blog_B->$sort_col);
+        });
+      }
+    }
+    
+    if( isset($limit) && Laclasse_Controller::valid_number($limit) ) {
+      if( !isset($page) || $page <= 0 || !Laclasse_Controller::valid_number($limit) )
+        $page = 1;
+    } else if( isset($page) && Laclasse_Controller::valid_number($limit) ) {
+      if( !isset($limit) || $limit <= 0 || !Laclasse_Controller::valid_number($limit) ) 
+        $limit = 50;
+    }
+
+    if( isset($limit) && isset($page) ) {
+      $offset = ($page - 1) * $limit;
+      $data = (object) [
+        'total' => count( $data ),
+        'page' => $page, 
+        'data' => array_splice( $data, $offset, $limit ),
+      ];
+    }
+
     return new WP_REST_Response( $data, 200 );
   }
   

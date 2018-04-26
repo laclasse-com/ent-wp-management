@@ -82,7 +82,7 @@ function blog_data($blogWp) {
 
 	switch_to_blog($result->id);
 	$result->quota_max = intval(get_space_allowed() * 1024 * 1024);
-	$result->quota_used = intval(get_space_used() * 1024 * 1024);
+	$result->quota_used = intval(get_space_used() * 1024 * 1024); 
 	restore_current_blog();
 
 	return $result;
@@ -90,11 +90,9 @@ function blog_data($blogWp) {
 
 // Return the list of all blogs
 function get_blogs() {
-	$blogs = get_sites(array("number" => 100000));
+	$blogs = get_sites(array("number" => 100000,'site__not_in' => [ 1 ]));
 	$result = [];
 	foreach ($blogs as $blog) {
-		if ($blog->blog_id == 1)
-			continue;
 		$blog_data = blog_data($blog);
 		array_push($result, $blog_data);
 	}
@@ -798,7 +796,7 @@ function laclasse_api_handle_request($method, $path) {
 				$blog = get_blog($user_blog->userblog_id);
 				if ($blog == null)
 					continue;
-
+					
 				$data = new stdClass();
 				$data->id = $user_blog->userblog_id;
 				$data->blog_id = $user_blog->userblog_id;

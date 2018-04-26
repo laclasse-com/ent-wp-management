@@ -142,25 +142,25 @@ class Users_Controller extends Laclasse_Controller {
     }
     if ( array_key_exists('query', $query_params) ) {
       // Search only works for these params : email address, URL, ID, username or display_name
-      // Does't work on meta_query cause WP_User_Query does an AND on the search
+      // And specified below meta_query fields
       $query_params['search'] = '*'.esc_attr( $query_params['query'] ).'*';
       $initial_query = $query_params['query']; 
+      $query_params['meta_query'] = array(
+        'relation' => 'OR',
+        array(
+          'key'     => 'uid_ENT',
+          'value'   => $query_params['query'],
+          'compare' => 'LIKE'
+        ),
+      );
+
+      $query_params['_meta_or_search'] = true;
       unset($query_params['query']);
     }
 
-    // if( array_key_exists('ent_profile', $query_params) ) {
-    //   $query_params['meta_query'][] = array(
-    //     array(
-    //       'key'     => 'profile_ENT',
-    //       'value'   => $query_params['ent_profile'] ,
-    //       'compare' => 'IN'
-    //     ),
-    //   ); 
-    //   unset( $query_params['ent_profile'] );
-    // }
-
     if( array_key_exists('ent_id', $query_params) ) {
-      $query_params['meta_query'][] = array(
+      $query_params['meta_query'] = array(
+        'relation' => 'OR',
         array(
           'key'     => 'uid_ENT',
           'value'   => $query_params['ent_id'] ,
@@ -171,23 +171,7 @@ class Users_Controller extends Laclasse_Controller {
     }
 
     $users = get_users($query_params);
-    
-    // if( array_key_exists('search', $query_params) ) {
-    //   // if we tried to search, search users again using their ent_id, and merge the result
-    //   unset( $query_params['search'] );
-    //   $query_params['meta_query'] = array(
-    //     array(
-    //       'key'     => 'uid_ENT',
-    //       'value'   => 'XXXXXXX', // $initial_query,
-    //       'compare' => 'LIKE'
-    //     ),
-    //   );
 
-    //   //TODO Limit Results
-    //   $users_2 = get_users($query_params);
-    //   $users = array_merge($users, $users_2);
-    //   // $users = array_unique($users, SORT_REGULAR);
-    // }
     $data = array();
     foreach( $users as $user ) {
       $userData = $this->prepare_user_for_response( $user, $request );

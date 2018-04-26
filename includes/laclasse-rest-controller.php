@@ -152,20 +152,5 @@ class Laclasse_Controller extends WP_REST_Controller {
    */
   public static function valid_number($value) {
     return is_int($value) || ctype_digit($value);
-  }
-}
-
-
-add_filter( 'rest_request_after_callbacks', 'laclasse_rest_request_after_callbacks');
-
-function laclasse_rest_request_after_callbacks( $response ) {
-  if( $response instanceof WP_Error ) {
-    $error_data = $response->get_error_data();
-    if ( is_array( $error_data ) && isset( $error_data['status'] ) )
-      $status = $error_data['status'];
-    else
-      $status = 500;  
-    return new WP_REST_Response(null,$status);
-  }
-  return $response;
+  }	
 }
