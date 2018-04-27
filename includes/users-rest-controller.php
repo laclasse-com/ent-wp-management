@@ -215,12 +215,8 @@ class Users_Controller extends Laclasse_Controller {
   * @return WP_Error|WP_REST_Response
   */
   public function get_current( $request ) {
-    if ( $this->wp_user ) {
-      $data = $this->prepare_user_for_response( $this->wp_user, $request );
-      return new WP_REST_Response( $data , 200 );
-    }
-
-    return new WP_REST_Response( null, 404 );
+    $data = $this->prepare_user_for_response( $this->wp_user, $request );
+    return new WP_REST_Response( $data , 200 );
   }
 
   /**
