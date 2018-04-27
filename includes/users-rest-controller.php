@@ -178,14 +178,13 @@ class Users_Controller extends Laclasse_Controller {
       $data[] = $this->prepare_response_for_collection( $userData );
     }
     if( array_key_exists('number', $query_params) )  {
-      $limit = $query_params['number'];
       unset($query_params['number']);
       $query_params['count_total'] = true;
       $total = (new WP_User_Query($query_params))->get_total();
       $data = (object) [
         'data' => $data,
         'page' => array_key_exists('paged', $query_params) ? $query_params['paged'] : 1, 
-        'total' => ceil($total / $limit)
+        'total' => $total
       ];
     }
     return new WP_REST_Response( $data, 200 );
@@ -231,11 +230,34 @@ class Users_Controller extends Laclasse_Controller {
   * @return WP_Error|WP_REST_Response
   */
   public function get_user_profiles( $request ) {
+    $query_params = $request->get_query_params();
     $params = $request->get_params();
     $user = $this->get_user_by( $params['id'] );
     
+    if ( array_key_exists('limit',$query_params) ) {
+      $limit = $query_params['limit'];
+    }
+    if ( array_key_exists('page',$query_params) ) {
+      $page = $query_params['page']; 
+    }
+
     if ( $user ) {
       $data = $this->get_user_blogs($user->id);
+      if( isset($limit) && Laclasse_Controller::valid_number($limit) && $limit > 0) {
+        if( !isset($page) || $page <= 0 || !Laclasse_Controller::valid_number($page) )
+          $page = 1;
+      }
+  
+      if( isset($limit) && isset($page) ) {
+        $offset = ($page - 1) * $limit;
+        $data = (object) [
+          'total' => count( $data ),
+          'page' => $page, 
+          'data' => array_splice( $data, $offset, $limit ),
+        ];
+      }
+
+
       return new WP_REST_Response( $data , 200 );
     }
 
@@ -390,7 +412,7 @@ class Users_Controller extends Laclasse_Controller {
     if ( !isset($json->role) ) 
       $json->role = get_user_blog_default_role($this->ent_user, $blog);
     
-    $user = $this->get_user_by( $user_by );
+    $user = $this->get_user_by( $user_id );
     
     $success = add_user_to_blog($blog_id, $user->id, $json->role);
     if( $success instanceof WP_Error )

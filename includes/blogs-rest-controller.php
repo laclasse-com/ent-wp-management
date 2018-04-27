@@ -5,7 +5,7 @@ class Blogs_Controller extends Laclasse_Controller {
   *
   * @var mixed
   */
- protected $blog;
+  protected $wp_site;
 
 
   /**
@@ -79,7 +79,7 @@ class Blogs_Controller extends Laclasse_Controller {
     );
 
      // DELETE /blogs/{id}/users/{user_id}
-     register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<id>[A-Za-z0-9]+)' . '/users' . '/(?P<user_id>[0-9]+)' , array(
+     register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<id>[0-9]+)' . '/users' . '/(?P<user_id>[A-Za-z0-9]+)' , array(
       array(
         'methods'  => WP_REST_Server::DELETABLE,
         'callback' => array( $this, 'delete_blog_user' ),
@@ -185,12 +185,9 @@ class Blogs_Controller extends Laclasse_Controller {
       }
     }
     
-    if( isset($limit) && Laclasse_Controller::valid_number($limit) ) {
-      if( !isset($page) || $page <= 0 || !Laclasse_Controller::valid_number($limit) )
+    if( isset($limit) && Laclasse_Controller::valid_number($limit) && $limit > 0) {
+      if( !isset($page) || $page <= 0 || !Laclasse_Controller::valid_number($page) )
         $page = 1;
-    } else if( isset($page) && Laclasse_Controller::valid_number($limit) ) {
-      if( !isset($limit) || $limit <= 0 || !Laclasse_Controller::valid_number($limit) ) 
-        $limit = 50;
     }
 
     if( isset($limit) && isset($page) ) {
@@ -212,7 +209,7 @@ class Blogs_Controller extends Laclasse_Controller {
   * @return WP_Error|WP_REST_Response
   */
   public function get_blog( $request ) {
-    $data = $this->prepare_blog_for_response( $this->blog, $request );
+    $data = $this->prepare_blog_for_response( $this->wp_site, $request );
     return new WP_REST_Response( $data , 200 );
   }
 
@@ -223,8 +220,74 @@ class Blogs_Controller extends Laclasse_Controller {
   * @return WP_Error|WP_REST_Response
   */
   public function get_blog_users( $request ) {
-    $blog_id = $this->blog->id;
-    $blog_users = get_users(array('blog_id' => $blog_id));
+    $blog_id = $this->wp_site->id;
+    $query_params = $request->get_query_params();
+
+    if ( array_key_exists('limit',$query_params) ) {
+      $query_params['number'] = $query_params['limit'];
+      unset($query_params['limit']);
+    }
+    if ( array_key_exists('page',$query_params) ) {
+      $query_params['paged'] = $query_params['page'];
+      unset($query_params['page']);
+    }
+    if ( array_key_exists('sort_dir',$query_params) 
+      && ( strcasecmp($query_params['sort_dir'], 'ASC') || strcasecmp($query_params['sort_dir'], 'DESC') ) ) {
+      $query_params['order'] = $query_params['sort_dir'];
+      unset($query_params['sort_dir']);
+    }
+    if ( array_key_exists('sort_col',$query_params) ) {
+      $avaliable_order_cols = ['id', 'login', 'nicename', 'email', 'url', 'registered', 'display_name', 'post_count', 'include','ent_id','ent_profile'];
+      if( in_array($query_params['sort_col'], $avaliable_order_cols) ) {
+        switch ($query_params['sort_col']) {
+          case 'ent_id':
+            $query_params['orderby'] = 'meta_value';
+            $query_params['meta_key'] = 'uid_ENT';
+            break;
+          case 'ent_profile':
+            $query_params['orderby'] = 'meta_value';
+            $query_params['meta_key'] = 'profile_ENT';
+            break;
+          default:
+            $query_params['orderby'] = $query_params['sort_col'];
+            break;
+        }
+        unset($query_params['sort_col']);
+      }
+    }
+    if ( array_key_exists('query', $query_params) ) {
+      // Search only works for these params : email address, URL, ID, username or display_name
+      // And specified below meta_query fields
+      $query_params['search'] = '*'.esc_attr( $query_params['query'] ).'*';
+      $initial_query = $query_params['query']; 
+      $query_params['meta_query'] = array(
+        'relation' => 'OR',
+        array(
+          'key'     => 'uid_ENT',
+          'value'   => $query_params['query'],
+          'compare' => 'LIKE'
+        ),
+      );
+
+      $query_params['_meta_or_search'] = true;
+      unset($query_params['query']);
+    }
+
+    if( array_key_exists('ent_id', $query_params) ) {
+      $query_params['meta_query'] = array(
+        'relation' => 'OR',
+        array(
+          'key'     => 'uid_ENT',
+          'value'   => $query_params['ent_id'] ,
+          'compare' => 'IN'
+        ),
+      ); 
+      unset( $query_params['ent_id'] );
+    }
+
+    $query_params['blog_id'] = $blog_id;
+    $blog_users = get_users($query_params);
+
 		$data = [];
 		foreach ($blog_users as $blog_user) {
 			$user = new stdClass();
@@ -236,6 +299,17 @@ class Blogs_Controller extends Laclasse_Controller {
 			array_push($data, $user);
 		}
     
+    if( array_key_exists('number', $query_params) )  {
+      unset($query_params['number']);
+      $query_params['count_total'] = true;
+      $total = (new WP_User_Query($query_params))->get_total();
+      $data = (object) [
+        'data' => $data,
+        'page' => array_key_exists('paged', $query_params) ? $query_params['paged'] : 1, 
+        'total' => $total
+      ];
+    }
+
     return new WP_REST_Response( $data, 200);
   }
   
@@ -338,7 +412,7 @@ class Blogs_Controller extends Laclasse_Controller {
   public function create_blog_user( $request ) {
     $json = $this->get_json_from_request( $request );
     $blog_id = $this->get_id_from_request( $request );
-    $has_admin_right = has_admin_right($this->ent_user, $this->wp_user->ID, $this->blog);
+    $has_admin_right = has_admin_right($this->ent_user, $this->wp_user->ID, $this->wp_site);
     
     if ( !is_array($json) )
       $json = [ $json ]; 
@@ -348,9 +422,13 @@ class Blogs_Controller extends Laclasse_Controller {
 				unset( $blog_user->role );
       
 			if ( !isset( $blog_user->role ) ) {
-				$userENT = get_ent_user_from_user_id($blog_user->user_id);
-				if ( $userENT != null )
-					$user_role = get_user_blog_default_role($userENT, $this->blog);
+        if( $blog_user->user_id != $this->wp_user->ID ) {
+          $userENT = get_ent_user_from_user_id($blog_user->user_id);
+        } else {
+          $userENT = $this->ent_user;
+        } 
+        if( $userENT != null )
+          $blog_user->role = get_user_blog_default_role($userENT, blog_data($this->wp_site));
 			}
       
       if ( isset( $blog_user->role ) ) {
@@ -372,8 +450,9 @@ class Blogs_Controller extends Laclasse_Controller {
   public function delete_blog_user( $request ) {
     $user_id = $request->get_url_params()['user_id'];
     $blog_id = $this->get_id_from_request( $request );
-        
-		remove_user_from_blog($user_id, $blog_id);
+
+    $user = $this->get_user_by( $user_id, $blog_id );    
+		remove_user_from_blog($user->id, $blog_id);
 
     return WP_REST_Response( null, 200 );
   }
@@ -430,13 +509,13 @@ class Blogs_Controller extends Laclasse_Controller {
     if( $this->permission_checked )
       return true;
     $this->permission_checked = true;
-    if( !$this->blog ) 
-      $this->blog = $this->get_blog_from_request($request);
+    if( !$this->wp_site ) 
+      $this->wp_site = $this->get_blog_from_request($request);
     if( ! $this->is_user_logged_in( $request ) ) 
       return new WP_Error( 'unauthorized', __( 'message', 'text-domain'), array( 'status' => 401 ) );
-    if( !$this->blog )
+    if( !$this->wp_site )
       return new WP_Error( 'not found', __( 'message', 'text-domain'), array( 'status' => 404 ) );
-    if( !has_read_right( $this->ent_user, $this->wp_user->id, $this->blog ))
+    if( !has_read_right( $this->ent_user, $this->wp_user->id, blog_data($this->wp_site) ))
       return new WP_Error( 'forbidden', __( 'message', 'text-domain'), array( 'status' => 403 ) );
     return true;
   }
@@ -475,14 +554,14 @@ class Blogs_Controller extends Laclasse_Controller {
     if( $this->permission_checked )
       return true;
     $this->permission_checked = true;
-    if( !$this->blog ) 
-      $this->blog = $this->get_blog_from_request($request);
+    if( !$this->wp_site ) 
+      $this->wp_site = $this->get_blog_from_request($request);
 
     if( !$this->is_user_logged_in( $request ) ) 
       return new WP_Error( 'unauthorized', __( 'message', 'text-domain'), array( 'status' => 401 ) );
-    if( !$this->blog )
+    if( !$this->wp_site )
       return new WP_Error( 'not found', __( 'message', 'text-domain'), array( 'status' => 404 ) );
-    if( !has_admin_right($this->ent_user, $this->wp_user->ID, $this->blog) )
+    if( !has_admin_right($this->ent_user, $this->wp_user->ID, blog_data($this->wp_site) ) )
       return new WP_Error( 'forbidden', __( 'message', 'text-domain'), array( 'status' => 403 ) );
     return true;
   }
@@ -522,14 +601,16 @@ class Blogs_Controller extends Laclasse_Controller {
     if( $this->permission_checked )
       return true;
     $this->permission_checked = true;
-    if( !$this->blog ) 
-      $this->blog = $this->get_blog_from_request($request);
+    if( !$this->wp_site ) 
+      $this->wp_site = $this->get_blog_from_request($request);
 
     if( ! $this->is_user_logged_in( $request ) ) 
       return new WP_Error( 'unauthorized', __( 'message', 'text-domain'), array( 'status' => 401 ) );
-    if( !$this->blog )
+    if( !$this->wp_site )
       return new WP_Error( 'not found', __( 'message', 'text-domain'), array( 'status' => 404 ) );
-    if( !has_admin_right($this->ent_user, $this->wp_user->ID, $this->blog) )
+
+    $blog = blog_data( $this->wp_site );
+    if( !has_admin_right($this->ent_user, $this->wp_user->ID, $blog) )
       return new WP_Error( 'forbidden', __( 'message', 'text-domain'), array( 'status' => 403 ) );
     return true;
   } 
@@ -538,20 +619,21 @@ class Blogs_Controller extends Laclasse_Controller {
     if( $this->permission_checked )
       return true;
     $this->permission_checked = true;
-    if( !$this->blog ) 
-      $this->blog = $this->get_blog_from_request($request);
+    if( !$this->wp_site ) 
+      $this->wp_site = $this->get_blog_from_request($request);
     
     if( ! $this->is_user_logged_in( $request ) ) 
       return new WP_Error( 'unauthorized', __( 'message', 'text-domain'), array( 'status' => 401 ) );
-    if( !$this->blog )
+    if( !$this->wp_site )
       return new WP_Error( 'not found', __( 'message', 'text-domain'), array( 'status' => 404 ) );
 
-    $has_admin_right = has_admin_right($this->ent_user, $this->wp_user->ID, $this->blog);
+    $blog = blog_data( $this->wp_site );
+    $has_admin_right = has_admin_right($this->ent_user, $this->wp_user->ID, $blog);
     $json_array = $this->get_json_from_request( $request );
     if( !is_array( $json_array ) ) 
       $json_array = [ $json_array ];
     foreach ($json_array as $json) 
-      if (!$has_admin_right && ( $this->wp_user->ID != $json->user_id || !has_read_right($this->ent_user, $this->wp_user->ID, $this->blog ) ) )
+      if (!$has_admin_right && ( $this->wp_user->ID != $json->user_id || !has_read_right($this->ent_user, $this->wp_user->ID, $blog ) ) )
         return new WP_Error( 'forbidden', __( 'message', 'text-domain'), array( 'status' => 403 ) );
 
     return true;
@@ -561,22 +643,23 @@ class Blogs_Controller extends Laclasse_Controller {
     if( $this->permission_checked)
       return true;
     $this->permission_checked = true;
-    if( !$this->blog ) 
-      $this->blog = $this->get_blog_from_request($request);
+    if( !$this->wp_site ) 
+      $this->wp_site = $this->get_blog_from_request($request);
 
     if( !$this->is_user_logged_in( $request ) ) 
       return new WP_Error( 'unauthorized', __( 'message', 'text-domain'), array( 'status' => 401 ) );
-    if( !$this->blog )
+    if( !$this->wp_site )
       return new WP_Error( 'not found', __( 'message', 'text-domain'), array( 'status' => 404 ) );
     
+    $blog = blog_data($this->wp_site);
     $user_id = $request->get_url_params()['user_id'];
     if( !$user_id )
       return new WP_Error( 'not found', __( 'message', 'text-domain'), array( 'status' => 404 ) );
     $user = $this->get_user_by( $user_id, $blog_id );
     if( !$user)
       return new WP_Error( 'not found', __( 'message', 'text-domain'), array( 'status' => 404 ) );
-    if ( !has_admin_right( $this->ent_user, $this->wp_user->ID, $this->blog )
-      && ($this->wp_user->ID != $user_id || !has_read_right($this->ent_user, $this->wp_user->ID, $this->blog)) )
+    if ( !has_admin_right( $this->ent_user, $this->wp_user->ID, $blog )
+      && ($this->wp_user->ID != $user_id || !has_read_right($this->ent_user, $this->wp_user->ID, $blog )) )
       return new WP_Error( 'forbidden', __( 'message', 'text-domain'), array( 'status' => 403 ) );
     return true;
   }
@@ -585,12 +668,12 @@ class Blogs_Controller extends Laclasse_Controller {
     if( $this->permission_checked )
       return true;
     $this->permission_checked = true;
-    if( !$this->blog ) 
-      $this->blog = $this->get_blog_from_request($request);
+    if( !$this->wp_site ) 
+      $this->wp_site = $this->get_blog_from_request($request);
 
     if( !$this->is_user_logged_in( $request ) ) 
       return new WP_Error( 'unauthorized', __( 'message', 'text-domain'), array( 'status' => 401 ) );
-    if( !$this->blog )
+    if( !$this->wp_site )
       return new WP_Error( 'not found', __( 'message', 'text-domain'), array( 'status' => 404 ) );
     
     return true;
