@@ -178,10 +178,17 @@ class Blogs_Controller extends Laclasse_Controller {
       // Available sort cols
       if(in_array( $sort_col , ['admin_email', 'domain',
       'registered', 'last_updated', 'public', 'archived', 'deleted', 'id',
-      'name', 'description', 'type', 'url', 'structure_id', 'group_id'] ) ) {
-        usort($data, function($blog_A,$blog_B) use ($sort_col, $sort_dir) {
-          return $sort_dir == 'DESC' ? strcasecmp( $blog_B->$sort_col ,$blog_A->$sort_col) : strcasecmp( $blog_A->$sort_col ,$blog_B->$sort_col);
-        });
+      'name', 'description', 'type', 'url', 'structure_id', 'group_id','quota_used','quota_max'] ) ) {
+        usort( $data, function($blog_A,$blog_B) use ($sort_col, $sort_dir) {
+          if( strcasecmp( $sort_dir, 'DESC' ) == 0 )
+            $compare = strnatcasecmp( $blog_B->$sort_col ,$blog_A->$sort_col );
+          else
+            $compare = strnatcasecmp( $blog_A->$sort_col ,$blog_B->$sort_col );
+          if( !$compare ) {
+            $compare = strnatcasecmp( $blog_A->id ,$blog_B->id );
+          }
+          return $compare;       
+         } );
       }
     }
     
@@ -194,7 +201,7 @@ class Blogs_Controller extends Laclasse_Controller {
       $offset = ($page - 1) * $limit;
       $data = (object) [
         'total' => count( $data ),
-        'page' => $page, 
+        'page' => $page,
         'data' => array_splice( $data, $offset, $limit ),
       ];
     }
