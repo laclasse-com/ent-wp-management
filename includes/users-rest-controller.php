@@ -181,9 +181,14 @@ class Users_Controller extends Laclasse_Controller {
       unset($query_params['number']);
       $query_params['count_total'] = true;
       $total = (new WP_User_Query($query_params))->get_total();
+      $sort_col = $query_params['orderby'];
       $data = (object) [
         'data' => $data,
         'page' => array_key_exists('paged', $query_params) ? $query_params['paged'] : 1, 
+        'elements' => array_map( function($user) use($sort_col) { 
+          $result = [ $user->id => $user->$sort_col ];
+          return $result;
+         }, $data ) ,
         'total' => $total
       ];
     }
@@ -657,7 +662,7 @@ class Users_Controller extends Laclasse_Controller {
       if (isset($d->display_name))
         $response->display_name = $d->display_name;
       if (isset($d->user_registered))
-        $response->ctime = $d->user_registered;
+        $response->registered = $d->user_registered;
       if (isset($d->deleted))
         $response->deleted = $d->deleted == 1;
     }
