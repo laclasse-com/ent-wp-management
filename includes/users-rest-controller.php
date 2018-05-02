@@ -185,10 +185,6 @@ class Users_Controller extends Laclasse_Controller {
       $data = (object) [
         'data' => $data,
         'page' => array_key_exists('paged', $query_params) ? $query_params['paged'] : 1, 
-        'elements' => array_map( function($user) use($sort_col) { 
-          $result = [ $user->id => $user->$sort_col ];
-          return $result;
-         }, $data ) ,
         'total' => $total
       ];
     }
