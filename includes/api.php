@@ -939,24 +939,92 @@ function laclasse_api_handle_request($method, $path) {
 	// GET /users
 	else if ($method == 'GET' && count($tpath) == 1 && $tpath[0] == 'users')
 	{
-		$result = [];
-		if (isset($_REQUEST['id']) && is_array($_REQUEST['id'])) {
-			foreach ($_REQUEST['id'] as $user_id) {
-				if (is_numeric($user_id)) {
-					$user = get_user($user_id);
-					if (filter_user($user, $_REQUEST))
-						array_push($result, $user);
+		$query_params = $_REQUEST;
+		if ( array_key_exists('id',$query_params) ) {
+			$query_params['include'] = $query_params['id'];
+			unset($query_params['id']);
+		}
+		if ( !array_key_exists('blog_id',$query_params) ) 
+			$query_params['blog_id'] = '';
+		if ( array_key_exists('limit',$query_params) ) {
+			$query_params['number'] = $query_params['limit'];
+			unset($query_params['limit']);
+		}
+		if ( array_key_exists('page',$query_params) ) {
+			$query_params['paged'] = $query_params['page'];
+			unset($query_params['page']);
+		}
+		if ( array_key_exists('sort_dir',$query_params) 
+			&& ( strcasecmp($query_params['sort_dir'], 'ASC') || strcasecmp($query_params['sort_dir'], 'DESC') ) ) {
+			$query_params['order'] = $query_params['sort_dir'];
+			unset($query_params['sort_dir']);
+		}
+		if ( array_key_exists('sort_col',$query_params) ) {
+			$avaliable_order_cols = ['id', 'login', 'nicename', 'email', 'url', 'registered', 'display_name', 'post_count', 'include','ent_id','ent_profile'];
+			if( in_array($query_params['sort_col'], $avaliable_order_cols) ) {
+				switch ($query_params['sort_col']) {
+					case 'ent_id':
+					$query_params['orderby'] = 'meta_value';
+					$query_params['meta_key'] = 'uid_ENT';
+					break;
+					case 'ent_profile':
+					$query_params['orderby'] = 'meta_value';
+					$query_params['meta_key'] = 'profile_ENT';
+					break;
+					default:
+					$query_params['orderby'] = $query_params['sort_col'];
+					break;
 				}
+				unset($query_params['sort_col']);
 			}
 		}
-		else {
-			$users = get_users(array('blog_id' => ''));
-			foreach ($users as $user) {
-				$data = user_data($user);
-				if (filter_user($data, $_REQUEST))
-					array_push($result, $data);
-			}	
-		}		
+		if ( array_key_exists('query', $query_params) ) {
+			// Search only works for these params : email address, URL, ID, username or display_name
+			// And specified below meta_query fields
+			$query_params['search'] = '*'.esc_attr( $query_params['query'] ).'*';
+			$initial_query = $query_params['query']; 
+			$query_params['meta_query'] = array(
+			'relation' => 'OR',
+			array(
+				'key'     => 'uid_ENT',
+				'value'   => $query_params['query'],
+				'compare' => 'LIKE'
+			),
+			);
+	
+			$query_params['_meta_or_search'] = true;
+			unset($query_params['query']);
+		}
+	
+		if( array_key_exists('ent_id', $query_params) ) {
+			$query_params['meta_query'] = array(
+			'relation' => 'OR',
+			array(
+				'key'     => 'uid_ENT',
+				'value'   => $query_params['ent_id'] ,
+				'compare' => 'IN'
+			),
+			); 
+			unset( $query_params['ent_id'] );
+		}
+	
+		$users = get_users($query_params);
+	
+		$result = array();
+		foreach( $users as $user ) {
+			$result[] = user_data($user);
+		}
+		if( array_key_exists('number', $query_params) )  {
+			unset($query_params['number']);
+			$query_params['count_total'] = true;
+			$total = (new WP_User_Query($query_params))->get_total();
+			$sort_col = $query_params['orderby'];
+			$result = (object) [
+			'data' => $result,
+			'page' => array_key_exists('paged', $query_params) ? $query_params['paged'] : 1, 
+			'total' => $total
+			];
+		}
 	}
 	// GET /users/current
 	else if ($method == 'GET' && count($tpath) == 2 && $tpath[0] == 'users' && $tpath[1] == 'current')
@@ -1137,5 +1205,3 @@ function wp_rest_laclasse_api_handle_request($request) {
 	header('cache-control: no-cache, must-revalidate');
 	return laclasse_api_handle_request($request->get_method(), $request->get_url_params()['path']);
 }
-
-
