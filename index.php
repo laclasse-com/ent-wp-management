@@ -38,6 +38,9 @@ require_once('includes/cas-functions.inc.php');
 require_once('includes/ENTback-office.php'); 
 // API JSON d'administration
 require_once('includes/api.php'); 
+require_once('includes/laclasse-rest-controller.php');
+require_once('includes/users-rest-controller.php');
+require_once('includes/blogs-rest-controller.php');
 
 //require_once(ABSPATH . WPINC . '/formatting.php');
 //require_once(ABSPATH . WPINC . '/wp-db.php');
@@ -140,8 +143,14 @@ add_action( 'rest_api_init', function () {
     register_rest_route( 'api', '/(?P<path>.*)', array(
 		'methods' => array('GET', 'POST', 'PUT', 'DELETE'),
 		'callback' => 'wp_rest_laclasse_api_handle_request'
-    ));
+	));
+
+	(new Users_Controller())->register_routes();
+	(new Blogs_Controller())->register_routes();
 } );
+
+add_filter( 'rest_request_after_callbacks', 'laclasse_rest_request_after_callbacks');
+add_filter( 'pre_user_query', 'query_meta_OR_search' );
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	

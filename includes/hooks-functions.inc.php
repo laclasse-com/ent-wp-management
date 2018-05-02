@@ -162,3 +162,36 @@ function getCustomExtraInfoBlog($ignore, $user_blog) {
 		echo "<div style='text-align:right;padding-right:40px;'>".formatTypeBlog($user_blog->userblog_id, $typeBlog)."</div>";
 	}
 }
+
+/**
+ * Adds ability to search from fields of table or its metadata table
+ * (By default Wordpress uses AND)
+ *
+ * @param WP_User_Query|WP_Site_Query $q 
+ * @return void
+ */
+function query_meta_OR_search( $q ) {
+    if ( $search = $q->get('_meta_or_search') ) {
+		$meta_table = $q->meta_query->meta_table;
+		$q->query_where = preg_replace( '/(\(\s*'.$meta_table.'[^)]*\)\s*\)\s*)(\w*)/', '$1OR', $q->query_where );
+	}
+}
+
+/**
+ * Transform WP_Error responses to WP_REST_Response in order 
+ * to remove extraneous data, only status code needs to be returned
+ *
+ * @param WP_Error|WP_REST_Response $response
+ * @return WP_REST_Response
+ */
+function laclasse_rest_request_after_callbacks( $response ) {
+	if( $response instanceof WP_Error ) {
+	  $error_data = $response->get_error_data();
+	  if ( is_array( $error_data ) && isset( $error_data['status'] ) )
+		$status = $error_data['status'];
+	  else
+		$status = 500;  
+	  return new WP_REST_Response(null,$status);
+	}
+	return $response;
+  }
