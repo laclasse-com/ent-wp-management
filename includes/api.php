@@ -1020,9 +1020,9 @@ function laclasse_api_handle_request($method, $path) {
 			$total = (new WP_User_Query($query_params))->get_total();
 			$sort_col = $query_params['orderby'];
 			$result = (object) [
-			'data' => $result,
-			'page' => array_key_exists('paged', $query_params) ? $query_params['paged'] : 1, 
-			'total' => $total
+				'data' => $result,
+				'page' => array_key_exists('paged', $query_params) ? intval($query_params['paged']) : 1, 
+				'total' => $total
 			];
 		}
 	}

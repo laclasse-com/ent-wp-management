@@ -35,13 +35,10 @@ class Laclasse_Controller extends WP_REST_Controller {
   * Retrieves the Wordpress user if it exists 
   *
   * @param integer|string $some_id Can be the user's Wordpress ID or ent ID
-  * @param integer|null $blog_id 
+  * @param integer|string $blog_id
   * @return WP_User|null
   */
-  public function get_user_by($some_id, $blog_id) {
-    if( !$blog_id )
-      $blog_id = '';
-
+  public function get_user_by($some_id, $blog_id = '') {
     if( Laclasse_Controller::valid_number($some_id) )
       return reset( get_users( array( 'include' => array($some_id), 'blog_id' => $blog_id ) ) );
     return reset( get_users( array( 'meta_key' => 'uid_ENT', 'meta_value' => $some_id, 'blog_id' => $blog_id ) ) );

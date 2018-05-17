@@ -312,7 +312,7 @@ class Blogs_Controller extends Laclasse_Controller {
       $total = (new WP_User_Query($query_params))->get_total();
       $data = (object) [
         'data' => $data,
-        'page' => array_key_exists('paged', $query_params) ? $query_params['paged'] : 1, 
+        'page' => array_key_exists('paged', $query_params) ? intval($query_params['paged']) : 1, 
         'total' => $total
       ];
     }

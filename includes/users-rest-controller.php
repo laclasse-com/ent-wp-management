@@ -184,7 +184,7 @@ class Users_Controller extends Laclasse_Controller {
       $sort_col = $query_params['orderby'];
       $data = (object) [
         'data' => $data,
-        'page' => array_key_exists('paged', $query_params) ? $query_params['paged'] : 1, 
+        'page' => array_key_exists('paged', $query_params) ? intval($query_params['paged']) : 1, 
         'total' => $total
       ];
     }
