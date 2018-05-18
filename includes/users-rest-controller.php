@@ -622,12 +622,13 @@ class Users_Controller extends Laclasse_Controller {
       $blog = get_blog($user_blog->userblog_id);
 				if ($blog == null)
           continue;
-          
+
+      $user = new WP_User( $wp_id, '', $user_blog->userblog_id );
+
 			$data = new stdClass();
-			// $data->id = "$wp_id-$user_blog->userblog_id";
 			$data->blog_id = $user_blog->userblog_id;
       $data->user_id = $wp_id;
-      if(count($user->roles))
+      if( isset($user) && count($user->roles) )
 			  $data->role = $user->roles[0];
 		
       $data->forced = ($ent_user != null && is_forced_blog($blog, $ent_user));
