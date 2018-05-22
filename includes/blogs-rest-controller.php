@@ -159,9 +159,33 @@ class Blogs_Controller extends Laclasse_Controller {
 			}
 		}
 
+    // TODO Replace if by a more general statement
+    if( isset($query_params['type']) ) {
+      $query['type'] =  $query_params['type'];
+      unset($query_params['type']);
+    }
+    if(isset($query_params['structure_id'])) {
+      $query['structure_id'] =  $query_params['structure_id'];
+      unset($query_params['structure_id']);
+    }
+    if(isset($query_params['group_id'])) {
+      $query['group_id'] =  $query_params['group_id'];
+      unset($query_params['group_id']);
+    }
+
+    if (isset($query_params['query'])) {
+      $queryRegex['name'] = $query_params['query'];
+      $queryRegex['description'] = $query_params['query'];
+      $queryRegex['domain'] = $query_params['query'];
+      unset($query_params['query']);
+    }
+
 		$data = [];
 		foreach ($blogs as $blog) {
-			if (!filter_blog($blog, $query_params))
+      // This does an exact filter
+			if ( isset($query) && !filter_blog($blog, $query) )
+				continue;
+			if ( isset($queryRegex) && !filter_blog_regex($blog, $queryRegex) )
 				continue;
 			// if seen_by is set, filter by what the given ENT user can see
 			if (($seenByWp != null) && !has_read_right($seenBy, $seenByWp->ID, $blog))
@@ -201,7 +225,7 @@ class Blogs_Controller extends Laclasse_Controller {
       $offset = ($page - 1) * $limit;
       $data = (object) [
         'total' => count( $data ),
-        'page' => $page,
+        'page' => intval( $page ),
         'data' => array_splice( $data, $offset, $limit ),
       ];
     }

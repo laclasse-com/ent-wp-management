@@ -129,6 +129,25 @@ function filter_fields($data, $params, $allowed_fields) {
 	return true;
 }
 
+function filter_blog_regex($blog, $params) {
+	return filter_fields_regex($blog, $params, array('admin_email', 'domain',
+		'registered', 'last_updated', 'public', 'archived', 'deleted', 'id',
+		'name', 'description', 'type', 'url', 'structure_id', 'group_id'));
+}
+
+function filter_fields_regex($data, $params, $allowed_fields) {
+	foreach ($params as $key => $value) {
+		if (in_array($key, $allowed_fields)) {
+			if (!isset($data->$key))
+				return false;
+
+			if ( preg_match ( '/' . $value . '/i', $data->$key ) === 1 )
+				return true;
+		}
+	}
+	return false;
+}
+
 function filter_blog($blog, $params) {
 	return filter_fields($blog, $params, array('admin_email', 'domain',
 		'registered', 'last_updated', 'public', 'archived', 'deleted', 'id',
