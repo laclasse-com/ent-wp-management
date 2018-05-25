@@ -1073,7 +1073,8 @@ function laclasse_api_handle_request($method, $path) {
 			$user_id = wp_create_user($json->login, $password);
 			// remove the user for blog 1
 			remove_user_from_blog($user_id, 1);
-	
+			// remove automatic role create on the current blog
+			remove_user_from_blog($user_id, get_current_blog_id());
 			if (isset($json->ent_id))
 				update_user_meta($user_id, 'uid_ENT', $json->ent_id);
 			if (isset($json->ent_profile))
