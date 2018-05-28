@@ -254,7 +254,6 @@ class Users_Controller extends Laclasse_Controller {
         ];
       }
 
-
       return new WP_REST_Response( $data , 200 );
     }
 
@@ -381,13 +380,14 @@ class Users_Controller extends Laclasse_Controller {
     $users = $this->get_json_from_request( $request );
     if($users instanceof WP_Error)
       return  new WP_REST_Response( null, 400 );
+    $deleted = true;
     foreach ($users as $user_id) {
       $user = $this->get_user_by( $user_id );
       if ( $user )
         $deleted = $deleted && delete_user( $user->id );
     }
     if ( $deleted )
-      return new WP_REST_Response( true, 200 );
+      return new WP_REST_Response( null, 200 );
 
     return new WP_REST_Response( null, 404 );
   }
