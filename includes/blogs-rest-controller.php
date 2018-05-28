@@ -401,6 +401,8 @@ class Blogs_Controller extends Laclasse_Controller {
 			update_blog_option($blog_id, 'group_id_ENT', $json->group_id);
 		if (isset($json->quota_max))
 			update_blog_option($blog_id, 'blog_upload_space', ceil($json->quota_max / (1024 * 1024)));
+    if ( isset($json->users) )
+      $this->merge_blog_user_change( $request, $json->users );
 
     $blog = get_site($blog_id);
     $data = $this->prepare_blog_for_response( $blog, $request);
@@ -482,8 +484,8 @@ class Blogs_Controller extends Laclasse_Controller {
     $user_id = $request->get_url_params()['user_id'];
     $blog_id = $this->get_id_from_request( $request );
 
-    $user = $this->get_user_by( $user_id, $blog_id );    
-		remove_user_from_blog($user->id, $blog_id);
+    if( $this->get_user_by( $user_id, $blog_id ) ) 
+		  remove_user_from_blog( $user_id, $blog_id );
 
     return WP_REST_Response( null, 200 );
   }
@@ -501,6 +503,44 @@ class Blogs_Controller extends Laclasse_Controller {
     }
     
     return WP_REST_Response( null, 200 );
+  }
+
+  /**
+   * This function applies the merge data for members of a given blog
+   * 
+   * It function assumes the caller has admin rights, 
+   * which should be checked at the time this is called
+   *
+   * @param WP_REST_Request $request
+   * @param object $json
+   * @return void
+   */
+  private function merge_blog_user_change( $request, $json ) {
+    $blog_id = $this->get_id_from_request( $request );
+    $diff = $json->diff;
+    if( !isset($diff) ) {
+      return;
+    }
+
+    if( isset( $diff->add ) ) {
+      foreach( $diff->add as $user_to_add ) {
+				add_user_to_blog( $blog_id, $user_to_add->user_id, $user_to_add->role );
+			}
+    }
+
+    if( isset( $diff->change ) ) {
+      foreach( $diff->change as $user_to_change ) {
+        if ( isset( $user_to_change->role ) ) {
+				  add_user_to_blog( $blog_id, $user_to_change->user_id, $user_to_change->role );
+				}
+      }
+    }
+    
+    if( isset( $diff->remove ) ) {
+      foreach( $diff->remove as $user_to_delete ) { 
+        remove_user_from_blog( $user_to_delete->user_id, $blog_id );
+      }
+    }
   }
 
   /**

@@ -61,7 +61,7 @@ class Users_Controller extends Laclasse_Controller {
       )
     ); 
 
-    // GET POST /uesrs/{id}/blogs
+    // GET POST /users/{id}/blogs
     register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<id>[A-Za-z0-9]+)' . '/blogs', array(
       array(
         'methods'         => WP_REST_Server::READABLE,
@@ -266,16 +266,16 @@ class Users_Controller extends Laclasse_Controller {
   * Create user from the collection
   *
   * @param WP_REST_Request $request Full data about the request.
-  * @return WP_Error|WP_REST_Request
+  * @return WP_Error|WP_REST_Response
   */
   public function create_user( $request ) {
     $json = $this->get_json_from_request( $request );
     if ($json instanceof WP_Error )
-      return new WP_Response(null, 400);
+      return new WP_REST_Response(null, 400);
 
     if( !isset($json->ent_id) && ( !isset($json->login) 
       || !isset($json->display_name) || !isset($json->login) || !isset($json->display_name) || !isset($json->email) ) )
-      return new WP_Response(null, 400);
+      return new WP_REST_Response(null, 400);
 
     $data = [];
     if( isset($json->ent_id) && !isset($json->login) ) {
@@ -285,7 +285,7 @@ class Users_Controller extends Laclasse_Controller {
           $user_ent = get_ent_user( $user_ent_id );
           if ($user_ent != null) {
             $user_wp = sync_ent_user_to_wp_user( $user_ent );
-            array_push( $data, user_data( $user_wp ) );
+            array_push( $data, $this->prepare_user_for_response( $user_wp, $request ) );
           }
         }
       } else {
@@ -294,7 +294,7 @@ class Users_Controller extends Laclasse_Controller {
           return new WP_REST_Response( null, 404 );
         else {
           $user_wp = sync_ent_user_to_wp_user( $user_ent );
-          $data = user_data( $user_wp );
+          $data = $this->prepare_user_for_response( $user_wp, $request );
         }
       }
     } else {
@@ -302,6 +302,8 @@ class Users_Controller extends Laclasse_Controller {
       $user_id = wp_create_user($json->login, $password);
       // remove the user for blog 1
       remove_user_from_blog($user_id, 1);
+      // remove automatic role create on the current blog
+      remove_user_from_blog($user_id, get_current_blog_id());
       
       $user_data = array('ID' => $user_id);
       $user_data['display_name'] = $json->display_name;
@@ -316,7 +318,7 @@ class Users_Controller extends Laclasse_Controller {
       $user_wp = $this->get_user_by( $user_id );
       $data = $this->prepare_user_for_response( $user_wp );
     }
-    return new WP_Response( $data, 200 );
+    return new WP_REST_Response( $data, 200 );
   }
   
   /**
