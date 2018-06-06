@@ -179,6 +179,8 @@ class Blogs_Controller extends Laclasse_Controller {
       $queryRegex['domain'] = $query_params['query'];
       unset($query_params['query']);
     }
+  
+    $needs_admin = ( isset( $query_params['role'] ) && $query_params['role'] == 'administrator' ) ? true : false;
 
 		$data = [];
 		foreach ($blogs as $blog) {
@@ -188,12 +190,15 @@ class Blogs_Controller extends Laclasse_Controller {
 			if ( isset($queryRegex) && !filter_blog_regex($blog, $queryRegex) )
 				continue;
 			// if seen_by is set, filter by what the given ENT user can see
-			if (($seenByWp != null) && !has_read_right($seenBy, $seenByWp->ID, $blog))
+      if ( ( $seenByWp != null ) 
+        && ( $needs_admin ? !has_admin_right( $seenBy, $seenByWp->ID, $blog ) : !has_read_right( $seenBy, $seenByWp->ID, $blog ) ) )
 				continue;
-			if (($seenByWp == null) && ($seenBy != null) && !has_right($seenBy, $blog))
+      if ( ( $seenByWp == null ) && ( $seenBy != null ) 
+        && ( $needs_admin ? !has_admin_right( $seenBy, $blog ) : !has_right( $seenBy, $blog ) ) )
 				continue;
-
-			ensure_read_right($this->ent_user, $this->wp_user->ID, $blog);
+       
+      ensure_read_right( $this->ent_user, $this->wp_user->ID, $blog );
+      
 			array_push($data, $blog);
     }
 
