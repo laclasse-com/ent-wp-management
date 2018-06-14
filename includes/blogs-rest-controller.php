@@ -230,6 +230,7 @@ class Blogs_Controller extends Laclasse_Controller {
       $offset = ($page - 1) * $limit;
       $data = (object) [
         'total' => count( $data ),
+        'limit' => $limit,
         'page' => intval( $page ),
         'data' => array_splice( $data, $offset, $limit ),
       ];
