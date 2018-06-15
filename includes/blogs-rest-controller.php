@@ -366,12 +366,21 @@ class Blogs_Controller extends Laclasse_Controller {
 
 		// create the blog and add the WP user as administrator
 		$blog_id = creerNouveauBlog(
-			$json->domain, '/', $json->name, $userENT->login, $this->get_user_email(), 1,
+			$json->domain, '/', $json->name, $this->ent_user->login, $this->get_user_email(), 1,
 			$this->wp_user->ID, $json->type, $json->structure_id, $json->group_id,
 			$json->description);
 
 		if (isset($json->quota_max))
 			update_blog_option($blog_id, 'blog_upload_space', ceil($json->quota_max / MB_IN_BYTES));
+
+    if(isset($json->users) && is_array($json->users)) {
+      foreach($json->users as $user) {
+        if($user->id == $this->wp_user->ID) 
+          continue;
+        // Add user to blog
+        add_user_to_blog( $blog_id, $user->user_id, $user->role );
+      }
+    }
 
 		$blog = get_site($blog_id);
 		if ($blog == null)
