@@ -216,6 +216,10 @@ class Users_Controller extends Laclasse_Controller {
   * @return WP_Error|WP_REST_Response
   */
   public function get_current( $request ) {
+    $query_params = $request->get_query_params();
+    if( array_key_exists('expand', $query_params) && $query_params['expand'] == true ){
+      update_roles_wp_user_from_ent_user($this->wp_user, $this->ent_user);
+    }
     $data = $this->prepare_user_for_response( $this->wp_user, $request );
     return new WP_REST_Response( $data , 200 );
   }
@@ -498,7 +502,20 @@ class Users_Controller extends Laclasse_Controller {
     $this->permission_checked = true;
     if( !$this->is_user_logged_in($request) ) 
       return new WP_Error( 'unauthorized', null, array( 'status' => 401 ) );
-    if( !has_admin_right( $this->ent_user, $this->wp_user->ID ) )
+    $json = $this->get_json_from_request($request);
+    if(isset($json->ent_id)) {
+      $best_profile = get_user_best_profile($this->ent_user);
+      if(in_array( $best_profile, ['DIR','ADM', 'ENS','ETA','DOC','EVS'] ) ) {
+        return true;
+      } else if(!is_array($json->ent_id) && $json->ent_id == $this->ent_user->id ){
+        return true;
+      }
+      return new WP_Error( 'forbidden', null, array( 'status' => 403 ) );
+    } else if(!has_admin_right( $this->ent_user, $this->wp_user->ID )) {
+      return new WP_Error( 'forbidden', null, array( 'status' => 403 ) );
+    }
+    if( !has_admin_right( $this->ent_user, $this->wp_user->ID ) && ( 
+      !isset( $json->ent_id ) || $json->ent_id != $this->ent_user->id ) )
       return new WP_Error( 'forbidden', null, array( 'status' => 403 ) );
     return true;
   }
