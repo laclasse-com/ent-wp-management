@@ -143,7 +143,7 @@ class Blogs_Controller extends Laclasse_Controller {
       $sort_col = $query_params['sort_col'];
       unset($query_params['sort_col']);
     }
-
+    
     $blogs = get_sites( $query_params );
     $blogs = array_map( function( $blog ) { return blog_data( $blog ); }, $blogs );
 		$seenBy = null;
@@ -502,7 +502,7 @@ class Blogs_Controller extends Laclasse_Controller {
     if( $this->get_user_by( $user_id, $blog_id ) ) 
 		  remove_user_from_blog( $user_id, $blog_id );
 
-    return WP_REST_Response( null, 200 );
+    return new WP_REST_Response( null, 200 );
   }
 
   public function delete_blog_users( $request ) {
@@ -517,7 +517,7 @@ class Blogs_Controller extends Laclasse_Controller {
         remove_user_from_blog( $user_id, $blog_id );
     }
     
-    return WP_REST_Response( null, 200 );
+    return new WP_REST_Response( null, 200 );
   }
 
   /**
