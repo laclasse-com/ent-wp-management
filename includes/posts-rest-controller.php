@@ -73,7 +73,7 @@ class Posts_Controller extends Laclasse_Controller
 
         if (array_key_exists('sort_dir', $query_params)
             && (strcasecmp($query_params['sort_dir'], 'ASC') || strcasecmp($query_params['sort_dir'], 'DESC'))) {
-            $filters['sort_dir'] = $query_params['sort_col'];
+            $filters['sort_dir'] = $query_params['sort_dir'];
             unset($query_params['sort_dir']);
         } else {
             $filters['sort_dir'] = 'DESC';
@@ -133,7 +133,7 @@ class Posts_Controller extends Laclasse_Controller
         //post_fetch filter processing ie paging,reordering, etc...
         usort($data, function ($left, $right) use ($filters) {
             $cmp = strcmp($left->{$filters['sort_col']}, $right->{$filters['sort_col']});
-            return $filters['sort_dir'] == 'DESC' ? $cmp * -1 : $cmp * 1;
+            return strcasecmp($filters['sort_dir'], 'DESC') ? $cmp : $cmp * -1;
         });
         if (array_key_exists('limit', $filters)) {
             $offset = ($filters['page'] - 1) * $filters['limit'];
