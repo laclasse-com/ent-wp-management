@@ -12,9 +12,6 @@ define ("ENT_URL", "www.dev.laclasse.com");
 // ENT name
 define ("ENT_NAME", "Laclasse.com");
 
-// Base domain for blogs creation
-define("BLOGS_DOMAIN", "blogs-dev.laclasse.com");
-
 // Public URL for this plugin JSON API
 define("BLOGS_API_URL", "https://www.dev.laclasse.com/blogs/wp-json/api/");
 

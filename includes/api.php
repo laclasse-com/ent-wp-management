@@ -82,7 +82,7 @@ function blog_data($blogWp) {
 
 	switch_to_blog($result->id);
 	$result->quota_max = intval(get_space_allowed() * 1024 * 1024);
-	$result->quota_used = intval(get_space_used() * 1024 * 1024);
+	$result->quota_used = intval(get_space_used() * 1024 * 1024); 
 	restore_current_blog();
 
 	return $result;
@@ -90,11 +90,9 @@ function blog_data($blogWp) {
 
 // Return the list of all blogs
 function get_blogs() {
-	$blogs = get_sites(array("number" => 100000));
+	$blogs = get_sites(array("number" => 100000,'site__not_in' => [ 1 ]));
 	$result = [];
 	foreach ($blogs as $blog) {
-		if ($blog->blog_id == 1)
-			continue;
 		$blog_data = blog_data($blog);
 		array_push($result, $blog_data);
 	}
@@ -129,6 +127,25 @@ function filter_fields($data, $params, $allowed_fields) {
 		}
 	}
 	return true;
+}
+
+function filter_blog_regex($blog, $params) {
+	return filter_fields_regex($blog, $params, array('admin_email', 'domain',
+		'registered', 'last_updated', 'public', 'archived', 'deleted', 'id',
+		'name', 'description', 'type', 'url', 'structure_id', 'group_id'));
+}
+
+function filter_fields_regex($data, $params, $allowed_fields) {
+	foreach ($params as $key => $value) {
+		if (in_array($key, $allowed_fields)) {
+			if (!isset($data->$key))
+				return false;
+
+			if ( preg_match ( '/' . $value . '/i', $data->$key ) === 1 )
+				return true;
+		}
+	}
+	return false;
 }
 
 function filter_blog($blog, $params) {
@@ -502,27 +519,8 @@ function laclasse_api_handle_request($method, $path) {
 	// GET /setup
 	if ($method == 'GET' && count($tpath) == 1 && $tpath[0] == 'setup')
 	{
-		$result = array("domain" => BLOGS_DOMAIN);
-	} 
-	// GET /blogs[?domain_exists={url}]
-	else if ($method == 'GET' && count($tpath) == 1 && $tpath[0] == 'blogs' && isset($_REQUEST['domain_exists'])){
-		$blogs = get_cached_blogs();
-		
-		$filters = ['domain' => $_REQUEST['domain_exists']];
-		
-		$result = [];
-		foreach ($blogs as $blog) {
-			if (!filter_blog($blog, $filters))
-				continue;
-			// Depending on rôle if not super_admin return just return the domain
-			if($userENT->super_admin) {
-				array_push($result, $blog);
-			} else {
-				array_push($result, (object)
-				["domain" => $blog->domain]);
-			}
-		}
-	} 
+		$result = array("domain" => DOMAIN_CURRENT_SITE);
+	}
 	// GET /blogs[?seen_by={ent_id}]
 	else if ($method == 'GET' && count($tpath) == 1 && $tpath[0] == 'blogs')
 	{
@@ -817,7 +815,7 @@ function laclasse_api_handle_request($method, $path) {
 				$blog = get_blog($user_blog->userblog_id);
 				if ($blog == null)
 					continue;
-
+					
 				$data = new stdClass();
 				$data->id = $user_blog->userblog_id;
 				$data->blog_id = $user_blog->userblog_id;
@@ -878,6 +876,62 @@ function laclasse_api_handle_request($method, $path) {
 				http_response_code(404);
 		}
 	}
+	// GET  /users/{user_id}/blogs/{blog_id}
+	else if ($method == 'GET' && count($tpath) == 4 && $tpath[0] == 'users' && $tpath[2] == 'blogs')
+	{
+		$user_id = intval($tpath[1]);
+		$blog_id = intval($tpath[3]);
+		
+		$data = get_blog($blog_id);
+		if ($data == null) {
+			http_response_code(404);
+			exit;
+		} else {
+			// check rights
+			if (!has_admin_right($userENT, $userWp->ID)) {
+				if ($userWp->ID != $user_id) {
+					http_response_code(403);
+					exit;
+				}
+			}
+		}
+		// if the current user is asking for its own blogs
+		// sync its roles on blogs
+		if ($userWp->ID == $user_id)
+			update_roles_wp_user_from_ent_user($userWp, $userENT);
+
+		if(!is_user_member_of_blog($user_id,$blog_id)) {
+			http_response_code(404);
+			exit;
+		}
+
+		$user_blogs = get_blogs_of_user($user_id);
+		$result = [];
+		
+		$user_blogs = array_filter($user_blogs,function($user_blog) use ($blog_id) {return $user_blog->userblog_id == $blog_id;});
+		foreach ($user_blogs as $user_blog) {
+			$blog = get_blog($user_blog->userblog_id);
+			if ($blog == null)
+				continue;
+				$data = new stdClass();
+			$data->id = $user_blog->userblog_id;
+			$data->blog_id = $user_blog->userblog_id;
+			$data->user_id = $user_id;
+			// try to find the user role
+			$users_search = get_users(
+				array(
+					'blog_id' => $user_blog->userblog_id,
+					'search'  => $user_id
+				)
+			);
+			if (count($users_search) > 0 && count($users_search[0]->roles) > 0)
+				$data->role = $users_search[0]->roles[0];
+			$data->forced = ($userENT != null && is_forced_blog($blog, $userENT));
+			
+			$result = $data;
+			break;
+		}
+	}
 	// DELETE /users/{user_id}/blogs/{blog_id}
 	else if ($method == 'DELETE' && count($tpath) == 4 && $tpath[0] == 'users' && $tpath[2] == 'blogs')
 	{
@@ -904,24 +958,92 @@ function laclasse_api_handle_request($method, $path) {
 	// GET /users
 	else if ($method == 'GET' && count($tpath) == 1 && $tpath[0] == 'users')
 	{
-		$result = [];
-		if (isset($_REQUEST['id']) && is_array($_REQUEST['id'])) {
-			foreach ($_REQUEST['id'] as $user_id) {
-				if (is_numeric($user_id)) {
-					$user = get_user($user_id);
-					if (filter_user($user, $_REQUEST))
-						array_push($result, $user);
+		$query_params = $_REQUEST;
+		if ( array_key_exists('id',$query_params) ) {
+			$query_params['include'] = $query_params['id'];
+			unset($query_params['id']);
+		}
+		if ( !array_key_exists('blog_id',$query_params) ) 
+			$query_params['blog_id'] = '';
+		if ( array_key_exists('limit',$query_params) ) {
+			$query_params['number'] = $query_params['limit'];
+			unset($query_params['limit']);
+		}
+		if ( array_key_exists('page',$query_params) ) {
+			$query_params['paged'] = $query_params['page'];
+			unset($query_params['page']);
+		}
+		if ( array_key_exists('sort_dir',$query_params) 
+			&& ( strcasecmp($query_params['sort_dir'], 'ASC') || strcasecmp($query_params['sort_dir'], 'DESC') ) ) {
+			$query_params['order'] = $query_params['sort_dir'];
+			unset($query_params['sort_dir']);
+		}
+		if ( array_key_exists('sort_col',$query_params) ) {
+			$avaliable_order_cols = ['id', 'login', 'nicename', 'email', 'url', 'registered', 'display_name', 'post_count', 'include','ent_id','ent_profile'];
+			if( in_array($query_params['sort_col'], $avaliable_order_cols) ) {
+				switch ($query_params['sort_col']) {
+					case 'ent_id':
+					$query_params['orderby'] = 'meta_value';
+					$query_params['meta_key'] = 'uid_ENT';
+					break;
+					case 'ent_profile':
+					$query_params['orderby'] = 'meta_value';
+					$query_params['meta_key'] = 'profile_ENT';
+					break;
+					default:
+					$query_params['orderby'] = $query_params['sort_col'];
+					break;
 				}
+				unset($query_params['sort_col']);
 			}
 		}
-		else {
-			$users = get_users(array('blog_id' => ''));
-			foreach ($users as $user) {
-				$data = user_data($user);
-				if (filter_user($data, $_REQUEST))
-					array_push($result, $data);
-			}	
-		}		
+		if ( array_key_exists('query', $query_params) ) {
+			// Search only works for these params : email address, URL, ID, username or display_name
+			// And specified below meta_query fields
+			$query_params['search'] = '*'.esc_attr( $query_params['query'] ).'*';
+			$initial_query = $query_params['query']; 
+			$query_params['meta_query'] = array(
+			'relation' => 'OR',
+			array(
+				'key'     => 'uid_ENT',
+				'value'   => $query_params['query'],
+				'compare' => 'LIKE'
+			),
+			);
+	
+			$query_params['_meta_or_search'] = true;
+			unset($query_params['query']);
+		}
+	
+		if( array_key_exists('ent_id', $query_params) ) {
+			$query_params['meta_query'] = array(
+			'relation' => 'OR',
+			array(
+				'key'     => 'uid_ENT',
+				'value'   => $query_params['ent_id'] ,
+				'compare' => 'IN'
+			),
+			); 
+			unset( $query_params['ent_id'] );
+		}
+	
+		$users = get_users($query_params);
+	
+		$result = array();
+		foreach( $users as $user ) {
+			$result[] = user_data($user);
+		}
+		if( array_key_exists('number', $query_params) )  {
+			unset($query_params['number']);
+			$query_params['count_total'] = true;
+			$total = (new WP_User_Query($query_params))->get_total();
+			$sort_col = $query_params['orderby'];
+			$result = (object) [
+				'data' => $result,
+				'page' => array_key_exists('paged', $query_params) ? intval($query_params['paged']) : 1, 
+				'total' => $total
+			];
+		}
 	}
 	// GET /users/current
 	else if ($method == 'GET' && count($tpath) == 2 && $tpath[0] == 'users' && $tpath[1] == 'current')
@@ -1103,5 +1225,3 @@ function wp_rest_laclasse_api_handle_request($request) {
 	header('cache-control: no-cache, must-revalidate');
 	return laclasse_api_handle_request($request->get_method(), $request->get_url_params()['path']);
 }
-
-

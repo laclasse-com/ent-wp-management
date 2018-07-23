@@ -72,7 +72,7 @@
         <script>
         angular.module('blogsApp')
           .constant('APP_PATH', '<?=APP_PATH?>')
-          .constant('BLOGS_DOMAIN', '<?=BLOGS_DOMAIN?>')
+          .constant('BLOGS_DOMAIN', '<?=DOMAIN_CURRENT_SITE?>')
           .constant('BLOGS_API_URL', '<?=BLOGS_API_URL?>')
           ;  
         </script>
