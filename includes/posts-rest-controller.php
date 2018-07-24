@@ -221,6 +221,7 @@ class Posts_Controller extends Laclasse_Controller
             $result->blog_name = $blog->blogname;
             $result->blog_domain = $blog->domain;
         }
+        $result->post_text = wp_strip_all_tags($post->post_content);
         return $result;
     }
 
