@@ -120,6 +120,7 @@ class Blogs_Controller extends Laclasse_Controller {
     $query_params = $request->get_query_params();
     //Exclude first blog of network
     $query_params['site__not_in'] = [ 1 ];
+    $query_params['number'] = 0x5f3759df;
 
     if ( array_key_exists('id',$query_params) ) {
       $query_params['site__in'] = $query_params['id'];
