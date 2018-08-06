@@ -119,8 +119,8 @@ add_filter('wpmu_signup_blog_notification', 'disableThisFunc', 10, 2);
 add_filter('wpmu_signup_user_notification', 'disableThisFunc', 10, 2);
 add_filter('wpmu_welcome_notification', 'disableThisFunc', 10, 2);
 add_filter('wpmu_welcome_user_notification', 'disableThisFunc', 10, 2);
-
-
+// Disable mail on email change
+add_filter( 'send_email_change_email', '__return_false' );
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	
 	s é c u r i s a t i o n   d e   l a   p l a t e f o r m e 
