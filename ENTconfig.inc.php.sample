@@ -12,9 +12,6 @@ define ("ENT_URL", "www.dev.laclasse.com");
 // ENT name
 define ("ENT_NAME", "Laclasse.com");
 
-// Public URL for this plugin JSON API
-define("BLOGS_API_URL", "https://www.dev.laclasse.com/blogs/wp-json/api/");
-
 // Akismet key for handling SPAMs comments
 define("AKISMET_KEY", "123456789012");
 
@@ -27,14 +24,3 @@ define("ANNUAIRE_USER", "BLOGS");
 // Directory API password
 define("ANNUAIRE_PASS", "12345678533643246564254");
 
-////////////////////////////////////////////////////////////////////////////////
-// Setup for the front
-////////////////////////////////////////////////////////////////////////////////
-
-define("APP_ROOT", ABSPATH);
-
-// virtual path de l'application
-define("APP_PATH", 'wp-content/plugins/ent-wp-management/front');
-
-// Version de l'application
-define("APP_VERSION", '2.0.0');
