@@ -139,7 +139,7 @@ class Posts_Controller extends Laclasse_Controller
             $offset = ($filters['page'] - 1) * $filters['limit'];
             $data = (object) [
                 'total' => count($data),
-                'limit' => $filters['limit'],
+                'limit' => intval($filters['limit']),
                 'page' => $filters['page'],
                 'data' => array_splice($data, $offset, $filters['limit']),
             ];
@@ -222,6 +222,21 @@ class Posts_Controller extends Laclasse_Controller
             $result->blog_domain = $blog->domain;
         }
         $result->post_text = html_entity_decode(wp_strip_all_tags($post->post_content));
+        if(has_post_thumbnail($post->ID)) {
+            $result->post_thumbnail = wp_get_attachment_image_url(get_post_thumbnail_id($post->ID),'medium');
+        }
+        
+        $attachments = get_attached_media( '', $post->ID );
+        if(count($attachments) > 0) {
+            foreach($attachments as $attachment) {
+                if(!isset($result->post_video) && strpos($attachment->post_mime_type, 'video/') !== false) {
+                    $result->post_video = wp_get_attachment_url($attachment->ID);
+                } else if(!isset($result->post_image) && strpos($attachment->post_mime_type, 'image/') !== false) {
+                    $result->post_image = wp_get_attachment_image_url($attachment->ID,'medium'); 
+                }
+            }
+        }
+        
         return $result;
     }
 
