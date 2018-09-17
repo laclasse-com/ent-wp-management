@@ -229,7 +229,8 @@ class Posts_Controller extends Laclasse_Controller
             // Finds images based on <img> tags, this prioritize images with a specified height and width
             // if none were found it takes the first image with unspecified height and/or width
             $dom = new DOMDocument();
-            $dom->loadHTML($post->post_content);
+            // By default loadHTML uses ISO-8859-1 so we fix that using XML Declaration
+            $dom->loadHTML('<?xml encoding="utf-8" ?>' . $post->post_content);
             foreach( $dom->getElementsByTagName( "img" ) as $image ) {
                 if($image->hasAttribute('width') && $image->hasAttribute('height') 
                     && $image->getAttribute('width') >= 100 && $image->getAttribute('height') >= 100) {
