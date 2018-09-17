@@ -221,22 +221,37 @@ class Posts_Controller extends Laclasse_Controller
             $result->blog_name = $blog->blogname;
             $result->blog_domain = $blog->domain;
         }
-        $result->post_text = html_entity_decode(wp_strip_all_tags($post->post_content));
+        $result->post_text = html_entity_decode(strip_shortcodes(wp_strip_all_tags($post->post_content)));
         if(has_post_thumbnail($post->ID)) {
             $result->post_thumbnail = wp_get_attachment_image_url(get_post_thumbnail_id($post->ID),'medium');
         }
-        
-        $attachments = get_attached_media( '', $post->ID );
-        if(count($attachments) > 0) {
-            foreach($attachments as $attachment) {
-                if(!isset($result->post_video) && strpos($attachment->post_mime_type, 'video/') !== false) {
-                    $result->post_video = wp_get_attachment_url($attachment->ID);
-                } else if(!isset($result->post_image) && strpos($attachment->post_mime_type, 'image/') !== false) {
-                    $result->post_image = wp_get_attachment_image_url($attachment->ID,'medium'); 
+        if(!empty($post->post_content)) {
+            // Finds images based on <img> tags, this prioritize images with a specified height and width
+            // if none were found it takes the first image with unspecified height and/or width
+            $dom = new DOMDocument();
+            $dom->loadHTML($post->post_content);
+            foreach( $dom->getElementsByTagName( "img" ) as $image ) {
+                if($image->hasAttribute('width') && $image->hasAttribute('height') 
+                    && $image->getAttribute('width') >= 100 && $image->getAttribute('height') >= 100) {
+                    $result->post_image = $image->getAttribute("src");
+                    break;
+                } else if(!isset($result->post_image)){
+                    $result->post_image = $image->getAttribute("src");
                 }
             }
+            // Finds videos based on video shortcode
+            preg_match( '/'.get_shortcode_regex( array('video') ).'/', $post->post_content, $video);
+            if($video != false) {
+                preg_match('/(?:src|mp4|m4v|webm|ogv|wmv|flv)="(.*)"/', $video[3], $video_src );
+                $result->post_video = $video_src ? $video_src[1] : null;
+            }
+            // Find gallery based on gallery short_code if no image was found
+            if( !isset($result->post_image)) {
+                $gallery = get_post_gallery_images($post->ID);
+                if(isset($gallery) && count($gallery) > 0)
+                    $result->post_image = $gallery[0];
+            }
         }
-        
         return $result;
     }
 
