@@ -226,11 +226,15 @@ class Posts_Controller extends Laclasse_Controller
             $result->post_thumbnail = wp_get_attachment_image_url(get_post_thumbnail_id($post->ID),'medium');
         }
         if(!empty($post->post_content)) {
-            // Finds images based on <img> tags, this prioritize images with a specified height and width
-            // if none were found it takes the first image with unspecified height and/or width
             $dom = new DOMDocument();
+            // Use internal errors because loadHTML doesn't support fully HTML5 tags or syntax 
+            // Nothing is done there so everything is discarded here 
+            $old = libxml_use_internal_errors(true);
             // By default loadHTML uses ISO-8859-1 so we fix that using XML Declaration
             $dom->loadHTML('<?xml encoding="utf-8" ?>' . $post->post_content);
+            libxml_use_internal_errors($old);
+            // Finds images based on <img> tags, this prioritize images with a specified height and width
+            // if none were found it takes the first image with unspecified height and/or width
             foreach( $dom->getElementsByTagName( "img" ) as $image ) {
                 if($image->hasAttribute('width') && $image->hasAttribute('height') 
                     && $image->getAttribute('width') >= 100 && $image->getAttribute('height') >= 100) {
