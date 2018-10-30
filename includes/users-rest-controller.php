@@ -41,6 +41,21 @@ class Users_Controller extends Laclasse_Controller {
       ) 
     );
 
+     // GET /users/cleanup
+     register_rest_route( $this->namespace, '/' . $this->rest_base . '/cleanup', array(
+      array(
+        'methods'         => WP_REST_Server::READABLE ,
+        'callback'        => array( $this, 'get_cleanup' ),
+        'permission_callback' => array( $this, 'get_is_super_admin_permissions_check' ),
+      ),
+      array(
+        'methods'         => WP_REST_Server::DELETABLE ,
+        'callback'        => array( $this, 'get_cleanup' ),
+        'permission_callback' => array( $this, 'get_is_super_admin_permissions_check' ),
+      ),
+      ) 
+    );
+
     // GET POST PUT DELETE /users/{id}
     register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<id>[A-Za-z0-9]+)', array(
       array(
@@ -625,6 +640,96 @@ class Users_Controller extends Laclasse_Controller {
       return new WP_Error( 'forbidden', null, array( 'status' => 403 ) );
 
     return true;
+  }
+
+  public function get_is_super_admin_permissions_check( $request ) {
+    if( $this->permission_checked )
+      return true;
+    $this->permission_checked = true;
+
+    $is_logged_in = $this->is_user_logged_in( $request );
+    if( !$is_logged_in )
+      return false;
+      
+    return is_super_admin($this->wp_user->ID);
+  }
+
+  /**
+   * This method lists or delete all users 
+   *
+   * @param [type] $request
+   * @return void
+   */
+  public function get_cleanup( $request ) {
+    $method = $request->get_method();
+    $willDelete = $method === WP_REST_Server::DELETABLE;
+
+    // Get Wordpress users
+    global $wpdb;
+    $sqlQuery = "SELECT user_id,meta1.meta_value as uid_ENT "
+    . "FROM {$wpdb->prefix}usermeta meta1 "
+    . "JOIN ("
+    . "SELECT meta_value, COUNT(meta_key) as uid_count "
+    . "FROM {$wpdb->prefix}usermeta "
+    . "WHERE meta_key = 'uid_ENT' "
+    . "GROUP BY meta_value"
+    . ") uidENT "
+    . "WHERE meta1.meta_key = 'uid_ENT' "
+    . "AND uid_count = 1 "
+    . "AND uidENT.meta_value = meta1.meta_value;";
+
+    $results = $wpdb->get_results($sqlQuery);
+
+    // Get ENT users and index them
+    $indexedUsers = array();
+    $batchEntIds = array();
+    foreach ($results as $user) {
+      $batchEntIds[] = $user->uid_ENT;
+      if(count($batchEntIds) === 10) {
+        $entUsers = $this->ask_for_ent_users($batchEntIds);
+
+        $keys = array_map( function( $user ) { return $user->id; }, $entUsers );
+        $indexedUsers += array_combine($keys, $entUsers);
+
+        $batchEntIds = array();
+      }
+    }
+    if(count($batchEntIds) !== 0) {
+      $entUsers = $this->ask_for_ent_users($batchEntIds);
+
+      $keys = array_map( function( $user ) { return $user->id; }, $entUsers );
+      $indexedUsers += array_combine($keys, $entUsers);
+    }
+    
+    // Récupération des utilisateurs don't l'id ent n'existe plus
+    $deadUsers = array_filter( $results, function( $user ) use ($indexedUsers) { 
+      return !array_key_exists($user->uid_ENT, $indexedUsers);
+    } );
+
+    if($willDelete == false) {
+      $users = get_users( array( 'blog_id' => 0,'include' => array_map( function( $user ) { return $user->user_id; }, $deadUsers ) ));
+      $data = array_map( function ( $user ) use ( $request ) { return $this->prepare_user_for_response( $user, $request ); }, $users);
+      return new WP_REST_Response( $data , 200 );
+    }
+
+    return  new WP_Error( 'not implemented', null, array( 'status' => 404 ) );
+  }
+
+  /**
+   * Sends HTTP request to fetch users based on given entIds
+   *
+   * @param array $entIds: id of users to fetch
+   * @return mixed the json representation of users
+   */
+  private function ask_for_ent_users($entIds = array()) {
+    $get = array('id' => $entIds, 'expand' => 'false');
+    $query = preg_replace('/(%5B)\d+(%5D=)/i', '$1$2', http_build_query($get));
+
+    $url = ANNUAIRE_URL . "api/users?" . $query;
+    $data = get_http($url, $error, $status);
+
+    if($status !== 200) return null;
+    return json_decode( $data );
   }
 
   /**
