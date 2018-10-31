@@ -226,7 +226,7 @@ function filter_user($user, $params) {
 // Return: the WP user or null if not found
 function get_wp_user_from_ent_user($userENT) {
 	// search if a user exists using its ENT id
-	$users_search = get_users(array('meta_key' => 'uid_ENT', 'meta_value' => $userENT->id, 'blog_id' => 0));
+	$users_search = get_users(array('meta_key' => 'uid_ENT', 'meta_value' => $userENT->id));
 	if (count($users_search) > 0)
 		return $users_search[0];
 
@@ -241,11 +241,11 @@ function get_wp_user_from_ent_user($userENT) {
 		if (!isset($user_email) || $email->primary)
 			$user_email = $email->address;
 	}
-	if (!isset($user_email))
-		$user_email = $userENT->id . '@noemail.lan';
-	$userWp = get_user_by('email', $user_email);
-	if ($userWp != false)
-		return $userWp;	
+	if ($user_email != null) {
+		$userWp = get_user_by('email', $user_email);
+		if ($userWp != false)
+			return $userWp;
+	}
 	// not found
 	return null;
 }
