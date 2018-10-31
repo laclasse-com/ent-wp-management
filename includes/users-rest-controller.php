@@ -684,29 +684,28 @@ class Users_Controller extends Laclasse_Controller {
       return new WP_REST_Response( 'Error while fetching Wordpress users' , 500 );
     }
     // Get ENT users and index them
-    $indexedUsers = array();
+    $keys = array();
     $batchEntIds = array();
     foreach ($results as $user) {
       $batchEntIds[] = $user->uid_ENT;
-      if(count($batchEntIds) === 10) {
+      if(count($batchEntIds) === 100) {
         $entUsers = $this->ask_for_ent_users($batchEntIds);
-
-        $keys = array_map( function( $user ) { return $user->id; }, $entUsers );
-        $indexedUsers += array_combine($keys, $entUsers);
-
+        $keys = array_merge($keys, array_map( function( $user ) { return $user->id; }, $entUsers ));
         $batchEntIds = array();
       }
     }
     if(count($batchEntIds) !== 0) {
       $entUsers = $this->ask_for_ent_users($batchEntIds);
-
-      $keys = array_map( function( $user ) { return $user->id; }, $entUsers );
-      $indexedUsers += array_combine($keys, $entUsers);
+      $keys = array_merge($keys, array_map( function( $user ) { return $user->id; }, $entUsers ));
     }
 
     // Récupération des utilisateurs don't l'id ent n'existe plus
-    $deadUsers = array_filter( $results, function( $user ) use ($indexedUsers) {
-      return !array_key_exists($user->uid_ENT, $indexedUsers);
+    $deadUsers = array_filter( $results, function( $user ) use ($keys) {
+      $index = array_search($user->uid_ENT, $keys);
+      if($index !== false) {
+        unset($keys[$index]);
+      }
+      return $index === false;
     } );
 
     // Return early if no user were found
