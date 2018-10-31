@@ -28,7 +28,7 @@ class Users_Controller extends Laclasse_Controller {
         'callback'        => array( $this, 'delete_users' ),
         'permission_callback' => array( $this, 'delete_user_permissions_check' ),
       ),
-      ) 
+      )
     );
 
     // GET /users/current
@@ -38,7 +38,7 @@ class Users_Controller extends Laclasse_Controller {
         'callback'        => array( $this, 'get_current' ),
         'permission_callback' => array( $this, 'get_user_permissions_check' ),
       ),
-      ) 
+      )
     );
 
      // GET /users/cleanup
@@ -53,7 +53,7 @@ class Users_Controller extends Laclasse_Controller {
         'callback'        => array( $this, 'get_cleanup' ),
         'permission_callback' => array( $this, 'get_is_super_admin_permissions_check' ),
       ),
-      ) 
+      )
     );
 
     // GET POST PUT DELETE /users/{id}
@@ -74,7 +74,7 @@ class Users_Controller extends Laclasse_Controller {
         'permission_callback' => array( $this, 'delete_user_permissions_check' ),
       ),
       )
-    ); 
+    );
 
     // GET POST /users/{id}/blogs
     register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<id>[A-Za-z0-9]+)' . '/blogs', array(
@@ -88,7 +88,7 @@ class Users_Controller extends Laclasse_Controller {
         'callback'        => array( $this, 'create_user_profile' ),
         'permission_callback' => array( $this, 'create_user_profile_permissions_check' ),
       ),
-      ) 
+      )
     );
 
 
@@ -105,9 +105,9 @@ class Users_Controller extends Laclasse_Controller {
         'permission_callback' => array( $this, 'delete_user_profile_permissions_check' ),
       ),
       )
-    ); 
+    );
   }
-      
+
   /**
   * Get a collection of users
   *
@@ -116,12 +116,12 @@ class Users_Controller extends Laclasse_Controller {
   */
   public function get_users( $request ) {
     $query_params = $request->get_query_params();
-    
+
     if ( array_key_exists('id',$query_params) ) {
       $query_params['include'] = $query_params['id'];
       unset($query_params['id']);
     }
-    if ( !array_key_exists('blog_id',$query_params) ) 
+    if ( !array_key_exists('blog_id',$query_params) )
       $query_params['blog_id'] = '';
     if ( array_key_exists('limit',$query_params) ) {
       $query_params['number'] = $query_params['limit'];
@@ -131,7 +131,7 @@ class Users_Controller extends Laclasse_Controller {
       $query_params['paged'] = $query_params['page'];
       unset($query_params['page']);
     }
-    if ( array_key_exists('sort_dir',$query_params) 
+    if ( array_key_exists('sort_dir',$query_params)
       && ( strcasecmp($query_params['sort_dir'], 'ASC') || strcasecmp($query_params['sort_dir'], 'DESC') ) ) {
       $query_params['order'] = $query_params['sort_dir'];
       unset($query_params['sort_dir']);
@@ -159,7 +159,7 @@ class Users_Controller extends Laclasse_Controller {
       // Search only works for these params : email address, URL, ID, username or display_name
       // And specified below meta_query fields
       $query_params['search'] = '*'.esc_attr( $query_params['query'] ).'*';
-      $initial_query = $query_params['query']; 
+      $initial_query = $query_params['query'];
       $query_params['meta_query'] = array(
         'relation' => 'OR',
         array(
@@ -181,7 +181,7 @@ class Users_Controller extends Laclasse_Controller {
           'value'   => $query_params['ent_id'] ,
           'compare' => 'IN'
         ),
-      ); 
+      );
       unset( $query_params['ent_id'] );
     }
 
@@ -199,13 +199,13 @@ class Users_Controller extends Laclasse_Controller {
       $sort_col = $query_params['orderby'];
       $data = (object) [
         'data' => $data,
-        'page' => array_key_exists('paged', $query_params) ? intval($query_params['paged']) : 1, 
+        'page' => array_key_exists('paged', $query_params) ? intval($query_params['paged']) : 1,
         'total' => $total
       ];
     }
     return new WP_REST_Response( $data, 200 );
   }
-  
+
   /**
   * Get one user from the collection
   *
@@ -215,7 +215,7 @@ class Users_Controller extends Laclasse_Controller {
   public function get_user( $request ) {
     $params = $request->get_params();
     $user = $this->get_user_by( $params['id'] );
-    
+
     if ( $user ) {
       $data = $this->prepare_user_for_response( $user, $request );
       return new WP_REST_Response( $data , 200 );
@@ -223,7 +223,7 @@ class Users_Controller extends Laclasse_Controller {
       return new WP_REST_Response( null , 404 );
     }
   }
-  
+
   /**
   * Get current user from the collection
   *
@@ -249,12 +249,12 @@ class Users_Controller extends Laclasse_Controller {
     $query_params = $request->get_query_params();
     $params = $request->get_params();
     $user = $this->get_user_by( $params['id'] );
-    
+
     if ( array_key_exists('limit',$query_params) ) {
       $limit = $query_params['limit'];
     }
     if ( array_key_exists('page',$query_params) ) {
-      $page = $query_params['page']; 
+      $page = $query_params['page'];
     }
 
     if ( $user ) {
@@ -263,12 +263,12 @@ class Users_Controller extends Laclasse_Controller {
         if( !isset($page) || $page <= 0 || !Laclasse_Controller::valid_number($page) )
           $page = 1;
       }
-  
+
       if( isset($limit) && isset($page) ) {
         $offset = ($page - 1) * $limit;
         $data = (object) [
           'total' => count( $data ),
-          'page' => intval( $page ), 
+          'page' => intval( $page ),
           'data' => array_splice( $data, $offset, $limit ),
         ];
       }
@@ -278,7 +278,7 @@ class Users_Controller extends Laclasse_Controller {
 
     return new WP_REST_Response( null, 404 );
   }
-  
+
 
   /**
   * Create user from the collection
@@ -291,7 +291,7 @@ class Users_Controller extends Laclasse_Controller {
     if ($json instanceof WP_Error )
       return new WP_REST_Response(null, 400);
 
-    if( !isset($json->ent_id) && ( !isset($json->login) 
+    if( !isset($json->ent_id) && ( !isset($json->login)
       || !isset($json->display_name) || !isset($json->login) || !isset($json->display_name) || !isset($json->email) ) )
       return new WP_REST_Response(null, 400);
 
@@ -322,7 +322,7 @@ class Users_Controller extends Laclasse_Controller {
       remove_user_from_blog($user_id, 1);
       // remove automatic role create on the current blog
       remove_user_from_blog($user_id, get_current_blog_id());
-      
+
       $user_data = array('ID' => $user_id);
       $user_data['display_name'] = $json->display_name;
       $user_data['user_email'] = $json->email;
@@ -338,10 +338,10 @@ class Users_Controller extends Laclasse_Controller {
     }
     return new WP_REST_Response( $data, 200 );
   }
-  
+
   /**
   * Update one user from the collection
-  * Est-ce utile ? 
+  * Est-ce utile ?
   *
   * @param WP_REST_Request $request Full data about the request.
   * @return WP_Error|WP_REST_Request
@@ -349,19 +349,19 @@ class Users_Controller extends Laclasse_Controller {
   public function update_user( $request ) {
     $user_id = $this->get_id_from_request( $request );
     $json = $this->get_json_from_request( $request );
-    
+
     if ( $json instanceof WP_Error || $user_id instanceof WP_Error )
       return new WP_REST_Response( null, 400 );
-      
+
     $user_wp = $this->get_user_by($user_id);
     if( !$user_wp )
-      return new WP_REST_Response( null, 404 ); 
+      return new WP_REST_Response( null, 404 );
 
     if (isset($json->ent_id))
       update_user_meta($user_wp->ID, 'uid_ENT', $json->ent_id);
     if (isset($json->ent_profile))
       update_user_meta($user_wp->ID, 'profile_ENT', $json->ent_profile);
-  
+
     $user_data = array('ID' => $user_wp->ID);
     if (isset($json->display_name))
       $user_data['display_name'] = $json->display_name;
@@ -371,9 +371,9 @@ class Users_Controller extends Laclasse_Controller {
     $user_wp = get_user_by('id', $user_id);
     $data = $this->prepare_user_for_response($user_wp);
 
-    return new WP_REST_Response( $data, 200 ); 
+    return new WP_REST_Response( $data, 200 );
   }
-  
+
   /**
   * Delete one user from the collection
   *
@@ -385,10 +385,10 @@ class Users_Controller extends Laclasse_Controller {
     $deleted = delete_user( $user_id );
     if ( $deleted )
       return new WP_REST_Response( null, 200 );
-    
+
     return new WP_REST_Response( null, 404 );
   }
-  
+
   /**
   * Delete several users from the collection
   *
@@ -426,12 +426,12 @@ class Users_Controller extends Laclasse_Controller {
 
     if ( !has_admin_right($this->ent_user, $this->wp_user->ID, $blog) )
       unset($json->role);
-    
-    if ( !isset($json->role) ) 
+
+    if ( !isset($json->role) )
       $json->role = get_user_blog_default_role($this->ent_user, $blog);
-    
+
     $user = $this->get_user_by( $user_id );
-    
+
     $success = add_user_to_blog($blog_id, $user->id, $json->role);
     if( $success instanceof WP_Error )
       return new WP_REST_Response( null, 404 );
@@ -441,8 +441,8 @@ class Users_Controller extends Laclasse_Controller {
     $data->blog_id = $blog_id;
     $data->role = $json->role;
     $data->forced = false;
-    
-    return new WP_REST_Response( $data, 200 ); 
+
+    return new WP_REST_Response( $data, 200 );
   }
 
   /**
@@ -455,7 +455,7 @@ class Users_Controller extends Laclasse_Controller {
     $user_id = $this->get_id_from_request( $request );
     $blog_id = $request->get_url_params()['blog_id'];
     $user = $this->get_user_by( $params['id'], $blog_id );
-    
+
     if ( $user ) {
       $ent_user = get_ent_user_from_user_id( $user->id );
       $blog = get_blog( $blog_id );
@@ -476,7 +476,7 @@ class Users_Controller extends Laclasse_Controller {
   public function delete_user_profile( $request ) {
     $user_id = $this->get_id_from_request( $request );
     $blog_id = $request->get_url_params()['blog_id'];
-    
+
     remove_user_from_blog($user_id, $blog_id);
     return new WP_REST_Response( $data , 200 );
   }
@@ -494,7 +494,7 @@ class Users_Controller extends Laclasse_Controller {
     $this->permission_checked = true;
     return $this->is_user_logged_in($request);
   }
-        
+
   /**
   * Check if a given request has access to get a specific user
   *
@@ -504,18 +504,18 @@ class Users_Controller extends Laclasse_Controller {
   public function get_user_permissions_check( $request ) {
     return $this->get_users_permissions_check( $request );
   }
-  
+
   /**
   * Check if a given request has access to create users
   *
   * @param WP_REST_Request $request Full data about the request.
   * @return WP_Error|bool
   */
-  public function create_user_permissions_check( $request ) { 
+  public function create_user_permissions_check( $request ) {
     if( $this->permission_checked )
       return true;
     $this->permission_checked = true;
-    if( !$this->is_user_logged_in($request) ) 
+    if( !$this->is_user_logged_in($request) )
       return new WP_Error( 'unauthorized', null, array( 'status' => 401 ) );
     $json = $this->get_json_from_request($request);
     if(isset($json->ent_id)) {
@@ -529,12 +529,12 @@ class Users_Controller extends Laclasse_Controller {
     } else if(!has_admin_right( $this->ent_user, $this->wp_user->ID )) {
       return new WP_Error( 'forbidden', null, array( 'status' => 403 ) );
     }
-    if( !has_admin_right( $this->ent_user, $this->wp_user->ID ) && ( 
+    if( !has_admin_right( $this->ent_user, $this->wp_user->ID ) && (
       !isset( $json->ent_id ) || $json->ent_id != $this->ent_user->id ) )
       return new WP_Error( 'forbidden', null, array( 'status' => 403 ) );
     return true;
   }
-  
+
   /**
   * Check if a given request has access to update a specific user
   *
@@ -544,7 +544,7 @@ class Users_Controller extends Laclasse_Controller {
   public function update_user_permissions_check( $request ) {
     return $this->create_user_permissions_check( $request );
   }
-  
+
   /**
   * Check if a given request has access to delete a specific user
   *
@@ -554,7 +554,7 @@ class Users_Controller extends Laclasse_Controller {
   public function delete_user_permissions_check( $request ) {
     return $this->create_user_permissions_check( $request );
   }
-  
+
   public function create_user_profile_permissions_check( $request ) {
     if( $this->permission_checked )
       return true;
@@ -565,11 +565,11 @@ class Users_Controller extends Laclasse_Controller {
       return false;
     $user_id = $this->get_id_from_request( $request );
     $json = $this->get_json_from_request( $request );
-    if( !isset($json->blog_id)) 
+    if( !isset($json->blog_id))
       return new WP_Error( 'bad-request', null, array( 'status' => 400 ) );
     $blog_id = $json->blog_id;
     $blog = get_blog($blog_id);
-    if( !$blog ) 
+    if( !$blog )
       return new WP_Error( 'not-found', null, array( 'status' => 404 ) );
     $user = $this->get_user_by($user_id);
     if ( !$user )
@@ -594,17 +594,17 @@ class Users_Controller extends Laclasse_Controller {
     $blog_id = $request->get_url_params()['blog_id'];
 
     $blog = get_blog($blog_id);
-    if( !$blog ) 
+    if( !$blog )
       return new WP_Error( 'not-found', null, array( 'status' => 404 ) );
 
     $user = $this->get_user_by($user_id);
     if ( !$user )
       return new WP_Error( 'not-found', null, array( 'status' => 404 ) );
- 
-		if ( $this->wp_user->ID == $user_id || $this->ent_user->id == $user_id )
-      update_roles_wp_user_from_ent_user( $this->wp_user, $this->ent_user ); 
 
-    if ( !is_user_member_of_blog($user->ID, $blog_id) ) 
+		if ( $this->wp_user->ID == $user_id || $this->ent_user->id == $user_id )
+      update_roles_wp_user_from_ent_user( $this->wp_user, $this->ent_user );
+
+    if ( !is_user_member_of_blog($user->ID, $blog_id) )
       return new WP_Error( 'not-found', null, array( 'status' => 404 ) );
 
     if ( ! has_admin_right( $this->ent_user, $this->wp_user->ID, $blog ) ) {
@@ -621,21 +621,21 @@ class Users_Controller extends Laclasse_Controller {
 
     if( !$this->is_user_logged_in( $request ) )
       return false;
-    
+
     $user_id = $this->get_id_from_request( $request );
     $blog_id = $request->get_url_params()['blog_id'];
-  
+
     $blog = get_blog($blog_id);
-    if( !$blog ) 
+    if( !$blog )
       return new WP_Error( 'not-found', null, array( 'status' => 404 ) );
-  
+
     $user = $this->get_user_by($user_id);
     if ( !$user )
       return new WP_Error( 'not-found', null, array( 'status' => 404 ) );
 
-    if ( !is_user_member_of_blog($user->ID, $blog_id) ) 
+    if ( !is_user_member_of_blog($user->ID, $blog_id) )
       return new WP_Error( 'not-found', null, array( 'status' => 404 ) );
-    if ( !has_admin_right( $this->ent_user, $this->wp_user->ID, $blog ) 
+    if ( !has_admin_right( $this->ent_user, $this->wp_user->ID, $blog )
       && ( $this->wp_user->ID != $user->ID && $this->ent_user->id != $user_id ) )
       return new WP_Error( 'forbidden', null, array( 'status' => 403 ) );
 
@@ -650,15 +650,15 @@ class Users_Controller extends Laclasse_Controller {
     $is_logged_in = $this->is_user_logged_in( $request );
     if( !$is_logged_in )
       return false;
-      
+
     return is_super_admin($this->wp_user->ID);
   }
 
   /**
-   * This method lists or delete all users 
+   * This method lists or delete all users
    *
-   * @param [type] $request
-   * @return void
+   * @param WP_REST_Request $request
+   * @return WP_REST_Response
    */
   public function get_cleanup( $request ) {
     $method = $request->get_method();
@@ -666,11 +666,12 @@ class Users_Controller extends Laclasse_Controller {
 
     // Get Wordpress users
     global $wpdb;
+    $db_prefix = $wpdb->get_blog_prefix(0);
     $sqlQuery = "SELECT user_id,meta1.meta_value as uid_ENT "
-    . "FROM {$wpdb->prefix}usermeta meta1 "
+    . "FROM {$db_prefix}usermeta meta1 "
     . "JOIN ("
     . "SELECT meta_value, COUNT(meta_key) as uid_count "
-    . "FROM {$wpdb->prefix}usermeta "
+    . "FROM {$db_prefix}usermeta "
     . "WHERE meta_key = 'uid_ENT' "
     . "GROUP BY meta_value"
     . ") uidENT "
@@ -679,7 +680,9 @@ class Users_Controller extends Laclasse_Controller {
     . "AND uidENT.meta_value = meta1.meta_value;";
 
     $results = $wpdb->get_results($sqlQuery);
-
+    if ($wpdb->last_error) {
+      return new WP_REST_Response( 'Error while fetching Wordpress users' , 500 );
+    }
     // Get ENT users and index them
     $indexedUsers = array();
     $batchEntIds = array();
@@ -700,11 +703,16 @@ class Users_Controller extends Laclasse_Controller {
       $keys = array_map( function( $user ) { return $user->id; }, $entUsers );
       $indexedUsers += array_combine($keys, $entUsers);
     }
-    
+
     // Récupération des utilisateurs don't l'id ent n'existe plus
-    $deadUsers = array_filter( $results, function( $user ) use ($indexedUsers) { 
+    $deadUsers = array_filter( $results, function( $user ) use ($indexedUsers) {
       return !array_key_exists($user->uid_ENT, $indexedUsers);
     } );
+
+    // Return early if no user were found
+    if(count($deadUsers) === 0) {
+      return new WP_REST_Response( 'No Wordpress user that aren\'t in laclasse' , 404 );
+    }
 
     if($willDelete == false) {
       $users = get_users( array( 'blog_id' => 0,'include' => array_map( function( $user ) { return $user->user_id; }, $deadUsers ) ));
@@ -754,7 +762,7 @@ class Users_Controller extends Laclasse_Controller {
       $data->user_id = $wp_id;
       if( isset($user) && count($user->roles) )
 			  $data->role = $user->roles[0];
-		
+
       $data->forced = ($ent_user != null && is_forced_blog($blog, $ent_user));
 			array_push($blogs, $data);
     }
@@ -798,10 +806,10 @@ class Users_Controller extends Laclasse_Controller {
     $params = $request->get_params();
     if( ( $user->ID == $this->wp_user->ID || has_admin_right($this->ent_user, $this->wp_user->ID) ) &&
         ( !array_key_exists('expand',$params) || ( array_key_exists('expand',$params) && filter_var( $params['expand'], FILTER_VALIDATE_BOOLEAN ) ) )
-    ) 
+    )
       $response->blogs = $this->get_user_blogs($response->id); //TODO See if there's a way to reduce sql querues
-    
+
     return $response;
   }
-  
+
 }
