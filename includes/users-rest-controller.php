@@ -722,7 +722,7 @@ class Users_Controller extends Laclasse_Controller {
    * @return mixed the json representation of users
    */
   private function ask_for_ent_users($entIds = array()) {
-    $get = array('id' => $entIds, 'expand' => 'false');
+    $get = array('id' => $entIds);
     $query = preg_replace('/(%5B)\d+(%5D=)/i', '$1$2', http_build_query($get));
 
     $url = ANNUAIRE_URL . "api/users?" . $query;
