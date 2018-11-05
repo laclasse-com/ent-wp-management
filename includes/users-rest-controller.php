@@ -667,17 +667,9 @@ class Users_Controller extends Laclasse_Controller {
     // Get Wordpress users
     global $wpdb;
     $db_prefix = $wpdb->get_blog_prefix(0);
-    $sqlQuery = "SELECT user_id,meta1.meta_value as uid_ENT "
-    . "FROM {$db_prefix}usermeta meta1 "
-    . "JOIN ("
-    . "SELECT meta_value, COUNT(meta_key) as uid_count "
+    $sqlQuery = "SELECT user_id, meta_value as uid_ENT "
     . "FROM {$db_prefix}usermeta "
-    . "WHERE meta_key = 'uid_ENT' "
-    . "GROUP BY meta_value"
-    . ") uidENT "
-    . "WHERE meta1.meta_key = 'uid_ENT' "
-    . "AND uid_count = 1 "
-    . "AND uidENT.meta_value = meta1.meta_value;";
+    . "WHERE meta1.meta_key = 'uid_ENT';";
 
     $results = $wpdb->get_results($sqlQuery);
     if ($wpdb->last_error) {
