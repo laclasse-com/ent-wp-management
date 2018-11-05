@@ -680,7 +680,7 @@ class Users_Controller extends Laclasse_Controller {
     $batchEntIds = array();
     foreach ($results as $user) {
       $batchEntIds[] = $user->uid_ENT;
-      if(count($batchEntIds) === 100) {
+      if(count($batchEntIds) === 200) {
         $entUsers = $this->ask_for_ent_users($batchEntIds);
         $keys = array_merge($keys, array_map( function( $user ) { return $user->id; }, $entUsers ));
         $batchEntIds = array();
