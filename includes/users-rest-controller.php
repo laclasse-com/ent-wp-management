@@ -706,12 +706,18 @@ class Users_Controller extends Laclasse_Controller {
     }
 
     if($willDelete == false) {
-      $users = get_users( array( 'blog_id' => 0,'include' => array_map( function( $user ) { return $user->user_id; }, $deadUsers ) ));
-      $data = array_map( function ( $user ) use ( $request ) { return $this->prepare_user_for_response( $user, $request ); }, $users);
-      return new WP_REST_Response( $data , 200 );
+      return new WP_REST_Response( $deadUsers , 200 );
     }
 
-    return  new WP_Error( 'not implemented', null, array( 'status' => 404 ) );
+    // Actally delete the users
+    $totalUsers = count($deadUsers);
+    $deletedCount = 0;
+    foreach ($deadUsers as $user) {
+      if( delete_user( $user->user_id ) )
+        $deletedCount++;
+    }
+
+    return  new WP_REST_Response( "$deletedCount utilisateurs ont été supprimé sur $totalUsers tentatives", 200 );
   }
 
   /**
