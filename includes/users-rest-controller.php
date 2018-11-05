@@ -669,7 +669,7 @@ class Users_Controller extends Laclasse_Controller {
     $db_prefix = $wpdb->get_blog_prefix(0);
     $sqlQuery = "SELECT user_id, meta_value as uid_ENT "
     . "FROM {$db_prefix}usermeta "
-    . "WHERE meta1.meta_key = 'uid_ENT';";
+    . "WHERE meta_key = 'uid_ENT';";
 
     $results = $wpdb->get_results($sqlQuery);
     if ($wpdb->last_error) {
