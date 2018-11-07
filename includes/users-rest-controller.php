@@ -291,50 +291,27 @@ class Users_Controller extends Laclasse_Controller {
     if ($json instanceof WP_Error )
       return new WP_REST_Response(null, 400);
 
-    if( !isset($json->ent_id) && ( !isset($json->login)
-      || !isset($json->display_name) || !isset($json->login) || !isset($json->display_name) || !isset($json->email) ) )
+    if( !isset($json->ent_id) )
       return new WP_REST_Response(null, 400);
 
     $data = [];
-    if( isset($json->ent_id) && !isset($json->login) ) {
-      // Users are created if needed using their ent_id
-      if( is_array($json->ent_id) ) {
-        foreach ( $json->ent_id as $user_ent_id ) {
-          $user_ent = get_ent_user( $user_ent_id );
-          if ($user_ent != null) {
-            $user_wp = sync_ent_user_to_wp_user( $user_ent );
-            array_push( $data, $this->prepare_user_for_response( $user_wp, $request ) );
-          }
-        }
-      } else {
-        $user_ent = get_ent_user( $json->ent_id );
-        if  ($user_ent == null )
-          return new WP_REST_Response( null, 404 );
-        else {
+    // Users are created if needed using their ent_id
+    if( is_array($json->ent_id) ) {
+      foreach ( $json->ent_id as $user_ent_id ) {
+        $user_ent = get_ent_user( $user_ent_id );
+        if ($user_ent != null) {
           $user_wp = sync_ent_user_to_wp_user( $user_ent );
-          $data = $this->prepare_user_for_response( $user_wp, $request );
+          array_push( $data, $this->prepare_user_for_response( $user_wp, $request ) );
         }
       }
     } else {
-      $password = substr(md5(microtime()), rand(0,26), 20);
-      $user_id = wp_create_user($json->login, $password);
-      // remove the user for blog 1
-      remove_user_from_blog($user_id, 1);
-      // remove automatic role create on the current blog
-      remove_user_from_blog($user_id, get_current_blog_id());
-
-      $user_data = array('ID' => $user_id);
-      $user_data['display_name'] = $json->display_name;
-      $user_data['user_email'] = $json->email;
-
-      update_user_meta($user_id, 'uid_ENT', $json->ent_id);
-      if (isset($json->ent_profile))
-        update_user_meta($user_id, 'profile_ENT', $json->ent_profile);
-
-      wp_update_user($user_data);
-
-      $user_wp = $this->get_user_by( $user_id );
-      $data = $this->prepare_user_for_response( $user_wp );
+      $user_ent = get_ent_user( $json->ent_id );
+      if  ($user_ent == null )
+        return new WP_REST_Response( null, 404 );
+      else {
+        $user_wp = sync_ent_user_to_wp_user( $user_ent );
+        $data = $this->prepare_user_for_response( $user_wp, $request );
+      }
     }
     return new WP_REST_Response( $data, 200 );
   }
@@ -804,9 +781,8 @@ class Users_Controller extends Laclasse_Controller {
     if( ( $user->ID == $this->wp_user->ID || has_admin_right($this->ent_user, $this->wp_user->ID) ) &&
         ( !array_key_exists('expand',$params) || ( array_key_exists('expand',$params) && filter_var( $params['expand'], FILTER_VALIDATE_BOOLEAN ) ) )
     )
-      $response->blogs = $this->get_user_blogs($response->id); //TODO See if there's a way to reduce sql querues
+    $response->blogs = $this->get_user_blogs($response->id); //TODO See if there's a way to reduce sql querues
 
     return $response;
   }
-
 }

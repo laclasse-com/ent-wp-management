@@ -223,31 +223,11 @@ function filter_user($user, $params) {
 }
 
 // Get the WP user corresponding to the given ENT user data
+// The ent_id is now used as login since it is unique contrary to login
+// which are recycled
 // Return: the WP user or null if not found
 function get_wp_user_from_ent_user($userENT) {
-	// search if a user exists using its ENT id
-	$users_search = get_users(array('meta_key' => 'uid_ENT', 'meta_value' => $userENT->id));
-	if (count($users_search) > 0)
-		return $users_search[0];
-
-	// search the user by its login
-	$userWp = get_user_by('login', $userENT->login);
-	if ($userWp != false)
-		return $userWp;
-	
-	// search the user by its email
-	$user_email = null;
-	foreach($userENT->emails as $email) {
-		if (!isset($user_email) || $email->primary)
-			$user_email = $email->address;
-	}
-	if ($user_email != null) {
-		$userWp = get_user_by('email', $user_email);
-		if ($userWp != false)
-			return $userWp;
-	}
-	// not found
-	return null;
+	return  get_user_by('login', $userENT->id);
 }
 
 // Create a WP user from the ENT user data
@@ -258,15 +238,13 @@ function create_wp_user_from_ent_user($userENT) {
 		if (!isset($user_email) || $email->primary)
 			$user_email = $email->address;
 	}
-	if (!isset($user_email))
-		$user_email = $userENT->id . '@noemail.lan';
 	$password = substr(md5(microtime()), rand(0,26), 20);
-	$user_id = wp_create_user($userENT->login, $password, $user_email);
+	$user_id = wp_create_user($userENT->id, $password, $user_email);
 	// remove the user for blog 1
 	remove_user_from_blog($user_id, 1);
 	// remove automatic role create on the current blog
 	remove_user_from_blog($user_id, get_current_blog_id());
-	
+
 	return get_user_by('id', $user_id);
 }
 
@@ -328,18 +306,6 @@ function get_user_best_profile($userENT) {
 // Update the WP user data with the given ENT ENT user data
 function update_wp_user_from_ent_user($userWp, $userENT, $sync_role = true) {
 
-	$profiles_order = array(
-		'ADM' => 9,
-		'ACA' => 8,
-		'DIR' => 7,
-		'DOC' => 6,
-		'ENS' => 5,
-		'ETA' => 4,
-		'EVS' => 3,
-		'ELV' => 2,
-		'TUT' => 1
-	);
-
 	if ($userENT->super_admin && !is_super_admin($userWp->ID))
 		grant_super_admin($userWp->ID);
 	else if (!$userENT->super_admin && is_super_admin($userWp->ID))
@@ -352,19 +318,23 @@ function update_wp_user_from_ent_user($userWp, $userENT, $sync_role = true) {
 	if ($profile != null)
 		update_user_meta($userWp->ID, 'profile_ENT', $profile);
 
-	$user_email = $userENT->id . '@noemail.lan';
+	$user_email;
 	foreach($userENT->emails as $email) {
 		if (!isset($user_email) || $email->primary)
 			$user_email = $email->address;
 	}
 
-	wp_update_user(array(
+	$user_data = array(
 		'ID' => $userWp->ID,
-		'first_name' => $userENT->firstname, 
+		'first_name' => $userENT->firstname,
 		'last_name' => $userENT->lastname,
 		'display_name' => $userENT->lastname.' '.$userENT->firstname,
-		'user_email' => $user_email
-	));
+	);
+
+	if ( isset($user_email) )
+		$user_data['user_email'] = $user_email;
+
+	wp_update_user($user_data);
 	if ($sync_role)
 		update_roles_wp_user_from_ent_user($userWp, $userENT);
 }
@@ -377,7 +347,7 @@ function sync_ent_user_to_wp_user($userENT, $sync_role = true) {
 
 	if ($userWp == null)
 		$userWp = create_wp_user_from_ent_user($userENT);
-	
+
 	update_wp_user_from_ent_user($userWp, $userENT, $sync_role);
 	return $userWp;
 }
@@ -417,7 +387,7 @@ function get_special_delete_user_id() {
 	$user_id = '';
 	$userWp = get_user_by('login', 'wp_deleted_user');
 	if ($userWp == false) {
-		$password= substr(md5(microtime()), rand(0,26), 20);		
+		$password= substr(md5(microtime()), rand(0,26), 20);
 		$user_id = wp_create_user('wp_deleted_user', $password);
 	}
 	else {
