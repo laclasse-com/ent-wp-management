@@ -66,7 +66,7 @@ function get_user_blog_default_role($userENT, $blog) {
         if(has_profile($userENT, $blog->structure_id, ['DIR','ADM']))
             return 'administrator';
         if(has_profile($userENT, $blog->structure_id, ['ENS','ETA','DOC','EVS']))
-            return 'editor';
+            return 'author';
         if(has_profile($userENT, $blog->structure_id, ['ELV','TUT']))
             return 'subscriber';
     }
@@ -165,7 +165,7 @@ function has_admin_right($userENT, $user_id, $blog = null) {
         // check WP rights on the blog
         if (isset($blog->id) && get_user_blog_role($user_id, $blog->id) == 'administrator')
             return true;
-    }    
+    }
     return false;
 }
 
@@ -225,7 +225,7 @@ function get_user_blog_role($user_id, $blog_id) {
 
 	$role = null;
     $user = get_userdata($user_id);
- 
+
     if ($user && $user->roles && count($user->roles) > 0) {
 		$role = $user->roles[0];
     }

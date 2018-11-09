@@ -24,3 +24,5 @@ define("ANNUAIRE_USER", "BLOGS");
 // Directory API password
 define("ANNUAIRE_PASS", "12345678533643246564254");
 
+// Plugin that force users to log in
+define('WP_FORCE_LOGIN', 'wp-force-login/wp-force-login.php');

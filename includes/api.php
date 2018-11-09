@@ -31,7 +31,7 @@ function get_blog_options($blogId, $options) {
 function blog_data($blogWp) {
 	$opts = Array('admin_email', 'siteurl', 'name', 'blogname',
 		'blogdescription', 'blogtype', 'etablissement_ENT', 'display_name',
-		'type_de_blog', 'group_id_ENT');
+		'type_de_blog', 'group_id_ENT','student-privacy','default_comment_status', 'blog_public');
 
 	$result = get_blog_options($blogWp->blog_id, $opts);
 	foreach($blogWp as $k => $v) { $result->$k = $v; }
@@ -80,9 +80,18 @@ function blog_data($blogWp) {
 		unset($result->group_id);
 	}
 
+	$result->student_privacy = isset( $result->{'student-privacy'} ) && $result->{'student-privacy'};
+	unset( $result->{'student-privacy'} );
+	$result->comments_enabled = $result->default_comment_status == "open";
+	unset($result->default_comment_status);
+	$result->discourage_index = $result->blog_public == 1;
+	unset($result->blog_public);
+
 	switch_to_blog($result->id);
 	$result->quota_max = intval(get_space_allowed() * 1024 * 1024);
 	$result->quota_used = intval(get_space_used() * 1024 * 1024);
+	if(function_exists('is_plugin_active'))
+		$result->force_login = is_plugin_active(WP_FORCE_LOGIN);
 	restore_current_blog();
 
 	return $result;
