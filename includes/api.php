@@ -344,8 +344,20 @@ function update_wp_user_from_ent_user($userWp, $userENT, $sync_role = true) {
 		$user_data['user_email'] = $user_email;
 
 	wp_update_user($user_data);
-	if ($sync_role)
+	if ($sync_role) {
+		// Updates role for current blog if it is public
+		$current_blog_id = get_current_blog_id();
+		$current_blog_type = get_blog_option( $current_blog_id, 'type_de_blog' );
+		if( $current_blog_id != 1 && ( $current_blog_type == false || $current_blog_type == 'ENV' ) ) {
+			$default_role = $userENT->super_admin ? 'administrator' : 'subscriber';
+			$current_role = get_user_blog_role( $userWp->ID, $current_blog_id );
+			// if the default role is better than the current upgrade/create it, this works based on alphabetical order
+			if ( $default_role != null && ($current_role == null || $default_role < $current_role))
+				add_user_to_blog($blog->id, $userWp->ID, $default_role);
+		}
+		// Updates roles based on the user's rights in laclasse.com
 		update_roles_wp_user_from_ent_user($userWp, $userENT);
+	}
 }
 
 // Create a WP user from the ENT user data if needed
