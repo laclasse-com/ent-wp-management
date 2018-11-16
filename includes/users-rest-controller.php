@@ -48,11 +48,6 @@ class Users_Controller extends Laclasse_Controller {
         'callback'        => array( $this, 'get_cleanup' ),
         'permission_callback' => array( $this, 'get_is_super_admin_permissions_check' ),
       ),
-      array(
-        'methods'         => WP_REST_Server::DELETABLE ,
-        'callback'        => array( $this, 'get_cleanup' ),
-        'permission_callback' => array( $this, 'get_is_super_admin_permissions_check' ),
-      ),
       )
     );
 
@@ -638,9 +633,6 @@ class Users_Controller extends Laclasse_Controller {
    * @return WP_REST_Response
    */
   public function get_cleanup( $request ) {
-    $method = $request->get_method();
-    $willDelete = $method === WP_REST_Server::DELETABLE;
-
     // Get Wordpress users
     global $wpdb;
     $db_prefix = $wpdb->get_blog_prefix(0);
@@ -677,24 +669,13 @@ class Users_Controller extends Laclasse_Controller {
       return $index === false;
     } );
 
+    $deadUsers = array_values($deadUsers);
     // Return early if no user were found
     if(count($deadUsers) === 0) {
       return new WP_REST_Response( 'No Wordpress user that aren\'t in laclasse' , 404 );
     }
 
-    if($willDelete == false) {
-      return new WP_REST_Response( $deadUsers , 200 );
-    }
-
-    // Actally delete the users
-    $totalUsers = count($deadUsers);
-    $deletedCount = 0;
-    foreach ($deadUsers as $user) {
-      if( delete_user( $user->user_id ) )
-        $deletedCount++;
-    }
-
-    return  new WP_REST_Response( "$deletedCount utilisateurs ont été supprimé sur $totalUsers tentatives", 200 );
+    return new WP_REST_Response( $deadUsers , 200 );
   }
 
   /**
