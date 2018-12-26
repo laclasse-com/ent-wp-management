@@ -12,12 +12,12 @@ class Laclasse_Controller extends WP_REST_Controller {
    * @var mixed
    */
   protected $ent_user;
-  
+
   /**
    * Tells if permissions were checked, this variable exists
    * because permission_callbacks can be called multiple times
    * for one API call
-   * 
+   *
    * If permissions were checked, you don't need to check it
    *
    * @var boolean
@@ -32,7 +32,7 @@ class Laclasse_Controller extends WP_REST_Controller {
   }
 
   /**
-  * Retrieves the Wordpress user if it exists 
+  * Retrieves the Wordpress user if it exists
   *
   * @param integer|string $some_id Can be the user's Wordpress ID or ent ID
   * @param integer|string $blog_id
@@ -41,38 +41,38 @@ class Laclasse_Controller extends WP_REST_Controller {
   public function get_user_by($some_id, $blog_id = '') {
     if( Laclasse_Controller::valid_number($some_id) )
       return reset( get_users( array( 'include' => array($some_id), 'blog_id' => $blog_id ) ) );
-    return reset( get_users( array( 'meta_key' => 'uid_ENT', 'meta_value' => $some_id, 'blog_id' => $blog_id ) ) );
+    return reset( get_users( array( 'login' => $some_id, 'blog_id' => $blog_id ) ) );
   }
-  
+
   /**
    * Retrieves the Wordpress user from the ENT using the cookie
    *
    * @param WP_REST_Request $request Full data about the request.
    */
   public function get_wp_user_from_ent($request) {
-    if (!array_key_exists("LACLASSE_AUTH", $_COOKIE)) 
+    if (!array_key_exists("LACLASSE_AUTH", $_COOKIE))
       return null;
-    
-  
+
+
     // get the current session
     $error; $status;
     $session = get_http(ANNUAIRE_URL . "api/sessions/" . $_COOKIE["LACLASSE_AUTH"], $error, $status);
-  
-    if ($status != 200) 
+
+    if ($status != 200)
       return null;
-    
-  
+
+
     $session = json_decode($session);
-  
+
     // get the user of the current session
     $this->ent_user = get_ent_user($session->user);
-    if ( !$this->ent_user ) 
-      return null;  
-  
+    if ( !$this->ent_user )
+      return null;
+
     // get/create and update the corresponding WP user
     $this->wp_user = sync_ent_user_to_wp_user($this->ent_user, false);
   }
-  
+
   /**
   * Check if a user is logged in
   *
@@ -133,7 +133,7 @@ class Laclasse_Controller extends WP_REST_Controller {
     return new WP_Error( 'bad-request', __( 'message', 'text-domain'), array( 'status' => 400 ) );
   }
 
-    
+
   protected function get_id_from_request( $request ) {
     $url_params = $request->get_url_params();
     if( array_key_exists( 'id', $url_params ) )
@@ -143,11 +143,11 @@ class Laclasse_Controller extends WP_REST_Controller {
 
   /**
    * Determine if the value is a integer or a string that can be converted to an integer
-   * 
+   *
    * @param integer|string $value
    * @return boolean valid number
    */
   public static function valid_number($value) {
     return is_int($value) || ctype_digit($value);
-  }	
+  }
 }

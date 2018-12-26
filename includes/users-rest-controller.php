@@ -189,9 +189,7 @@ class Users_Controller extends Laclasse_Controller {
       $data[] = $this->prepare_response_for_collection( $userData );
     }
     if( array_key_exists('number', $query_params) )  {
-      unset($query_params['number']);
       $total = $userQuery->get_total();
-      $sort_col = $query_params['orderby'];
       $data = (object) [
         'data' => $data,
         'page' => array_key_exists('paged', $query_params) ? intval($query_params['paged']) : 1,

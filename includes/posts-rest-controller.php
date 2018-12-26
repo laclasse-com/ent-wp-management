@@ -152,7 +152,7 @@ class Posts_Controller extends Laclasse_Controller
      * Check if a given request has access to get post
      * /!\ If seen_by is present in URL parameters
      * it can change the wp_user or ent_user in order to find what would be seen by seen_by's user
-     * 
+     *
      *
      * @param WP_REST_Request $request Full data about the request.
      * @return WP_Error|bool
@@ -211,7 +211,7 @@ class Posts_Controller extends Laclasse_Controller
      */
     public function prepare_post_for_response($post, $request, $blog)
     {
-        $result = (object) $post;
+        $result = new stdClass();
         if (isset($blog->id)) {
             $result->blog_id = $blog->id;
             $result->blog_name = $blog->name;
@@ -221,14 +221,23 @@ class Posts_Controller extends Laclasse_Controller
             $result->blog_name = $blog->blogname;
             $result->blog_domain = $blog->domain;
         }
+        $keys = array(
+            'ID', 'post_date','post_title','post_status','guid','post_type',
+            'comment_status','ping_status','post_modified',
+        );
+        foreach($keys as $value) {
+            $result->$value = $post->$value;
+        }
+
+        $result->post_link = get_permalink($post->ID);
         $result->post_text = html_entity_decode(strip_shortcodes(wp_strip_all_tags($post->post_content)));
         if(has_post_thumbnail($post->ID)) {
             $result->post_thumbnail = wp_get_attachment_image_url(get_post_thumbnail_id($post->ID),'medium');
         }
         if(!empty($post->post_content)) {
             $dom = new DOMDocument();
-            // Use internal errors because loadHTML doesn't support fully HTML5 tags or syntax 
-            // Nothing is done there so everything is discarded here 
+            // Use internal errors because loadHTML doesn't support fully HTML5 tags or syntax
+            // Nothing is done there so everything is discarded here
             $old = libxml_use_internal_errors(true);
             // By default loadHTML uses ISO-8859-1 so we fix that using XML Declaration
             $dom->loadHTML('<?xml encoding="utf-8" ?>' . $post->post_content);
@@ -236,7 +245,7 @@ class Posts_Controller extends Laclasse_Controller
             // Finds images based on <img> tags, this prioritize images with a specified height and width
             // if none were found it takes the first image with unspecified height and/or width
             foreach( $dom->getElementsByTagName( "img" ) as $image ) {
-                if($image->hasAttribute('width') && $image->hasAttribute('height') 
+                if($image->hasAttribute('width') && $image->hasAttribute('height')
                     && $image->getAttribute('width') >= 100 && $image->getAttribute('height') >= 100) {
                     $result->post_image = $image->getAttribute("src");
                     break;

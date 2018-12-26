@@ -324,12 +324,14 @@ class Blogs_Controller extends Laclasse_Controller {
     }
 
     $query_params['blog_id'] = $blog_id;
-    $blog_users = get_users($query_params);
+    $query_params['count_total'] = true;
+
+    $userQuery = (new WP_User_Query($query_params));
+    $blog_users = $userQuery->get_results();
 
 		$data = [];
 		foreach ($blog_users as $blog_user) {
 			$user = new stdClass();
-			// $user->id = "$blog_user->ID-$blog_id";
 			$user->user_id = $blog_user->ID;
 			$user->blog_id = $blog_id;
 			if (isset($blog_user->roles) && count($blog_user->roles) > 0)
@@ -338,9 +340,7 @@ class Blogs_Controller extends Laclasse_Controller {
 		}
 
     if( array_key_exists('number', $query_params) )  {
-      unset($query_params['number']);
-      $query_params['count_total'] = true;
-      $total = (new WP_User_Query($query_params))->get_total();
+      $total = $userQuery->get_total();
       $data = (object) [
         'data' => $data,
         'page' => array_key_exists('paged', $query_params) ? intval($query_params['paged']) : 1,
