@@ -180,8 +180,9 @@ class Users_Controller extends Laclasse_Controller {
       unset( $query_params['ent_id'] );
     }
 
-    $users = get_users($query_params);
-
+    $query_params['count_total'] = true;
+    $userQuery = new WP_User_Query($query_params);
+    $users = $userQuery->get_results();
     $data = array();
     foreach( $users as $user ) {
       $userData = $this->prepare_user_for_response( $user, $request );
@@ -189,8 +190,7 @@ class Users_Controller extends Laclasse_Controller {
     }
     if( array_key_exists('number', $query_params) )  {
       unset($query_params['number']);
-      $query_params['count_total'] = true;
-      $total = (new WP_User_Query($query_params))->get_total();
+      $total = $userQuery->get_total();
       $sort_col = $query_params['orderby'];
       $data = (object) [
         'data' => $data,
