@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------------
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	
+
 	hooks et filtres généraux
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
@@ -45,7 +45,7 @@ function user_role_editor_settings() {
     // Voir si user_role_editor est installé
     if (function_exists('ure_init') || function_exists('ure_install')) {
         // Voir quelle version est installée
-        define("URE_ENABLE_SIMPLE_ADMIN_FOR_MULTISITE", 1); 
+        define("URE_ENABLE_SIMPLE_ADMIN_FOR_MULTISITE", 1);
         define('URE_SHOW_ADMIN_ROLE', 0);
     } // user role editor n'est pas installé
 }
@@ -83,28 +83,8 @@ function remove_frame_options_header() {
 }
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	
-	l i s t e   d e s   u t i l i s a t e u r s 
 
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
-
-/*************************************************************************************
-fonction getUserCols : modifier l'entête des colonnes de la liste des utilisateurs
-					   pour ajouter des données issues de l'ENT.
-filter : wpmu_users_columns
-*************************************************************************************/
-function getUserCols($userCols){
-	$customCols = array(
-		'profile_ENT'  		=> __( 'profil ENT' ),
-		'group_id_ENT'  		=> __( 'classe'),
-		'etablissement_ENT' => __( '&eacute;tablissement')
-	);
-	return array_merge($userCols, $customCols);
-}
-
-/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	
-	l i s t e   d e s   s i t e s 
+	l i s t e   d e s   s i t e s
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
@@ -120,7 +100,7 @@ function formatTypeBlog($pBlogID, $pTypeBlog) {
 				$LibTypeBlog = "<strong>Blog principal</strong>";
 			else
 				$LibTypeBlog = "inconnu...";
-			$color = "red";  
+			$color = "red";
 			break;
 	}
 	return "<span style='color:".$color.";'>".$LibTypeBlog."</span>";
@@ -167,7 +147,7 @@ function getCustomExtraInfoBlog($ignore, $user_blog) {
  * Adds ability to search from fields of table or its metadata table
  * (By default Wordpress uses AND)
  *
- * @param WP_User_Query|WP_Site_Query $q 
+ * @param WP_User_Query|WP_Site_Query $q
  * @return void
  */
 function query_meta_OR_search( $q ) {
@@ -178,7 +158,7 @@ function query_meta_OR_search( $q ) {
 }
 
 /**
- * Transform WP_Error responses to WP_REST_Response in order 
+ * Transform WP_Error responses to WP_REST_Response in order
  * to remove extraneous data, only status code needs to be returned
  *
  * @param WP_Error|WP_REST_Response $response
@@ -190,7 +170,7 @@ function laclasse_rest_request_after_callbacks( $response ) {
 	  if ( is_array( $error_data ) && isset( $error_data['status'] ) )
 		$status = $error_data['status'];
 	  else
-		$status = 500;  
+		$status = 500;
 	  return new WP_REST_Response(null,$status);
 	}
 	return $response;

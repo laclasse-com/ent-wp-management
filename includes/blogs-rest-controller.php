@@ -116,126 +116,136 @@ class Blogs_Controller extends Laclasse_Controller {
   * @return WP_Error|WP_REST_Response
   */
   public function get_blogs( $request ) {
-    // TODO Better use of WP_Site_Query or get_sites in order to not get all the blogs in one sitting
     $query_params = $request->get_query_params();
-    //Exclude first blog of network
-    $query_params['site__not_in'] = [ 1 ];
-    $query_params['number'] = 0x5f3759df;
 
+    // Transforms query parameters to have the same use as the Laclasse's Directory API
     if ( array_key_exists('id',$query_params) ) {
-      $query_params['site__in'] = $query_params['id'];
+      $query_params['blog_id'] = $query_params['id'];
       unset($query_params['id']);
     }
 
     if ( array_key_exists('limit',$query_params) ) {
-      $limit = $query_params['limit'];
+      $query_params['number'] = $query_params['limit'];
       unset($query_params['limit']);
     }
     if ( array_key_exists('page',$query_params) ) {
       $page = $query_params['page'];
+      if((!is_int($page) && !ctype_digit($page)) || (int)$page < 1)
+        $page = 1;
+      $query_params['paged'] = $page;
       unset($query_params['page']);
     }
-    if ( array_key_exists('sort_dir',$query_params)
-      && ( strcasecmp($query_params['sort_dir'], 'ASC') || strcasecmp($query_params['sort_dir'], 'DESC') ) ) {
-      $sort_dir = $query_params['sort_dir'];
+
+    if ( array_key_exists('sort_dir',$query_params) ) {
+      $query_params['order'] = $query_params['sort_dir'];
       unset($query_params['sort_dir']);
     }
     if ( array_key_exists('sort_col',$query_params) ) {
-      $sort_col = $query_params['sort_col'];
+      $query_params['orderby'] = $query_params['sort_col'];
       unset($query_params['sort_col']);
     }
 
-    $blogs = get_sites( $query_params );
-    $blogs = array_map( function( $blog ) { return blog_data( $blog ); }, $blogs );
-		$seenBy = null;
-		$seenByWp = null;
-		if (isset($query_params['seen_by'])) {
-			if ($query_params['seen_by'] == $this->ent_user->id) {
-				$seenBy = $this->ent_user;
-				$seenByWp = $this->wp_user;
-			} else {
-				$seenBy = get_ent_user($query_params['seen_by']);
-				if ($seenBy != null)
-					$seenByWp = get_wp_user_from_ent_user($seenBy);
-			}
-		}
-
-    // TODO Replace if by a more general statement
-    if( isset($query_params['type']) ) {
-      $query['type'] =  $query_params['type'];
-      unset($query_params['type']);
-    }
-    if(isset($query_params['structure_id'])) {
-      $query['structure_id'] =  $query_params['structure_id'];
-      unset($query_params['structure_id']);
-    }
-    if(isset($query_params['group_id'])) {
-      $query['group_id'] =  $query_params['group_id'];
-      unset($query_params['group_id']);
-    }
-
     if (isset($query_params['query'])) {
-      $queryRegex['name'] = $query_params['query'];
-      $queryRegex['description'] = $query_params['query'];
-      $queryRegex['domain'] = $query_params['query'];
+      $query_params['search'] = $query_params['query'];
       unset($query_params['query']);
     }
 
-    $needs_admin = ( isset( $query_params['role'] ) && $query_params['role'] == 'administrator' ) ? true : false;
-
-		$data = [];
-		foreach ($blogs as $blog) {
-      // This does an exact filter
-			if ( isset($query) && !filter_blog($blog, $query) )
-				continue;
-			if ( isset($queryRegex) && !filter_blog_regex($blog, $queryRegex) )
-				continue;
-			// if seen_by is set, filter by what the given ENT user can see
-      if ( ( $seenByWp != null )
-        && ( $needs_admin ? !has_admin_right( $seenBy, $seenByWp->ID, $blog ) : !has_read_right( $seenBy, $seenByWp->ID, $blog ) ) )
-				continue;
-      if ( ( $seenByWp == null ) && ( $seenBy != null )
-        && ( $needs_admin ? !has_admin_right( $seenBy, $blog ) : !has_right( $seenBy, $blog ) ) )
-				continue;
-
-      ensure_read_right( $this->ent_user, $this->wp_user->ID, $blog );
-
-			array_push($data, $blog);
+    if(isset($query_params['structure_id']) && is_array($query_params['structure_id'])) {
+      $query_params['structure__in'] = $query_params['structure_id'];
+      unset($query_params['structure_id']);
     }
 
-    // Order and paginate response
-    if(isset($sort_col)) {
-      // Available sort cols
-      if(in_array( $sort_col , ['admin_email', 'domain',
-      'registered', 'last_updated', 'public', 'archived', 'deleted', 'id',
-      'name', 'description', 'type', 'url', 'structure_id', 'group_id','quota_used','quota_max'] ) ) {
-        usort( $data, function($blog_A,$blog_B) use ($sort_col, $sort_dir) {
-          if( strcasecmp( $sort_dir, 'DESC' ) == 0 )
-            $compare = strnatcasecmp( $blog_B->$sort_col ,$blog_A->$sort_col );
-          else
-            $compare = strnatcasecmp( $blog_A->$sort_col ,$blog_B->$sort_col );
-          if( !$compare ) {
-            $compare = strnatcasecmp( $blog_A->id ,$blog_B->id );
-          }
-          return $compare;
-         } );
+    if(isset($query_params['group_id']) && is_array($query_params['group_id'])) {
+      $query_params['group__in'] = $query_params['group_id'];
+      unset($query_params['group_id']);
+    }
+
+    if (isset($query_params['seen_by'])) {
+      if ($query_params['seen_by'] == $this->ent_user->id) {
+				$query_params['ent_user'] = $this->ent_user;
+				$query_params['wp_user'] = $this->wp_user;
+			} else {
+				$seenBy = get_ent_user($query_params['seen_by']);
+				if ($seenBy != null) {
+          $query_params['ent_user'] = $seenBy;
+          $query_params['wp_user'] = get_wp_user_from_ent_user($seenBy);
+        }
+			}
+    }
+
+    // If orderby is a quota, there's a performance hit because we need all the blogs
+    if ( array_key_exists('orderby',$query_params) && in_array( $query_params['orderby'], array( 'quota_used', 'quota_max' ) ) ) {
+      $need_post_process = true;
+      $original_number = $query_params['number'];
+      $query_params['number'] = 0x5f3759df;
+    }
+
+    $query_params['return_blogs'] = true;
+
+    $blogQuery = new Ent_Blog_Meta_Query( $query_params );
+    $blogs = $blogQuery->get_results();
+
+    $need_post_process = $need_post_process && $blogQuery->get_total() > 0;
+    // Post processing done to order by quota_used, quota_max
+    if( $need_post_process ) {
+      $field = $query_params['orderby'];
+      $blog_ids = get_sites( array(
+        'fields' => 'ids',
+        'number' => $query_params['number']
+      ) );
+      $blog_sizes = array_map( function( $blog_id ) use($field) {
+        switch_to_blog( $blog_id );
+        $quota = ( $field == 'quota_used' ) ? intval( get_space_used() ) : intval( get_space_allowed() );
+        $blog = (object) [
+          'blog_id' => $blog_id,
+          $field => $quota
+        ];
+        restore_current_blog();
+        return $blog;
+      }, $blog_ids );
+
+      $order = strtoupper( $query_params['order'] ) == 'ASC' ? 1 : -1;
+      usort( $blog_sizes, function( $a, $b ) use( $order, $field ) {
+        // ordre croissant
+        if ($a->{$field} == $b->{$field}) {
+          return 0;
+        }
+        return ( ( $a->{$field} < $b->{$field} ) ? -1 : 1 ) * $order;
+      } );
+
+      $ordered_blogs = array();
+      foreach ($blog_sizes as $key => $value) {
+        $ordered_blogs[] = $value->blog_id;
       }
+
+      usort($blogs, function( $a, $b ) use( $ordered_blogs ){
+        $indexA = array_search( $a->blog_id, $ordered_blogs );
+        $indexB = array_search( $b->blog_id, $ordered_blogs );
+
+        if ( $indexA == $indexB ) {
+          return 0;
+        }
+        return ( $indexA < $indexB ) ? -1 : 1 ;
+      } );
+
+      $query_params['number'] = $original_number;
+      $offset = ( $query_params['paged'] - 1 ) * $original_number;
+      $blogs = array_splice( $blogs, $offset, $original_number );
     }
 
-    if( isset($limit) && Laclasse_Controller::valid_number($limit) && $limit > 0) {
-      if( !isset($page) || $page <= 0 || !Laclasse_Controller::valid_number($page) )
-        $page = 1;
+    foreach ($blogs as $key => $value) {
+      $blogs[$key] = $this->prepare_blog_for_response( $value, $request );
     }
 
-    if( isset($limit) && isset($page) ) {
-      $offset = ($page - 1) * $limit;
+    if ( $query_params['number'] != null )
       $data = (object) [
-        'total' => count( $data ),
-        'limit' => $limit,
-        'page' => intval( $page ),
-        'data' => array_splice( $data, $offset, $limit ),
+        'total' => $blogQuery->get_total(),
+        'limit' => intval( $query_params['number'] ),
+        'page' => intval( $blogQuery->get( 'paged' ) ),
+        'data' => $blogs,
       ];
-    }
+    else
+      $data = $blogs;
 
     return new WP_REST_Response( $data, 200 );
   }
@@ -371,7 +381,17 @@ class Blogs_Controller extends Laclasse_Controller {
 			$this->wp_user->ID, $json->type, $json->structure_id, $json->group_id,
 			$json->description);
 
-		if (isset($json->quota_max))
+    // Create Ent_Blog_Meta_Model
+    $entBlogMeta = new Ent_Blog_Meta_Model((object)[
+      'group_id' => $json->group_id,
+      'type' => $json->type,
+      'structure_id' => $json->structure_id,
+      'blog_id' => $blog_id
+    ]);
+
+    Ent_Blog_Meta_Model::wp_insert_or_update($entBlogMeta);
+
+		if (isset($json->quota_max) && $this->ent_user->super_admin )
 			update_blog_option($blog_id, 'blog_upload_space', ceil($json->quota_max / MB_IN_BYTES));
     if (isset($json->comments_enabled))
       update_blog_option($blog_id, 'default_comment_status', $json->comments_enabled ? 'open': 'closed');
@@ -412,6 +432,7 @@ class Blogs_Controller extends Laclasse_Controller {
     $blog_id = $this->get_id_from_request( $request );
     $json = $this->get_json_from_request( $request );
 
+    switch_to_blog($blog_id);
 		if (isset($json->name))
 			update_blog_option($blog_id, 'blogname', $json->name);
 		if (isset($json->description))
@@ -422,11 +443,11 @@ class Blogs_Controller extends Laclasse_Controller {
 			update_blog_status($blog_id, 'archived', $json->archived ? '1' : '0');
 		if (isset($json->deleted))
 			update_blog_status($blog_id, 'deleted', $json->deleted ? '1' : '0');
-		if (isset($json->structure_id))
+		if (property_exists($json,'structure_id'))
 			update_blog_option($blog_id, 'etablissement_ENT', $json->structure_id);
-		if (isset($json->group_id))
+		if (property_exists($json, 'group_id'))
 			update_blog_option($blog_id, 'group_id_ENT', $json->group_id);
-		if (isset($json->quota_max))
+		if (isset($json->quota_max) && $this->ent_user->super_admin)
       update_blog_option($blog_id, 'blog_upload_space', ceil($json->quota_max / (1024 * 1024)));
     if (isset($json->comments_enabled))
       update_blog_option($blog_id, 'default_comment_status', $json->comments_enabled ? 'open': 'closed');
@@ -435,15 +456,41 @@ class Blogs_Controller extends Laclasse_Controller {
     if (isset($json->student_privacy))
       update_blog_option($blog_id, 'student-privacy', $json->student_privacy ? 1 : 0);
     if (isset($json->force_login)) {
-      switch_to_blog($blog_id);
       if($json->force_login)
         activate_plugin(WP_FORCE_LOGIN);
       else
         deactivate_plugins(WP_FORCE_LOGIN,false,false);
-      restore_current_blog();
     }
+    restore_current_blog();
     if ( isset($json->users) )
       $this->merge_blog_user_change( $request, $json->users );
+
+    // Update Blog Ent Meta
+    $results = new Ent_Blog_Meta_Query(array(
+      'blog_id' => $blog_id
+    ));
+
+    if( $results->get_total() == 0 )  {
+      $blog_options = get_blog_options($blog_id, array('etablissement_ENT', 'type_de_blog', 'group_id_ENT'));
+
+      $entBlogMeta = new Ent_Blog_Meta_Model((object)[
+        'structure_id' => $blog_options->etablissement_ENT,
+        'type' => $blog_options->type_de_blog,
+        'group_id' => $blog_options->group_id_ENT,
+        'blog_id' => $blog_id
+      ]);
+
+    } else {
+      $entBlogMeta = $results->get_results()[0];
+      if (isset($json->type) && in_array($json->type, ['ETB','CLS','GRP','GPL','ENV']))
+        $entBlogMeta->type = $json->type;
+      if (property_exists($json,'structure_id'))
+        $entBlogMeta->structure_id = $json->structure_id;
+      if (property_exists($json,'group_id'))
+        $entBlogMeta->group_id = $json->group_id;
+    }
+
+    Ent_Blog_Meta_Model::wp_insert_or_update($entBlogMeta);
 
     $blog = get_site($blog_id);
     $data = $this->prepare_blog_for_response( $blog, $request);
@@ -502,7 +549,7 @@ class Blogs_Controller extends Laclasse_Controller {
           $userENT = $this->ent_user;
         }
         if( $userENT != null )
-          $blog_user->role = get_user_blog_default_role($userENT, blog_data($this->wp_site));
+          $blog_user->role = get_user_blog_default_role($userENT, $this->wp_site);
 			}
 
       if ( isset( $blog_user->role ) ) {
@@ -592,8 +639,17 @@ class Blogs_Controller extends Laclasse_Controller {
    */
   public function get_blog_from_request( $request ) {
     $blog_id = $this->get_id_from_request( $request );
-    if(!( $blog_id instanceof WP_Error ) )
-      return get_site($blog_id);
+    if(!( $blog_id instanceof WP_Error ) ) {
+      $blogQuery = new Ent_Blog_Meta_Query( array(
+        'blog_id'           => $blog_id,
+        'return_blogs'      => true,
+        'count_total'       => false,
+      ) );
+      $blogs = $blogQuery->get_results();
+      if( !empty( $blogs ) )
+        return $blogs[0];
+    }
+
     return null;
   }
 
@@ -608,7 +664,18 @@ class Blogs_Controller extends Laclasse_Controller {
     if( $this->permission_checked )
       return true;
     $this->permission_checked = true;
-    return $this->is_user_logged_in( $request );
+    $is_logged_in = $this->is_user_logged_in( $request );
+    if( !$is_logged_in ) {
+      return new WP_Error( 'forbidden', __( 'message', 'text-domain'), array( 'status' => 403 ) );
+    }
+
+    if (isset($query_params['seen_by'])) {
+      if ( $query_params['seen_by'] != $this->ent_user->id && !$this->ent_user->super_admin ) {
+        return new WP_Error( 'forbidden', __( 'message', 'text-domain'), array( 'status' => 403 ) );
+			}
+    }
+
+    return $is_logged_in;
   }
 
   /**
@@ -627,7 +694,7 @@ class Blogs_Controller extends Laclasse_Controller {
       return new WP_Error( 'unauthorized', __( 'message', 'text-domain'), array( 'status' => 401 ) );
     if( !$this->wp_site )
       return new WP_Error( 'not found', __( 'message', 'text-domain'), array( 'status' => 404 ) );
-    if( !has_read_right( $this->ent_user, $this->wp_user->id, blog_data($this->wp_site) ))
+    if( !has_read_right( $this->ent_user, $this->wp_user->id, $this->wp_site ))
       return new WP_Error( 'forbidden', __( 'message', 'text-domain'), array( 'status' => 403 ) );
     return true;
   }
@@ -673,7 +740,7 @@ class Blogs_Controller extends Laclasse_Controller {
       return new WP_Error( 'unauthorized', __( 'message', 'text-domain'), array( 'status' => 401 ) );
     if( !$this->wp_site )
       return new WP_Error( 'not found', __( 'message', 'text-domain'), array( 'status' => 404 ) );
-    if( !has_admin_right($this->ent_user, $this->wp_user->ID, blog_data($this->wp_site) ) )
+    if( !has_admin_right($this->ent_user, $this->wp_user->ID, $this->wp_site ) )
       return new WP_Error( 'forbidden', __( 'message', 'text-domain'), array( 'status' => 403 ) );
     return true;
   }
@@ -721,8 +788,7 @@ class Blogs_Controller extends Laclasse_Controller {
     if( !$this->wp_site )
       return new WP_Error( 'not found', __( 'message', 'text-domain'), array( 'status' => 404 ) );
 
-    $blog = blog_data( $this->wp_site );
-    if( !has_admin_right($this->ent_user, $this->wp_user->ID, $blog) )
+    if( !has_admin_right($this->ent_user, $this->wp_user->ID, $this->wp_site ) )
       return new WP_Error( 'forbidden', __( 'message', 'text-domain'), array( 'status' => 403 ) );
     return true;
   }
@@ -739,13 +805,12 @@ class Blogs_Controller extends Laclasse_Controller {
     if( !$this->wp_site )
       return new WP_Error( 'not found', __( 'message', 'text-domain'), array( 'status' => 404 ) );
 
-    $blog = blog_data( $this->wp_site );
-    $has_admin_right = has_admin_right($this->ent_user, $this->wp_user->ID, $blog);
+    $has_admin_right = has_admin_right($this->ent_user, $this->wp_user->ID, $this->wp_site);
     $json_array = $this->get_json_from_request( $request );
     if( !is_array( $json_array ) )
       $json_array = [ $json_array ];
     foreach ($json_array as $json)
-      if (!$has_admin_right && ( $this->wp_user->ID != $json->user_id || !has_read_right($this->ent_user, $this->wp_user->ID, $blog ) ) )
+      if (!$has_admin_right && ( $this->wp_user->ID != $json->user_id || !has_read_right($this->ent_user, $this->wp_user->ID, $this->wp_site ) ) )
         return new WP_Error( 'forbidden', __( 'message', 'text-domain'), array( 'status' => 403 ) );
 
     return true;
@@ -763,15 +828,14 @@ class Blogs_Controller extends Laclasse_Controller {
     if( !$this->wp_site )
       return new WP_Error( 'not found', __( 'message', 'text-domain'), array( 'status' => 404 ) );
 
-    $blog = blog_data($this->wp_site);
     $user_id = $request->get_url_params()['user_id'];
     if( !$user_id )
       return new WP_Error( 'not found', __( 'message', 'text-domain'), array( 'status' => 404 ) );
     $user = $this->get_user_by( $user_id, $blog_id );
     if( !$user)
       return new WP_Error( 'not found', __( 'message', 'text-domain'), array( 'status' => 404 ) );
-    if ( !has_admin_right( $this->ent_user, $this->wp_user->ID, $blog )
-      && ($this->wp_user->ID != $user_id || !has_read_right($this->ent_user, $this->wp_user->ID, $blog )) )
+    if ( !has_admin_right( $this->ent_user, $this->wp_user->ID, $this->wp_site )
+      && ($this->wp_user->ID != $user_id || !has_read_right($this->ent_user, $this->wp_user->ID, $this->wp_site )) )
       return new WP_Error( 'forbidden', __( 'message', 'text-domain'), array( 'status' => 403 ) );
     return true;
   }
@@ -793,15 +857,23 @@ class Blogs_Controller extends Laclasse_Controller {
   /**
   * Prepare the blog for the REST response
   *
-  * @param WP_User $blog WordPress representation of the blog.
+  * @param WP_Site $blog WordPress representation of the blog.
   * @param WP_REST_Request $request Request object.
   * @return mixed
   */
-  public function prepare_blog_for_response( $blog, $request ) {
-    $response = blog_data($blog);
-    $url_params = $request->get_url_params();
-    if( array_key_exists( 'id', $url_params ) && Laclasse_Controller::valid_number( $url_params['id'] )
-     || ( $request->get_method() == 'POST' && $request->get_route() == '/blogs') ) {
+  public function prepare_blog_for_response( $blog, $request = null ) {
+    $expand = true;
+    if($request == null) { $expand = false;}
+    else {
+      $url_params = $request->get_url_params();
+      $query_params = $request->get_query_params();
+    }
+
+    if(isset($query_params['expand']) && filter_var($query_params['expand'], FILTER_VALIDATE_BOOLEAN) == false )  { $expand = false; }
+    $response = $this->blog_data($blog, $expand );
+
+    if( $expand && ( array_key_exists( 'id', $url_params ) && Laclasse_Controller::valid_number( $url_params['id'] )
+     || ( $request->get_method() == 'POST' && $request->get_route() == '/blogs') ) ) {
       $args = [
         'blog_id' => $blog->id,
       ];
@@ -819,5 +891,47 @@ class Blogs_Controller extends Laclasse_Controller {
       $response->users = $users;
     }
     return $response;
+  }
+
+  function blog_data($blogWp, $expand = false) {
+    $result = array();
+    foreach($blogWp as $k => $v) { $result[$k] = $v; }
+
+    $result['id'] = intval($result['blog_id']);
+    unset($result['blog_id']);
+    $result['public'] = $result['public'] == 1;
+    $result['archived'] = $result['archived'] == 1;
+    $result['mature'] = $result['mature'] == 1;
+    $result['spam'] = $result['spam'] == 1;
+    $result['deleted'] = $result['deleted'] == 1;
+
+    if(is_bool($expand) && $expand ) {
+      $result = array_merge( $result,  $this->extended_options($result['id'] ) );
+    }
+
+    return (object) $result;
+  }
+
+  function extended_options($blog_id) {
+    $opts = array('admin_email', 'blogdescription',
+    'student-privacy','default_comment_status', 'blog_public');
+
+    $expanded_options = get_blog_options($blog_id, $opts);
+
+    $result = array();
+    $result['description'] = $expanded_options->blogdescription;
+
+    $result['student_privacy'] = isset( $expanded_options->{'student-privacy'} ) && $expanded_options->{'student-privacy'};
+    $result['comments_enabled'] = $expanded_options->default_comment_status == "open";
+    $result['discourage_index'] = $expanded_options->blog_public == 1;
+
+    switch_to_blog($blog_id);
+    $result['quota_max'] = intval(get_space_allowed() * 1024 * 1024);
+    $result['quota_used'] = intval(get_space_used() * 1024 * 1024);
+    if(function_exists('is_plugin_active'))
+      $result['force_login'] = is_plugin_active(WP_FORCE_LOGIN);
+    restore_current_blog();
+
+    return $result;
   }
 }

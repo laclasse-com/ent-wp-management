@@ -6,6 +6,7 @@
 function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $site_id, $wpUsrId, $TypeDeBlog, $EtbUAI, $group_id = "", $blogdescription = "") {
 	global $wpError;
 
+	// Create blog metas
 	$meta = new stdClass();
 	$meta->type_de_blog = $TypeDeBlog;
 	if ($EtbUAI)
@@ -17,47 +18,43 @@ function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $si
 	$meta->admin_email = $user_email;
 	$meta->wordpress_api_key = AKISMET_KEY;
 
-	$wpBlogId = wpmu_create_blog($domain, $path, $sitename, $wpUsrId, $meta, $site_id);
-    	
-	// Ajout du role administrator sur le blog crée
-	add_user_to_blog($wpBlogId, $wpUsrId, "administrator");
-	
-	update_blog_option($wpBlogId, 'blogname', $sitename);
+	$meta->blogname = $sitename;
 
 	if (!empty($blogdescription))
-		update_blog_option($wpBlogId, 'blogdescription', $blogdescription);
+		$meta->blogdescription = $blogdescription;
+	$meta->users_can_register = 0;
+	$meta->mailserver_url = 'localhost';
+	$meta->rss_language = 'fr';
+	$meta->language = 'fr';
+	$meta->WPLANG = 'fr_FR';
+	$meta->blog_upload_space = 300;
+	$meta->comment_registration = 1 ;
 
-	update_blog_option($wpBlogId, 'users_can_register', 0);
-	
-	update_blog_option($wpBlogId, 'mailserver_url', 'localhost');
+	$scheme = is_ssl() ? 'https' : 'http';
+	$meta->home = $meta->siteurl = esc_url( $scheme . '://' . $domain . $path );
 
-	update_blog_option($wpBlogId, 'rss_language', 'fr');
+	$wpBlogId = wpmu_create_blog($domain, $path, $sitename, $wpUsrId, $meta, $site_id);
 
-	update_blog_option($wpBlogId, 'language', 'fr');
-	update_blog_option($wpBlogId, 'WPLANG', 'fr_FR');
+	// Ajout du role administrator sur le blog crée
+	add_user_to_blog($wpBlogId, $wpUsrId, "administrator");
 
-	update_blog_option($wpBlogId, 'blog_upload_space', 300);
-
-	update_blog_option($wpBlogId, 'comment_registration', 1 );
-	
 	// Change theme of created blog
 	// Add new widget for Posts (Pages)
 	$laclasseTheme = wp_get_theme('wordpress-theme-laclasse');
 	if($laclasseTheme->exists()) {
-		// update_blog_option($wpBlogId,'stylesheet','wordpress-theme-laclasse'); 	
 		switch_to_blog($wpBlogId);
 		switch_theme('wordpress-theme-laclasse');
 		restore_current_blog();
 
 		insert_widget_in_blog_sidebar('pages',array('sortby' => 'menu_order'), $wpBlogId,'sidebar-1');
 	}
-	
+
 	return $wpBlogId;
 }
 
 /**
  * Insert a widget a sidebar, widget always inserted at index 1
- * 
+ *
  * @param string $widget_id   ID of the widget (search, recent-posts, etc.)
  * @param array $widget_data  Widget settings.
  * @param int $wp_blog_id	  ID of the blog in which to add the widget

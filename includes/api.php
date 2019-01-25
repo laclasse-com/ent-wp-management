@@ -261,24 +261,35 @@ function create_wp_user_from_ent_user($userENT) {
 // Update the WP user roles on blogs with the given ENT user
 // and the type of each blog. Means auto register user to their blogs
 function update_roles_wp_user_from_ent_user($userWp, $userENT) {
-	$blogs = get_cached_blogs();
+	$structures = array_map( function ( $profile ) { return $profile->structure_id; }, $userENT->profiles );
+	$structures = array_unique( $structures );
 
-	$role_order['subscriber'] = 1;
-	$role_order['contributor'] = 2;
-	$role_order['author'] = 3;
-	$role_order['editor'] = 4;
-	$role_order['administrator'] = 5;
+	$groups = array_map( function ( $group ) { return $group->group_id; }, $userENT->groups );
+	$groups = array_unique( $groups );
 
-	$user_blogs = get_blogs_of_user($userWp->ID);
+	$blogs = new Ent_Blog_Meta_Query( array(
+		'group__in' => $groups,
+		'structure__in' => $structures,
+		'relation' => 'OR'
+	) );
 
-	foreach ($blogs as $blog) {
-		if (is_forced_blog($blog, $userENT)) {
+	$role_order = [
+		'subscriber' => 1,
+		'contributor' => 2,
+		'author' => 3,
+		'editor' => 4,
+		'administrator' => 5
+	];
+
+	foreach ($blogs->get_results() as $blog) {
+		$blogData = $blog->toBlogData();
+		if (is_forced_blog($blogData, $userENT)) {
 			// add rights on blog if needed
-			$default_role = get_user_blog_default_role($userENT, $blog);
-			$current_role = get_user_blog_role($userWp->ID, $blog->id);
+			$default_role = get_user_blog_default_role($userENT, $blogData);
+			$current_role = get_user_blog_role($userWp->ID, $blogData->id);
 			// if the default role is better than the current upgrade/create it
 			if ($default_role != null && ($current_role == null || $role_order[$default_role] > $role_order[$current_role]))
-				add_user_to_blog($blog->id, $userWp->ID, $default_role);
+				add_user_to_blog($blogData->id, $userWp->ID, $default_role);
 		}
 	}
 }

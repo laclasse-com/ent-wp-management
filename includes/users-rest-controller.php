@@ -430,7 +430,6 @@ class Users_Controller extends Laclasse_Controller {
       $ent_user = get_ent_user_from_user_id( $user->id );
       $blog = get_blog( $blog_id );
       $data = new stdClass();
-      // $data->id = "$user->id-$blog_id";
       $data->user_id = $user->id;
       $data->blog_id = intval( $blog_id );
       if( count( $user->roles ) )
@@ -633,7 +632,7 @@ class Users_Controller extends Laclasse_Controller {
   public function get_cleanup( $request ) {
     // Get Wordpress users
     global $wpdb;
-    $db_prefix = $wpdb->get_blog_prefix(0);
+    $db_prefix = $wpdb->base_prefix;
     $sqlQuery = "SELECT user_id, meta_value as uid_ENT "
     . "FROM {$db_prefix}usermeta "
     . "WHERE meta_key = 'uid_ENT';";
