@@ -904,7 +904,8 @@ class Blogs_Controller extends Laclasse_Controller {
     $result['mature'] = $result['mature'] == 1;
     $result['spam'] = $result['spam'] == 1;
     $result['deleted'] = $result['deleted'] == 1;
-
+    $scheme = is_ssl() ? 'https' : 'http';
+    $result['url'] = "{$scheme}://{$blogWp->domain}{$blogWp->path}";
     if(is_bool($expand) && $expand ) {
       $result = array_merge( $result,  $this->extended_options($result['id'] ) );
     }
