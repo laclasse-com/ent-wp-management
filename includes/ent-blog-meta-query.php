@@ -21,7 +21,7 @@ class Ent_Blog_Meta_Query {
      *
      * @var string
      */
-    public static $table_name = 'blog_ent_meta';
+    public static $table_name = 'ent_options';
 
     /**
      * Query vars, after parsing

@@ -655,6 +655,8 @@ class Blogs_Controller extends Laclasse_Controller {
       $blogs = $blogQuery->get_results();
       if( !empty( $blogs ) )
         return $blogs[0];
+
+      return get_blog($blog_id);
     }
 
     return null;

@@ -189,7 +189,7 @@ function blog_ent_meta_create_table( $prefix ) {
 			PRIMARY KEY (`id`),
 			UNIQUE (`blog_id`),
 			FOREIGN KEY (`blog_id`) REFERENCES `'. $prefix .'blogs`(`blog_id`) ON DELETE CASCADE
-			);';
+			) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;';
 
 	global $wpdb;
 	return $wpdb->query( $creation_query );
