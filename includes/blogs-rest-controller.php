@@ -386,7 +386,8 @@ class Blogs_Controller extends Laclasse_Controller {
       'group_id' => $json->group_id,
       'type' => $json->type,
       'structure_id' => $json->structure_id,
-      'blog_id' => $blog_id
+      'blog_id' => $blog_id,
+      'name' => $json->name,
     ]);
 
     Ent_Blog_Meta_Model::wp_insert_or_update($entBlogMeta);
@@ -414,10 +415,11 @@ class Blogs_Controller extends Laclasse_Controller {
       }
     }
 
-		$blog = get_site($blog_id);
-		if ($blog == null)
+    $blogs = new Ent_Blog_Meta_Query( array( 'blog_id' => $blog_id, 'return_blogs' => true ) );
+    if( $blogs->get_total() == 0 )
       return new WP_REST_Response( null, 404 );
 
+    $blog = $blogs->get_results()[0];
     $data = $this->prepare_blog_for_response( $blog, $request);
     return new WP_REST_Response( $data, 200 );
   }
@@ -466,18 +468,17 @@ class Blogs_Controller extends Laclasse_Controller {
       $this->merge_blog_user_change( $request, $json->users );
 
     // Update Blog Ent Meta
-    $results = new Ent_Blog_Meta_Query(array(
-      'blog_id' => $blog_id
-    ));
+    $results = new Ent_Blog_Meta_Query( array( 'blog_id' => $blog_id ) );
 
     if( $results->get_total() == 0 )  {
-      $blog_options = get_blog_options($blog_id, array('etablissement_ENT', 'type_de_blog', 'group_id_ENT'));
+      $blog_options = get_blog_options($blog_id, array('etablissement_ENT', 'type_de_blog', 'group_id_ENT', 'blogname'));
 
       $entBlogMeta = new Ent_Blog_Meta_Model((object)[
         'structure_id' => $blog_options->etablissement_ENT,
         'type' => $blog_options->type_de_blog,
         'group_id' => $blog_options->group_id_ENT,
-        'blog_id' => $blog_id
+        'blog_id' => $blog_id,
+        'name' => $json->name,
       ]);
 
     } else {
@@ -488,13 +489,19 @@ class Blogs_Controller extends Laclasse_Controller {
         $entBlogMeta->structure_id = $json->structure_id;
       if (property_exists($json,'group_id'))
         $entBlogMeta->group_id = $json->group_id;
+      if (property_exists($json,'name'))
+        $entBlogMeta->name = $json->name;
     }
 
     Ent_Blog_Meta_Model::wp_insert_or_update($entBlogMeta);
 
-    $blog = get_site($blog_id);
+    $blogs = new Ent_Blog_Meta_Query( array( 'blog_id' => $blog_id, 'return_blogs' => true ) );
+    if( $blogs->get_total() == 0 )
+      return new WP_REST_Response( null, 404 );
+
+    $blog = $blogs->get_results()[0];
     $data = $this->prepare_blog_for_response( $blog, $request);
-		return new WP_REST_Response( $data, 200);
+    return new WP_REST_Response( $data, 200);
   }
 
   /**

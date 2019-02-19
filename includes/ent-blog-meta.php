@@ -204,15 +204,24 @@ class Ent_Blog_Meta_Model {
         if( is_numeric( $metadata['blog_id'] ) )
             $blog_id = $metadata['blog_id'];
 
-        if( is_numeric( $metadata['group_id'] ) )
+        if( is_set( $metadata['group_id'] ) && is_numeric( $metadata['group_id'] ) )
             $group_id = $metadata['group_id'];
+        else
+            $group_id = null;
 
         $sanitized_type = sanitize_text_field( $metadata['type'], true );
-        $blog_type = trim( $sanitized_type );
-        if ( empty( $blog_type ) ) {
-            return new WP_Error( 'invalid_ent_blog_type', __( 'Invalid ent blog type.' ) );
+        $type = trim( $sanitized_type );
+        if ( empty( $type ) ) {
+            return new WP_Error( 'invalid_ent_type', __( 'Invalid ent blog type.' ) );
         }
-        $compacted = compact( 'structure_id', 'group_id', 'type', 'blog_id' );
+
+        $sanitized_name = sanitize_text_field( $metadata['name'], true );
+        $name = trim( $sanitized_name );
+        if ( empty( $name ) ) {
+            return new WP_Error( 'invalid_name', __( 'Invalid name.' ) );
+        }
+
+        $compacted = compact( 'structure_id', 'group_id', 'type', 'blog_id', 'name' );
         $data = wp_unslash( $compacted );
 
         $table_name = $wpdb->base_prefix . Ent_Blog_Meta_Query::$table_name;

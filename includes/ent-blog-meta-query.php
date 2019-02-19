@@ -219,7 +219,7 @@ class Ent_Blog_Meta_Query {
             if ( is_array( $qv['blog_id'] ) ) {
                 $blog_ids = implode( ', ', $blog_ids );
             }
-            $this->query_where .= $wpdb->prepare( " $relation $wpdb->blogs.blog_id IN ( {$blog_ids} )", array() );
+            $this->query_where .= $wpdb->prepare( " $relation $meta_table.blog_id IN ( {$blog_ids} )", array() );
             $relation = $qv['relation'];
         }
 
