@@ -204,7 +204,7 @@ class Ent_Blog_Meta_Model {
         if( is_numeric( $metadata['blog_id'] ) )
             $blog_id = $metadata['blog_id'];
 
-        if( is_set( $metadata['group_id'] ) && is_numeric( $metadata['group_id'] ) )
+        if( isset( $metadata['group_id'] ) && is_numeric( $metadata['group_id'] ) )
             $group_id = $metadata['group_id'];
         else
             $group_id = null;
