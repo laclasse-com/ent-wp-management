@@ -116,8 +116,27 @@ class Users_Controller extends Laclasse_Controller {
       $query_params['include'] = $query_params['id'];
       unset($query_params['id']);
     }
-    if ( !array_key_exists('blog_id',$query_params) )
-      $query_params['blog_id'] = '';
+    // A authenticated user can only access users
+    // in blogs he has administrator priveledges
+    if( !$this->ent_user->super_admin ) {
+      $blogQuery = new Ent_Blog_Meta_Query( array(
+        'wp_user' => $this->wp_user,
+        'ent_user' => $this->ent_user,
+        'role' => 'administrator'
+      ) );
+
+      $blogs = array_map( function( $blog ) { return $blog->blog_id; }, $blogQuery->get_results() );
+      if( !isset( $blogs ) || !isset( $query_params['blog_id'] ) ) {
+        return new WP_Error( 'not-found', null, array( 'status' => 404 ) );
+      }
+
+      if( !in_array( $query_params['blog_id'], $blogs ) ) {
+        return new WP_Error( 'forbidden', null, array( 'status' => 403 ) );
+      }
+    } else if ( !array_key_exists('blog_id',$query_params) ) {
+        $query_params['blog_id'] = '';
+    }
+
     if ( array_key_exists('limit',$query_params) ) {
       $query_params['number'] = $query_params['limit'];
       unset($query_params['limit']);
@@ -207,7 +226,27 @@ class Users_Controller extends Laclasse_Controller {
   */
   public function get_user( $request ) {
     $params = $request->get_params();
-    $user = $this->get_user_by( $params['id'] );
+    if( !$this->ent_user->super_admin ) {
+      $blogQuery = new Ent_Blog_Meta_Query( array(
+        'wp_user' => $this->wp_user,
+        'ent_user' => $this->ent_user,
+        'role' => 'administrator'
+      ) );
+
+      $blogs = array_map( function( $blog ) { return $blog->blog_id; }, $blogQuery->get_results() );
+
+      if( !isset( $blogs ) || count($blogs) == 0 ) {
+        return new WP_Error( 'not-found', null, array( 'status' => 404 ) );
+      }
+      foreach ($blogs as $blog) {
+        $user = $this->get_user_by( $params['id'], $blog );
+        if( $user ) { break; }
+      }
+    } else {
+      $user = $this->get_user_by( $params['id'], $blogs );
+    }
+
+
 
     if ( $user ) {
       $data = $this->prepare_user_for_response( $user, $request );

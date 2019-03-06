@@ -303,14 +303,13 @@ class Ent_Blog_Meta_Query {
                 if ( ! is_numeric( $site_id ) )
                     continue;
                 // Role
-                if( empty( $qv['role'] ) )
-                    $site_ids[] = (int) $site_id;
-                else {
+                $site_ids[] = (int) $site_id;
+                if ( !empty( $qv['role'] ) ){
                     foreach($value as $role) {
                         $unserialized = maybe_unserialize($role);
                         if($role == $unserialized) { continue; }
                         if( array_key_exists( $qv['role'], $unserialized ) )
-                            $site_ids[] = (int) $site_id;
+                            $role_site_ids[] = (int) $site_id;
                     }
                 }
             }
@@ -332,6 +331,13 @@ class Ent_Blog_Meta_Query {
                 $sub_query .= " $sub_relation $meta_table.blog_id IN ( {$site_ids} ) ";
                 $sub_relation = "OR";
             }
+
+            if( !empty( $role_site_ids ) ) {
+                $role_site_ids = implode( ', ', $role_site_ids );
+                $sub_query .= " ) AND ( $meta_table.blog_id IN ( {$role_site_ids} ) ";
+                $sub_relation = "OR";
+            }
+
             if( !empty( $sub_query ) ) {
                 $this->query_where .= $wpdb->prepare( " $relation ( $sub_query ) ",array() );
                 $relation = $qv['relation'];
