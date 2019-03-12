@@ -372,7 +372,7 @@ class Blogs_Controller extends Laclasse_Controller {
     $json = $this->get_json_from_request($request);
 
     if( !isset($json->name) || !isset($json->domain) || !isset($json->type)
-      || !in_array($json->type, ['ETB','CLS','GRP','GPL','ENV']) )
+      || !in_array($json->type, ['ETB','CLS','GRP','GPL','ENV']) || !ctype_lower($json->domain) )
       return new WP_REST_Response( null, 400 );
 
 		// create the blog and add the WP user as administrator
