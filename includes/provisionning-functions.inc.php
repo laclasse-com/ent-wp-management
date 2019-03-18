@@ -30,6 +30,10 @@ function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $si
 	$meta->blog_upload_space = 300;
 	$meta->comment_registration = 1 ;
 
+	// Disable pingbacks
+	$meta->default_ping_status = 'closed';
+	$meta->default_pingback_flag = '';
+
 	$scheme = is_ssl() ? 'https' : 'http';
 	$meta->home = $meta->siteurl = esc_url( $scheme . '://' . $domain . $path );
 
