@@ -371,8 +371,15 @@ class Blogs_Controller extends Laclasse_Controller {
   public function create_blog( $request ) {
     $json = $this->get_json_from_request($request);
 
+    // Check if the domain is valid
+    $subdomain = explode( DOMAIN_CURRENT_SITE, $json->domain );
+    if( $subdomain === false || count( $subdomain ) === 0
+      || substr( $subdomain[0], -1 ) !== '.' || !ctype_lower( substr( $subdomain[0], 0, -1 ) )
+      || domain_exists( $json->domain, '/' ) )
+      return new WP_REST_Response( null, 400 );
+
     if( !isset($json->name) || !isset($json->domain) || !isset($json->type)
-      || !in_array($json->type, ['ETB','CLS','GRP','GPL','ENV']) || !ctype_lower($json->domain) )
+      || !in_array($json->type, ['ETB','CLS','GRP','GPL','ENV']) )
       return new WP_REST_Response( null, 400 );
 
 		// create the blog and add the WP user as administrator
