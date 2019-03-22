@@ -173,8 +173,19 @@ class Blogs_Controller extends Laclasse_Controller {
 			}
     }
 
+    // If orderby and order are an array of the same length, they are combined
+    if( isset( $query_params['orderby'] ) && is_array( $query_params['orderby'] ) ) {
+      if( !is_array($query_params['order'] ) || count( $query_params['order'] ) !== count( $query_params['orderby'] ) )
+        return new WP_REST_Response( null, 400 );
+
+      $query_params['orderby'] = array_combine($query_params['orderby'], $query_params['order']);
+      unset($query_params['order']);
+    }
+
     // If orderby is a quota, there's a performance hit because we need all the blogs
-    if ( array_key_exists('orderby',$query_params) && in_array( $query_params['orderby'], array( 'quota_used', 'quota_max' ) ) ) {
+    if ( array_key_exists('orderby',$query_params)
+      && ( in_array( $query_params['orderby'], array( 'quota_used', 'quota_max' ) )
+        || isset( $query_params['orderby']['quota_used'] ) || isset( $query_params['orderby']['quota_max'] ) ) ) {
       $need_post_process = true;
       $original_number = $query_params['number'];
       $query_params['number'] = 0x5f3759df;
