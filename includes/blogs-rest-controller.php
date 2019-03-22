@@ -382,6 +382,21 @@ class Blogs_Controller extends Laclasse_Controller {
       || !in_array($json->type, ['ETB','CLS','GRP','GPL','ENV']) )
       return new WP_REST_Response( null, 400 );
 
+    // Check blog type
+    if($json->type == 'ETB' ) {
+      if(!isset($json->structure_id) || isset($json->group_id))
+        return new WP_REST_Response( null, 400 );
+    } else if(in_array($json->type, ['CLS','GRP'])){
+      if(!isset($json->structure_id) || !isset($json->group_id))
+        return new WP_REST_Response( null, 400 );
+    } else if($json->type == 'GPL') {
+      if(!isset($json->group_id))
+        return new WP_REST_Response( null, 400 );
+    } else {
+      if(isset($json->structure_id) || isset($json->group_id))
+        return new WP_REST_Response( null, 400 );
+    }
+
 		// create the blog and add the WP user as administrator
 		$blog_id = creerNouveauBlog(
 			$json->domain, '/', $json->name, $this->ent_user->login, $this->get_user_email(), 1,
