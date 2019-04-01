@@ -188,7 +188,9 @@ class Blogs_Controller extends Laclasse_Controller {
         || isset( $query_params['orderby']['quota_used'] ) || isset( $query_params['orderby']['quota_max'] ) ) ) {
       $need_post_process = true;
       $original_number = $query_params['number'];
+      $original_paged = $query_params['paged'];
       $query_params['number'] = 0x5f3759df;
+      $query_params['paged'] = 1;
     }
 
     $query_params['return_blogs'] = true;
@@ -199,48 +201,53 @@ class Blogs_Controller extends Laclasse_Controller {
     $need_post_process = $need_post_process && $blogQuery->get_total() > 0;
     // Post processing done to order by quota_used, quota_max
     if( $need_post_process ) {
-      $field = $query_params['orderby'];
       $blog_ids = get_sites( array(
         'fields' => 'ids',
-        'number' => $query_params['number']
+        'number' => $query_params['number'],
+        'site__not_in' => 1,
       ) );
-      $blog_sizes = array_map( function( $blog_id ) use($field) {
+
+      $orderby = $query_params['orderby'];
+
+      // Step 1: Get the needed quota
+      $order_quota_used = array_key_exists( 'quota_used', $orderby );
+      $order_quota_max = array_key_exists( 'quota_max', $orderby );
+      foreach ($blog_ids as $blog_id) {
         switch_to_blog( $blog_id );
-        $quota = ( $field == 'quota_used' ) ? intval( get_space_used() ) : intval( get_space_allowed() );
-        $blog = (object) [
-          'blog_id' => $blog_id,
-          $field => $quota
-        ];
-        restore_current_blog();
-        return $blog;
-      }, $blog_ids );
-
-      $order = strtoupper( $query_params['order'] ) == 'ASC' ? 1 : -1;
-      usort( $blog_sizes, function( $a, $b ) use( $order, $field ) {
-        // ordre croissant
-        if ($a->{$field} == $b->{$field}) {
-          return 0;
+        $blog = array();
+        if( $order_quota_used ) {
+          $blog['quota_used'] = get_space_used();
         }
-        return ( ( $a->{$field} < $b->{$field} ) ? -1 : 1 ) * $order;
-      } );
-
-      $ordered_blogs = array();
-      foreach ($blog_sizes as $key => $value) {
-        $ordered_blogs[] = $value->blog_id;
+        if( $order_quota_max ) {
+          $blog['quota_max'] = intval( get_space_allowed() );
+        }
+        $blog_sizes[$blog_id] = $blog;
+        restore_current_blog();
       }
 
-      usort($blogs, function( $a, $b ) use( $ordered_blogs ){
-        $indexA = array_search( $a->blog_id, $ordered_blogs );
-        $indexB = array_search( $b->blog_id, $ordered_blogs );
-
-        if ( $indexA == $indexB ) {
-          return 0;
+      // Step 2: Add them to blogs
+      foreach ( $blogs as $site ) {
+        if( $order_quota_used ) {
+          $site->quota_used = $blog_sizes[$site->blog_id]['quota_used'];
         }
-        return ( $indexA < $indexB ) ? -1 : 1 ;
-      } );
+        if( $order_quota_max ) {
+          $site->quota_max = $blog_sizes[$site->blog_id]['quota_max'];
+        }
+      }
 
+      // Step 3: Sort the array using call_user_func_array( 'array_multisort', $params );
+      $params = array();
+      foreach ($orderby as $key => $value) {
+        $params[] = array_column($blogs, $key);
+        $params[] = $value == 'desc' ? SORT_DESC : SORT_ASC;
+      }
+      $params[] = &$blogs;
+      call_user_func_array( 'array_multisort', $params );
+
+      // Step 4: Retrieve the correct number of results
       $query_params['number'] = $original_number;
-      $offset = ( $query_params['paged'] - 1 ) * $original_number;
+      $query_params['paged'] = $original_paged;
+      $offset = ( $original_paged - 1 ) * $original_number;
       $blogs = array_splice( $blogs, $offset, $original_number );
     }
 
@@ -252,7 +259,7 @@ class Blogs_Controller extends Laclasse_Controller {
       $data = (object) [
         'total' => $blogQuery->get_total(),
         'limit' => intval( $query_params['number'] ),
-        'page' => intval( $blogQuery->get( 'paged' ) ),
+        'page' => intval( $query_params['paged'] ),
         'data' => $blogs,
       ];
     else
@@ -923,7 +930,6 @@ class Blogs_Controller extends Laclasse_Controller {
 			$users = [];
 			foreach ($blog_users as $blog_user) {
 				$data = new stdClass();
-				// $data->id = $blog_user->ID;
 				$data->user_id = $blog_user->ID;
 				$data->blog_id = $blog->id;
 				if (isset($blog_user->roles) && count($blog_user->roles) > 0)
