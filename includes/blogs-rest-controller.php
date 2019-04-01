@@ -180,6 +180,14 @@ class Blogs_Controller extends Laclasse_Controller {
 
       $query_params['orderby'] = array_combine($query_params['orderby'], $query_params['order']);
       unset($query_params['order']);
+    } else if ( isset( $query_params['orderby'] ) && !is_array( $query_params['orderby'] ) ) {
+      if( is_array($query_params['order'] ) )
+        return new WP_REST_Response( null, 400 );
+
+      $query_params['orderby'] = array(
+        $query_params['orderby'] => isset( $query_params['order'] ) ? $query_params['order'] : 'asc'
+      );
+      unset($query_params['order']);
     }
 
     // If orderby is a quota, there's a performance hit because we need all the blogs
