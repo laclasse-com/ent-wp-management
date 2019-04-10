@@ -27,7 +27,7 @@ function creerNouveauBlog($domain, $path, $sitename, $username, $user_email, $si
 	$meta->rss_language = 'fr';
 	$meta->language = 'fr';
 	$meta->WPLANG = 'fr_FR';
-	$meta->blog_upload_space = 300;
+	$meta->blog_upload_space = 1000;
 	$meta->comment_registration = 1 ;
 
 	// Disable pingbacks
