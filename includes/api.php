@@ -88,8 +88,8 @@ function blog_data($blogWp) {
 	unset($result->blog_public);
 
 	switch_to_blog($result->id);
-	$result->quota_max = intval(get_space_allowed() * 1024 * 1024);
-	$result->quota_used = intval(get_space_used() * 1024 * 1024);
+	$result->quota_max = intval(get_space_allowed() * KB_IN_BYTES * KB_IN_BYTES);
+	$result->quota_used = intval(get_space_used() * KB_IN_BYTES * KB_IN_BYTES);
 	if(function_exists('is_plugin_active'))
 		$result->force_login = is_plugin_active(WP_FORCE_LOGIN);
 	restore_current_blog();

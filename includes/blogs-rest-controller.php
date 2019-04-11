@@ -192,8 +192,9 @@ class Blogs_Controller extends Laclasse_Controller {
 
     // If orderby is a quota, there's a performance hit because we need all the blogs
     if ( array_key_exists('orderby',$query_params)
-      && ( in_array( $query_params['orderby'], array( 'quota_used', 'quota_max' ) )
-        || isset( $query_params['orderby']['quota_used'] ) || isset( $query_params['orderby']['quota_max'] ) ) ) {
+      && ( in_array( $query_params['orderby'], array( 'quota_used', 'quota_max', 'post_count' ) )
+        || isset( $query_params['orderby']['quota_used'] ) || isset( $query_params['orderby']['quota_max'] )
+        || isset( $query_params['orderby']['post_count'] ) ) ) {
       $need_post_process = true;
       $original_number = $query_params['number'];
       $original_paged = $query_params['paged'];
@@ -220,6 +221,7 @@ class Blogs_Controller extends Laclasse_Controller {
       // Step 1: Get the needed quota
       $order_quota_used = array_key_exists( 'quota_used', $orderby );
       $order_quota_max = array_key_exists( 'quota_max', $orderby );
+      $order_post_count = array_key_exists( 'post_count', $orderby );
       foreach ($blog_ids as $blog_id) {
         switch_to_blog( $blog_id );
         $blog = array();
@@ -228,6 +230,9 @@ class Blogs_Controller extends Laclasse_Controller {
         }
         if( $order_quota_max ) {
           $blog['quota_max'] = intval( get_space_allowed() );
+        }
+        if( $order_post_count ) {
+          $blog['post_count'] = intval( get_option( 'post_count', 0 ) );
         }
         $blog_sizes[$blog_id] = $blog;
         restore_current_blog();
@@ -240,6 +245,9 @@ class Blogs_Controller extends Laclasse_Controller {
         }
         if( $order_quota_max ) {
           $site->quota_max = $blog_sizes[$site->blog_id]['quota_max'];
+        }
+        if( $order_post_count ) {
+          $site->post_count = $blog_sizes[$site->blog_id]['post_count'];
         }
       }
 
@@ -498,7 +506,7 @@ class Blogs_Controller extends Laclasse_Controller {
 		if (property_exists($json, 'group_id'))
 			update_blog_option($blog_id, 'group_id_ENT', $json->group_id);
 		if (isset($json->quota_max) && $this->ent_user->super_admin)
-      update_blog_option($blog_id, 'blog_upload_space', ceil($json->quota_max / (1024 * 1024)));
+      update_blog_option($blog_id, 'blog_upload_space', ceil($json->quota_max / (KB_IN_BYTES * KB_IN_BYTES)));
     if (isset($json->comments_enabled))
       update_blog_option($blog_id, 'default_comment_status', $json->comments_enabled ? 'open': 'closed');
     if (isset($json->discourage_index))
@@ -971,7 +979,7 @@ class Blogs_Controller extends Laclasse_Controller {
 
   function extended_options($blog_id) {
     $opts = array('admin_email', 'blogdescription',
-    'student-privacy','default_comment_status', 'blog_public');
+    'student-privacy','default_comment_status', 'blog_public', 'post_count');
 
     $expanded_options = get_blog_options($blog_id, $opts);
 
@@ -982,9 +990,10 @@ class Blogs_Controller extends Laclasse_Controller {
     $result['comments_enabled'] = $expanded_options->default_comment_status == "open";
     $result['discourage_index'] = $expanded_options->blog_public == 1;
 
+    $result['post_count'] = intval( $expanded_options->post_count );
     switch_to_blog($blog_id);
-    $result['quota_max'] = intval(get_space_allowed() * 1024 * 1024);
-    $result['quota_used'] = intval(get_space_used() * 1024 * 1024);
+    $result['quota_max'] = intval(get_space_allowed() * KB_IN_BYTES * KB_IN_BYTES);
+    $result['quota_used'] = intval(get_space_used() * KB_IN_BYTES * KB_IN_BYTES);
     if(function_exists('is_plugin_active'))
       $result['force_login'] = is_plugin_active(WP_FORCE_LOGIN);
     restore_current_blog();

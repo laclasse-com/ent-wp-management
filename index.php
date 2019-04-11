@@ -5,7 +5,7 @@ Plugin URI:
 Description: <strong>Plugin Laclasse.com</strong>. Valable pour tout ENT s'appuyant sur CAS pour son sso. Pour l'int&eacute;gration de Wordpress dans un ENT. Gestion des utilisateurs d'un ENT pour WordPress Multi-Utilisateurs, Gestion des actions de pilotage des blogs depuis un ENT. <strong>Pr&eacute;-requis :</strong>Le plugin Akismet doit &ecirc;tre activ&eacute; pour le r&eacute;seau.
 Author: Pierre-Gilles Levallois
 Author: Nelson Gonçalves
-Version: 0.4
+Version: 0.5.0
 Author URI: http://www.laclasse.com/
 */
 
@@ -86,7 +86,7 @@ register_activation_hook( __FILE__, 'ent_wp_management_activation' );
 add_filter('admin_footer_text', 'addEntName', 10, 0);
 
 // Maîtriser les headers http qui sont envoyés
-add_action( 'login_init', 'remove_frame_options_header',12, 0 );
+add_action( 'login_init', 'remove_frame_options_header', 12, 0 );
 add_action( 'admin_init', 'remove_frame_options_header', 12, 0 );
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
