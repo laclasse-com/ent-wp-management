@@ -408,7 +408,7 @@ class Blogs_Controller extends Laclasse_Controller {
     // Check if the domain is valid
     $subdomain = explode( DOMAIN_CURRENT_SITE, $json->domain );
     if( $subdomain === false || count( $subdomain ) === 0
-      || substr( $subdomain[0], -1 ) !== '.' || !ctype_lower( substr( $subdomain[0], 0, -1 ) )
+      || substr( $subdomain[0], -1 ) !== '.' || !preg_match( '/^[a-z0-9-]*$/', substr( $subdomain[0], 0, -1 ) )
       || domain_exists( $json->domain, '/' ) )
       return new WP_REST_Response( null, 400 );
 
