@@ -230,6 +230,16 @@ class Posts_Controller extends Laclasse_Controller
         }
 
         $result->post_link = get_permalink($post->ID);
+        // search for audio MP3 shortcode if any
+        $pattern = get_shortcode_regex();
+        if (preg_match_all('/'. $pattern .'/s', $post->post_content, $matches)
+            && array_key_exists(2, $matches)
+            && in_array('audio', $matches[2])
+            && array_key_exists(3, $matches)) {
+            if (preg_match('/mp3="([^\"]+)"/', $matches[3][0], $mp3_matches)) {
+                $result->post_audio_mp3 = $mp3_matches[1];
+            }
+        }
         $result->post_text = html_entity_decode(strip_shortcodes(wp_strip_all_tags($post->post_content)));
         if(has_post_thumbnail($post->ID)) {
             $result->post_thumbnail = wp_get_attachment_image_url(get_post_thumbnail_id($post->ID),'medium');
