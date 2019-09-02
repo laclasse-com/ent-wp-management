@@ -63,7 +63,9 @@ require_once('includes/ent-blog-meta-query.php');
 // plugin hooks into authentication system
 add_action('wp_authenticate', array('wpCAS', 'authenticate'), 10, 2);
 add_action('wp_logout', array('wpCAS', 'logout'));
-add_action('lost_password', array('wpCAS', 'disable_function_pwd'));
+add_action('allow_password_reset', 'disableThisFunc');
+add_action('login_footer', array('wpCAS', 'hide_forms'));
+add_action('login_message', array('wpCAS', 'disable_function_pwd'));
 add_action('retrieve_password', array('wpCAS', 'disable_function_pwd'));
 add_action('check_passwords', array('wpCAS', 'check_passwords'), 10, 3);
 add_action('password_reset', array('wpCAS', 'disable_function_pwd'));

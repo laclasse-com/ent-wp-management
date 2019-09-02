@@ -48,12 +48,12 @@ class wpCAS {
 	public static function get_url_login() {
 		return CAS_URL . "login?service=" . urlencode(home_url() . "/wp-login.php");
 	}
-	
+
 	// Revoie l'url de logout selon l'ent de provenance.
 	public static function get_url_logout($wpLogoutUrl) {
 		return $wpLogoutUrl;
 	}
-	
+
 	// hook CAS logout to WP logout
 	public static function logout() {
 		header('Location: ' . CAS_URL . "logout?service=" . urlencode(home_url() . "/wp-login.php"));
@@ -72,9 +72,14 @@ class wpCAS {
 
 	// disabled reset, lost, and retrieve password features
 	public static function disable_function_pwd() {
-		echo( __( 'Les fonctions de gestion des mots de passe sont d&eacute;sactiv&eacute;es car la plateforme est connect�e &agrave; l\'ENT '.ENT_NAME.'.', 'wpcas' ));
+		echo( '<p class="message">'.__( 'Les fonctions de gestion des mots de passe de Wordpress sont d&eacute;sactiv&eacute;es car la plateforme est connect&eacute;e &agrave; l\'ENT <a href="'.ENT_URL.'">'.ENT_NAME.'</a>.</p>', 'wpcas' ));
+		// return false;
 	}
 
+	public static function hide_forms() {
+		echo( "<script> alert('if this happen don\'t use it');const forms = document.getElementsByTagName('form'); if(forms.length > 0) for(var i=0;i<forms.length;i++) { forms[i].hidden = true; }</script>");
+		// return false;
+	}
 	// set the passwords on user creation
 	// patched Mar 25 2010 by Jonathan Rogers jonathan via findyourfans.com
 	public static function check_passwords( $user, $pass1, $pass2 ) {
