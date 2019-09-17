@@ -229,6 +229,16 @@ class Posts_Controller extends Laclasse_Controller
             $result->$value = $post->$value;
         }
 
+        if( isset($post->post_date) ) {
+            $datetime = new DateTime($post->post_date);
+            $result->post_date = $datetime->format(DateTime::ATOM);
+        }
+
+        if( isset($post->post_modified) ) {
+            $datetime = new DateTime($post->post_modified);
+            $result->post_modified = $datetime->format(DateTime::ATOM);
+        }
+
         $result->post_link = get_permalink($post->ID);
         // search for audio MP3 shortcode if any
         $pattern = get_shortcode_regex();
