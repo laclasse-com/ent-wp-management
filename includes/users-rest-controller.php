@@ -781,8 +781,10 @@ class Users_Controller extends Laclasse_Controller {
         $response->nicename = $d->user_nicename;
       if (isset($d->display_name))
         $response->display_name = $d->display_name;
-      if (isset($d->user_registered))
-        $response->registered = $d->user_registered;
+      if (isset($d->user_registered)) {
+        $datetime = new DateTime($d->user_registered);
+        $response->registered = $datetime->format(DateTime::ATOM);
+      }
       if (isset($d->deleted))
         $response->deleted = $d->deleted == 1;
     }

@@ -961,6 +961,16 @@ class Blogs_Controller extends Laclasse_Controller {
     $result = array();
     foreach($blogWp as $k => $v) { $result[$k] = $v; }
 
+    if( isset($blogWp->registered) ) {
+      $datetime = new DateTime($blogWp->registered);
+      $result['registered'] = $datetime->format(DateTime::ATOM);
+    }
+
+    if( isset($blogWp->last_updated) ) {
+      $datetime = new DateTime($blogWp->last_updated);
+      $result['last_updated'] = $datetime->format(DateTime::ATOM);
+    }
+
     $result['id'] = intval($result['blog_id']);
     unset($result['blog_id']);
     $result['public'] = $result['public'] == 1;
